@@ -1,0 +1,5 @@
+node_modules/
+kaizen.db
+kaizen.db-shm
+kaizen.db-wal
+kaizen.db.lock/

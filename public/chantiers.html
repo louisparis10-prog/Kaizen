@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chantiers Kaizen</title>
+<link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+<div class="topbar">
+  <div class="brand"><span class="logo">改善</span> Kaizen Toolbox</div>
+  <nav>
+    <a href="/index.html">Outils</a>
+    <a href="/chantiers.html" class="active">Chantiers Kaizen</a>
+  </nav>
+</div>
+
+<main>
+  <div id="view-list">
+    <div class="page-header">
+      <h1>Chantiers Kaizen</h1>
+      <p>Cree, pilote et documente tes chantiers d'amelioration continue de bout en bout.</p>
+    </div>
+    <div class="toolbar">
+      <button class="btn orange" id="btn-new-chantier">+ Nouveau chantier</button>
+    </div>
+    <div id="chantiers-list"></div>
+  </div>
+
+  <div id="view-form" style="display:none">
+    <div class="page-header">
+      <h1 id="form-title">Nouveau chantier</h1>
+    </div>
+    <div class="section-card">
+      <div class="form-grid">
+        <div class="full">
+          <label>Titre du chantier</label>
+          <input type="text" id="f-titre" placeholder="Ex : Reduire le temps de changement de format ligne 3">
+        </div>
+        <div class="full">
+          <label>Probleme constate</label>
+          <textarea id="f-probleme" rows="3" placeholder="Decris le probleme terrain (faits, chiffres si possible)"></textarea>
+        </div>
+        <div>
+          <label>Perimetre</label>
+          <input type="text" id="f-perimetre" placeholder="Ligne, poste, atelier...">
+        </div>
+        <div>
+          <label>Pilote du chantier</label>
+          <input type="text" id="f-pilote">
+        </div>
+        <div class="full">
+          <label>Equipe (noms separes par des virgules)</label>
+          <input type="text" id="f-equipe" placeholder="Ex: Marie, Karim, Julien">
+        </div>
+        <div class="full">
+          <label>Objectif (SMART)</label>
+          <textarea id="f-objectif" rows="2" placeholder="Ex : passer de 45 min a moins de 15 min de changement de format d'ici fin du mois"></textarea>
+        </div>
+        <div>
+          <label>Date de debut</label>
+          <input type="date" id="f-date-debut">
+        </div>
+        <div>
+          <label>Date de fin visee</label>
+          <input type="date" id="f-date-fin">
+        </div>
+        <div class="full">
+          <label>Outils Kaizen utilises</label>
+          <div id="f-outils" class="tool-checklist"></div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn orange" id="btn-save-chantier">Enregistrer</button>
+        <button class="btn secondary" id="btn-cancel-chantier">Annuler</button>
+        <button class="btn secondary" id="btn-ask-expert-form">Demander conseil a l'expert sur ce probleme</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="view-detail" style="display:none"></div>
+</main>
+
+<div id="modal-root"></div>
+
+<script src="/js/chantiers.js"></script>
+<script src="/js/chat.js"></script>
+</body>
+</html>

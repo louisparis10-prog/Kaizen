@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kaizen - Boite a outils amelioration continue</title>
+<link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+<div class="topbar">
+  <div class="brand"><span class="logo">改善</span> Kaizen Toolbox</div>
+  <nav>
+    <a href="/index.html" class="active">Outils</a>
+    <a href="/chantiers.html">Chantiers Kaizen</a>
+  </nav>
+</div>
+
+<main>
+  <div class="page-header">
+    <h1>Bibliotheque des outils Lean / Kaizen</h1>
+    <p>Clique sur un outil pour voir son explication complete et son memo. Utilise le chat en bas a droite pour te faire orienter par l'expert.</p>
+  </div>
+
+  <div class="toolbar">
+    <input type="search" id="search" placeholder="Rechercher un outil (ex: panne, changement de serie...)">
+    <div id="category-filters"></div>
+  </div>
+
+  <div class="tools-grid" id="tools-grid"></div>
+</main>
+
+<div id="modal-root"></div>
+
+<script src="/js/app.js"></script>
+<script src="/js/chat.js"></script>
+</body>
+</html>
