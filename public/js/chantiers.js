@@ -429,10 +429,65 @@
     const params = new URLSearchParams(location.search);
     const preselect = params.get('preselect');
     if (preselect) {
-      openForm(null);
-      selectedOutils = [preselect];
-      renderOutilsChecklist();
+      window.history.replaceState({}, '', '/chantiers.html');
+      openAddToChantierChooser(preselect);
     }
+  }
+
+  function openAddToChantierChooser(toolId) {
+    const tool = tools.find(t => t.id === toolId);
+    if (!tool) return;
+
+    if (chantiers.length === 0) {
+      openForm(null);
+      selectedOutils = [toolId];
+      renderOutilsChecklist();
+      return;
+    }
+
+    const root = document.getElementById('modal-root');
+    root.innerHTML = '';
+    const backdrop = el(`
+      <div class="modal-backdrop">
+        <div class="modal">
+          <button class="modal-close">&times;</button>
+          <h2>${tool.icon} Ajouter ${tool.name} a un chantier</h2>
+          <p>Choisis un chantier existant, ou cree un nouveau chantier avec cet outil.</p>
+          <div id="chooser-list"></div>
+          <div class="modal-actions">
+            <button class="btn orange" id="btn-chooser-new">+ Nouveau chantier</button>
+          </div>
+        </div>
+      </div>
+    `);
+    backdrop.addEventListener('click', e => { if (e.target === backdrop) root.innerHTML = ''; });
+    backdrop.querySelector('.modal-close').addEventListener('click', () => { root.innerHTML = ''; });
+
+    const list = backdrop.querySelector('#chooser-list');
+    chantiers.forEach(c => {
+      const item = el(`<div class="chantier-card"><span class="badge ${c.statut}">${statutLabel(c.statut)}</span><h3>${c.titre}</h3></div>`);
+      item.addEventListener('click', async () => {
+        const outils = Array.from(new Set([...(c.outils || []), toolId]));
+        const res = await fetch(`/api/chantiers/${c.id}`, {
+          method: 'PUT', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ ...c, outils })
+        });
+        const updated = await res.json();
+        root.innerHTML = '';
+        await loadChantiers();
+        openDetail(updated.id);
+      });
+      list.appendChild(item);
+    });
+
+    backdrop.querySelector('#btn-chooser-new').addEventListener('click', () => {
+      root.innerHTML = '';
+      openForm(null);
+      selectedOutils = [toolId];
+      renderOutilsChecklist();
+    });
+
+    root.appendChild(backdrop);
   }
 
   init();
