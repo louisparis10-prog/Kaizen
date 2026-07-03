@@ -30,7 +30,7 @@ const TOOLS = [
       "Shitsuke = MAINTENIR : audit regulier + discipline",
       "Astuce : zone rouge pour trier, marquage au sol pour ranger, checklist d'audit pour maintenir"
     ],
-    keywords: ['5s', 'rangement', 'desordre', 'desordonne', 'encombre', 'poste de travail sale', 'trier', 'ranger', 'nettoyer poste', 'organisation atelier', 'objets qui trainent', 'perte de temps a chercher']
+    keywords: ['5s', 'rangement', 'desordre', 'desordonne', 'encombre', 'encombrement', 'poste de travail sale', 'trier', 'ranger', 'nettoyer poste', 'organisation atelier', 'objets qui trainent', 'perte de temps a chercher', 'bazar', 'fouillis', 'pagaille', 'zone encombree', 'materiel egare', 'outils introuvables', 'outils perdus', 'poste inonde de pieces', 'allees encombrees', 'acces bloque', 'chute d\'objet', 'risque de trebuchement', 'zone de stockage desorganisee', 'gain de place', 'optimisation espace atelier', 'armoire mal rangee', 'etabli encombre', 'sol sale', 'zone de vie', 'management visuel poste', 'etiquetage poste', 'marquage au sol', 'ombrage outils', 'audit 5s', 'debarras', 'tri selectif atelier', 'placard en bazar', 'entrepot desordonne', 'stock mal range']
   },
   {
     id: 'pdca',
@@ -57,7 +57,7 @@ const TOOLS = [
       "A - Act : je standardise ou je recommence",
       "Astuce : ne jamais sauter le Check, sinon la roue tourne dans le vide"
     ],
-    keywords: ['pdca', 'roue de deming', 'demarche amelioration', 'plan do check act', 'methode generale', 'comment structurer', 'piloter un chantier']
+    keywords: ['pdca', 'roue de deming', 'demarche amelioration', 'plan do check act', 'methode generale', 'comment structurer', 'piloter un chantier', 'cycle d\'amelioration', 'boucle d\'amelioration continue', 'structurer un projet amelioration', 'suivre un plan d\'action', 'avant apres amelioration', 'demarche qualite', 'methode de resolution de probleme generale', 'processus d\'amelioration continue', 'comment m\'y prendre pour ameliorer', 'par ou commencer amelioration']
   },
   {
     id: 'ishikawa',
@@ -85,7 +85,7 @@ const TOOLS = [
       "Combiner avec les 5 Pourquoi pour creuser chaque cause",
       "Toujours verifier sur le terrain (Gemba) avant d'agir"
     ],
-    keywords: ['ishikawa', 'arete de poisson', 'diagramme causes', 'cause effet', '5m', 'cause racine', 'pourquoi le probleme arrive', 'panne recurrente', 'defaut qualite recurrent']
+    keywords: ['ishikawa', 'arete de poisson', 'diagramme causes', 'cause effet', '5m', 'cause racine', 'pourquoi le probleme arrive', 'panne recurrente', 'defaut qualite recurrent', 'diagramme causal', 'recherche de causes', 'brainstorming des causes', 'analyse multicritere probleme', 'main d\'oeuvre methode materiel matiere milieu', 'cause profonde', 'cause multiple', 'trouver l\'origine du probleme', 'analyse de defaillance', 'facteurs explicatifs probleme']
   },
   {
     id: '5-pourquoi',
@@ -113,7 +113,7 @@ const TOOLS = [
       "Toujours verifier en remontant la chaine logique",
       "A utiliser en groupe pour eviter les biais individuels"
     ],
-    keywords: ['5 pourquoi', 'pourquoi pourquoi', 'cause racine', 'root cause', 'analyse rapide', 'probleme ponctuel']
+    keywords: ['5 pourquoi', 'pourquoi pourquoi', 'cause racine', 'root cause', 'analyse rapide', 'probleme ponctuel', 'creuser la cause', 'cause profonde incident', 'analyse rapide incident', 'remonter a la source', 'pourquoi ce probleme', 'comprendre l\'origine']
   },
   {
     id: 'pareto',
@@ -141,7 +141,7 @@ const TOOLS = [
       "Concentrer les efforts sur les 2-3 premieres barres",
       "A refaire apres actions pour verifier l'effet"
     ],
-    keywords: ['pareto', '80/20', 'prioriser', 'quels defauts traiter en premier', 'classement des causes', 'top defauts']
+    keywords: ['pareto', '80/20', 'prioriser', 'quels defauts traiter en premier', 'classement des causes', 'top defauts', 'histogramme des defauts', 'analyse abc', 'top 3 causes', 'quel defaut prioritaire', 'classement decroissant', 'trop de causes a traiter', 'par ou commencer les actions']
   },
   {
     id: 'qqoqccp',
@@ -170,7 +170,7 @@ const TOOLS = [
       "Se baser sur des faits verifies, pas des impressions",
       "Sert aussi a cadrer le perimetre d'un chantier Kaizen"
     ],
-    keywords: ['qqoqccp', 'cadrage', 'cadrer le probleme', 'definir le probleme', 'perimetre du chantier', 'grille de questionnement']
+    keywords: ['qqoqccp', 'cadrage', 'cadrer le probleme', 'definir le probleme', 'perimetre du chantier', 'grille de questionnement', 'questionnement structure', 'collecte de faits', 'definir le perimetre', 'probleme mal defini', 'probleme flou', 'clarifier le sujet']
   },
   {
     id: 'vsm',
@@ -198,7 +198,7 @@ const TOOLS = [
       "Etat actuel -> etat futur -> plan d'actions",
       "Outil de niveau chaine de valeur, pas juste un poste"
     ],
-    keywords: ['vsm', 'value stream mapping', 'cartographie des flux', 'chaine de valeur', 'lead time', 'flux d\'information', 'stocks intermediaires']
+    keywords: ['vsm', 'value stream mapping', 'cartographie des flux', 'chaine de valeur', 'lead time', 'flux d\'information', 'stocks intermediaires', 'delai de livraison client', 'flux logistique interne', 'macro processus', 'vision globale du flux', 'flux physique et information', 'temps a valeur ajoutee', 'cartographie processus']
   },
   {
     id: 'spaghetti',
@@ -226,7 +226,7 @@ const TOOLS = [
       "Objectif : reduire la distance totale parcourue",
       "Debouche souvent sur une reimplantation de poste"
     ],
-    keywords: ['spaghetti', 'deplacements inutiles', 'trajet', 'reimplantation', 'distance parcourue', 'aller retour']
+    keywords: ['spaghetti', 'deplacements inutiles', 'trajet', 'reimplantation', 'distance parcourue', 'aller retour', 'plan d\'implantation', 'ergonomie deplacement', 'flux physique operateur', 'trop de marche', 'operateur qui marche trop', 'chariot qui fait des allers retours', 'circulation atelier']
   },
   {
     id: 'smed',
@@ -254,7 +254,7 @@ const TOOLS = [
       "5. Standardiser + mesurer le nouveau temps",
       "Objectif symbolique : changement en moins de 10 minutes"
     ],
-    keywords: ['smed', 'changement de serie', 'changement de format', 'changement de reference', 'reglage machine long', 'temps de changement outillage', 'arret machine pour reglage', 'temps d\'attente entre les series', 'temps d\'attente entre changements']
+    keywords: ['smed', 'changement de serie', 'changement de format', 'changement de reference', 'reglage machine long', 'temps de changement outillage', 'arret machine pour reglage', 'temps d\'attente entre les series', 'temps d\'attente entre changements', 'changement d\'outillage', 'changement de moule', 'changement d\'outil presse', 'setup time', 'temps de setup', 'conversion de ligne', 'changement de fabrication', 'reglage trop long', 'temps de reglage', 'changement de production long']
   },
   {
     id: 'kanban',
@@ -282,7 +282,7 @@ const TOOLS = [
       "Tableau visuel = A faire / En cours / Fait",
       "Ajuster regulierement selon la demande"
     ],
-    keywords: ['kanban', 'flux tire', 'stock intermediaire', 'reapprovisionnement', 'tableau visuel', 'suivi des taches', 'planche kanban']
+    keywords: ['kanban', 'flux tire', 'stock intermediaire', 'reapprovisionnement', 'tableau visuel', 'suivi des taches', 'planche kanban', 'etiquette kanban', 'supermarche production', 'dimensionnement de stock', 'gestion visuelle des priorites', 'cartes de production', 'trop de stock intermediaire', 'flux pousse a corriger']
   },
   {
     id: 'poka-yoke',
@@ -310,7 +310,7 @@ const TOOLS = [
       "Concevoir avec les operateurs qui vivent le probleme",
       "Tester en conditions reelles avant generalisation"
     ],
-    keywords: ['poka-yoke', 'anti erreur', 'detrompeur', 'erreur humaine', 'oubli piece', 'montage incorrect', 'erreur de montage', 'securite erreur']
+    keywords: ['poka-yoke', 'anti erreur', 'detrompeur', 'erreur humaine', 'oubli piece', 'montage incorrect', 'erreur de montage', 'securite erreur', 'erreur d\'assemblage', 'dispositif anti erreur', 'erreur recurrente montage', 'detection automatique erreur', 'piece oubliee', 'mauvais sens de montage', 'inversion de piece', 'assemblage a l\'envers', 'operateur se trompe souvent', 'oublient une piece', 'oublie une piece', 'oublient souvent', 'piece manquante', 'manque une piece', 'oubli recurrent']
   },
   {
     id: 'standard-work',
@@ -338,7 +338,7 @@ const TOOLS = [
       "Tout le monde applique le meme standard",
       "Toute amelioration validee devient le nouveau standard"
     ],
-    keywords: ['standard work', 'mode operatoire', 'procedure standard', 'variabilite operateur', 'formation nouvel arrivant', 'meilleure pratique']
+    keywords: ['standard work', 'mode operatoire', 'procedure standard', 'variabilite operateur', 'formation nouvel arrivant', 'meilleure pratique', 'instruction de travail', 'fiche de poste', 'ecart de methode entre operateurs', 'chaque operateur fait different', 'pas de procedure ecrite', 'methode de travail non definie', 'formation nouvelle recrue']
   },
   {
     id: 'tpm',
@@ -366,7 +366,7 @@ const TOOLS = [
       "Auto-maintenance : petits gestes confies aux operateurs",
       "Objectif : passer du curatif au preventif"
     ],
-    keywords: ['tpm', 'maintenance', 'panne', 'trs', 'oeed', 'oee', 'arret machine', 'disponibilite machine', 'auto maintenance']
+    keywords: ['tpm', 'maintenance', 'panne', 'trs', 'oeed', 'oee', 'arret machine', 'disponibilite machine', 'auto maintenance', 'maintenance preventive', 'maintenance curative', 'arret non planifie', 'graissage', 'resserrage', 'usure prematuree', 'fiabilite equipement', 'plan de maintenance', 'casse machine', 'panne imprevue', 'vibration', 'surchauffe', 'fuite hydraulique', 'fuite pneumatique', 'fuite', 'roulement use', 'courroie cassee', 'capteur defectueux', 'equipement fatigue', 'equipement vieillissant']
   },
   {
     id: 'andon',
@@ -394,7 +394,7 @@ const TOOLS = [
       "L'operateur doit se sentir en confiance pour l'utiliser",
       "Les donnees andon nourrissent les chantiers Kaizen (Pareto)"
     ],
-    keywords: ['andon', 'alerte visuelle', 'signal lumineux', 'arreter la ligne', 'signaler un probleme', 'reactivite']
+    keywords: ['andon', 'alerte visuelle', 'signal lumineux', 'arreter la ligne', 'signaler un probleme', 'reactivite', 'cordon d\'arret', 'ligne arretee', 'signalement immediat', 'tableau de bord visuel temps reel', 'bouton d\'alerte', 'voyant lumineux poste', 'probleme signale trop tard']
   },
   {
     id: 'jidoka',
@@ -422,7 +422,7 @@ const TOOLS = [
       "Se combine naturellement avec Andon et Poka-Yoke",
       "Chaque arret doit etre analyse (5 Pourquoi)"
     ],
-    keywords: ['jidoka', 'arret automatique', 'defaut transmis', 'controle qualite poste', 'detection anomalie automatique']
+    keywords: ['jidoka', 'arret automatique', 'defaut transmis', 'controle qualite poste', 'detection anomalie automatique', 'qualite a la source', 'controle integre au poste', 'ne pas transmettre le defaut', 'machine continue malgre le defaut', 'defaut envoye au poste suivant']
   },
   {
     id: 'heijunka',
@@ -450,7 +450,7 @@ const TOOLS = [
       "Heijunka box = outil de sequencement visuel",
       "Combat le Mura (l'irregularite), source de Muri et Muda"
     ],
-    keywords: ['heijunka', 'lissage', 'lissage production', 'a coups de charge', 'gros lots', 'planification irreguliere']
+    keywords: ['heijunka', 'lissage', 'lissage production', 'a coups de charge', 'gros lots', 'planification irreguliere', 'pics et creux de charge', 'regularite de production', 'production tres irreguliere', 'trop de series longues', 'urgences alternees']
   },
   {
     id: 'takt-time',
@@ -478,7 +478,7 @@ const TOOLS = [
       "Sert de base a l'equilibrage de ligne",
       "A recalculer des que la demande change"
     ],
-    keywords: ['takt time', 'cadence', 'rythme de production', 'equilibrage de ligne', 'temps de cycle vs demande']
+    keywords: ['takt time', 'cadence', 'rythme de production', 'equilibrage de ligne', 'temps de cycle vs demande', 'dimensionnement effectif', 'cadence non alignee avec la demande', 'ligne trop lente', 'ligne trop rapide', 'combien d\'operateurs par poste']
   },
   {
     id: 'a3',
@@ -507,7 +507,7 @@ const TOOLS = [
       "Toujours base sur des donnees factuelles et chiffrees",
       "Sert de support de communication ET de pilotage"
     ],
-    keywords: ['a3', 'rapport a3', 'synthese chantier', 'presentation projet', 'reporting kaizen', 'fiche projet amelioration']
+    keywords: ['a3', 'rapport a3', 'synthese chantier', 'presentation projet', 'reporting kaizen', 'fiche projet amelioration', 'communication visuelle projet', 'presenter a la direction', 'formaliser le chantier', 'capitaliser sur un projet']
   },
   {
     id: 'gemba-walk',
@@ -535,7 +535,7 @@ const TOOLS = [
       "Comparer l'observe au standard defini",
       "Toujours en repartir avec des faits, pas des impressions"
     ],
-    keywords: ['gemba', 'gemba walk', 'aller sur le terrain', 'observation terrain', 'verifier le standard', 'management visuel terrain']
+    keywords: ['gemba', 'gemba walk', 'aller sur le terrain', 'observation terrain', 'verifier le standard', 'management visuel terrain', 'tournee terrain', 'verifier sur place', 'aller voir la realite', 'perte de contact avec le terrain', 'management deconnecte du terrain']
   },
   {
     id: 'kata-kaizen',
@@ -563,7 +563,7 @@ const TOOLS = [
       "Developpe le reflexe d'amelioration continue de l'equipe",
       "Complementaire des chantiers Kaizen ponctuels"
     ],
-    keywords: ['kata', 'kata kaizen', 'routine amelioration continue', 'culture kaizen', 'amelioration quotidienne', 'petits pas']
+    keywords: ['kata', 'kata kaizen', 'routine amelioration continue', 'culture kaizen', 'amelioration quotidienne', 'petits pas', 'coaching amelioration', 'ancrer une culture d\'amelioration', 'progresser pas a pas', 'habitude d\'amelioration']
   },
   {
     id: 'brainstorming',
@@ -591,7 +591,7 @@ const TOOLS = [
       "Le vote cree l'adhesion collective aux priorites",
       "A utiliser en debut de chantier ou pour choisir entre solutions"
     ],
-    keywords: ['brainstorming', 'vote pondere', 'idees', 'creativite groupe', 'choisir une solution', 'consensus equipe']
+    keywords: ['brainstorming', 'vote pondere', 'idees', 'creativite groupe', 'choisir une solution', 'consensus equipe', 'atelier collaboratif', 'reunion d\'idees', 'faire emerger des solutions', 'choisir entre plusieurs solutions']
   }
 ];
 
