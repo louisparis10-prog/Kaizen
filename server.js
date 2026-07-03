@@ -1,7 +1,7 @@
 const express = require('express');
 const path = require('path');
 const { Database } = require('node-sqlite3-wasm');
-const { TOOLS } = require('./data/tools.js');
+const { TOOLS, TOOLS_BY_ID } = require('./data/tools.js');
 const leanExpert = require('./lib/leanExpert.js');
 
 const app = express();
@@ -118,15 +118,34 @@ app.get('/api/chantiers/:id', (req, res) => {
 app.post('/api/chantiers', (req, res) => {
   const { titre, probleme, perimetre, pilote, equipe, objectif, outils, date_debut, date_fin } = req.body;
   if (!titre) return res.status(400).json({ error: 'titre requis' });
-  const { lastInsertRowid } = db.prepare(`
-    INSERT INTO chantiers (titre, probleme, perimetre, pilote, equipe, objectif, outils, date_debut, date_fin)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run([
-    titre, probleme || '', perimetre || '', pilote || '',
-    JSON.stringify(equipe || []), objectif || '', JSON.stringify(outils || []),
-    date_debut || '', date_fin || ''
-  ]);
-  res.json(getChantierFull(lastInsertRowid));
+
+  const chantier_id = transaction(() => {
+    const { lastInsertRowid } = db.prepare(`
+      INSERT INTO chantiers (titre, probleme, perimetre, pilote, equipe, objectif, outils, date_debut, date_fin)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run([
+      titre, probleme || '', perimetre || '', pilote || '',
+      JSON.stringify(equipe || []), objectif || '', JSON.stringify(outils || []),
+      date_debut || '', date_fin || ''
+    ]);
+
+    // Pre-remplit le plan d'action avec les etapes types de chaque outil selectionne,
+    // pour transformer le choix d'un outil en demarrage concret du chantier.
+    (outils || []).forEach(outilId => {
+      const tool = TOOLS_BY_ID[outilId];
+      if (!tool) return;
+      tool.steps.forEach(step => {
+        db.prepare(`
+          INSERT INTO actions (chantier_id, description, responsable, echeance, statut)
+          VALUES (?, ?, '', '', 'a_faire')
+        `).run([lastInsertRowid, step]);
+      });
+    });
+
+    return lastInsertRowid;
+  });
+
+  res.json(getChantierFull(chantier_id));
 });
 
 app.put('/api/chantiers/:id', (req, res) => {
@@ -143,6 +162,44 @@ app.put('/api/chantiers/:id', (req, res) => {
     date_debut || '', date_fin || '', statut || 'en_cours', req.params.id
   ]);
   res.json(getChantierFull(req.params.id));
+});
+
+// ---------- Tableau de bord ----------
+app.get('/api/dashboard', (req, res) => {
+  const today = new Date().toISOString().slice(0, 10);
+
+  const parChantierStatut = db.prepare(`
+    SELECT statut, COUNT(*) as n FROM chantiers GROUP BY statut
+  `).all();
+
+  const actionsEnRetard = db.prepare(`
+    SELECT a.id, a.description, a.responsable, a.echeance, a.chantier_id, c.titre as chantier_titre
+    FROM actions a
+    JOIN chantiers c ON c.id = a.chantier_id
+    WHERE a.statut != 'fait' AND a.echeance != '' AND a.echeance < ?
+    ORDER BY a.echeance ASC
+  `).all([today]);
+
+  const indicateurs = db.prepare(`
+    SELECT valeur_avant, valeur_apres FROM indicateurs
+    WHERE valeur_avant IS NOT NULL AND valeur_apres IS NOT NULL AND valeur_avant != 0
+  `).all();
+
+  const gains = indicateurs.map(i => ((i.valeur_avant - i.valeur_apres) / i.valeur_avant) * 100);
+  const gainMoyen = gains.length ? gains.reduce((a, b) => a + b, 0) / gains.length : null;
+
+  const totalActions = db.prepare(`SELECT COUNT(*) as n FROM actions`).get().n;
+  const actionsFaites = db.prepare(`SELECT COUNT(*) as n FROM actions WHERE statut = 'fait'`).get().n;
+
+  res.json({
+    chantiersParStatut: Object.fromEntries(parChantierStatut.map(r => [r.statut, r.n])),
+    totalChantiers: parChantierStatut.reduce((a, r) => a + r.n, 0),
+    actionsEnRetard,
+    totalActions,
+    actionsFaites,
+    gainMoyen,
+    indicateursSuivis: gains.length
+  });
 });
 
 app.delete('/api/chantiers/:id', (req, res) => {

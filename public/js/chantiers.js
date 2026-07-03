@@ -23,11 +23,63 @@
     return { a_faire: 'A faire', en_cours: 'En cours', fait: 'Fait', bloque: 'Bloque' }[s] || s;
   }
 
+  // ---------- Tableau de bord ----------
+  async function loadDashboard() {
+    const res = await fetch('/api/dashboard');
+    const d = await res.json();
+    renderDashboard(d);
+  }
+
+  function renderDashboard(d) {
+    const wrap = document.getElementById('dashboard');
+    const enCours = d.chantiersParStatut.en_cours || 0;
+    const termine = d.chantiersParStatut.termine || 0;
+    const gainHtml = d.gainMoyen === null
+      ? '<span class="dash-value">-</span>'
+      : `<span class="dash-value ${d.gainMoyen >= 0 ? 'gain-positive' : 'gain-negative'}">${d.gainMoyen >= 0 ? '-' : '+'}${Math.abs(d.gainMoyen).toFixed(0)}%</span>`;
+
+    wrap.innerHTML = '';
+    const box = el(`
+      <div class="dashboard-grid">
+        <div class="dash-card">
+          <div class="dash-label">Chantiers en cours</div>
+          <div class="dash-value">${enCours}</div>
+        </div>
+        <div class="dash-card">
+          <div class="dash-label">Chantiers termines</div>
+          <div class="dash-value">${termine}</div>
+        </div>
+        <div class="dash-card${d.actionsEnRetard.length ? ' dash-alert' : ''}">
+          <div class="dash-label">Actions en retard</div>
+          <div class="dash-value">${d.actionsEnRetard.length}</div>
+        </div>
+        <div class="dash-card">
+          <div class="dash-label">Gain moyen constate</div>
+          ${gainHtml}
+          <div class="dash-sub">${d.indicateursSuivis} indicateur(s) suivi(s)</div>
+        </div>
+      </div>
+    `);
+    wrap.appendChild(box);
+
+    if (d.actionsEnRetard.length) {
+      const list = el(`<div class="dash-retard-list"></div>`);
+      d.actionsEnRetard.forEach(a => {
+        const item = el(`<div class="dash-retard-item"></div>`);
+        item.innerHTML = `<strong>${a.echeance}</strong> - ${a.description} <span class="tool-tag">${a.chantier_titre}</span>`;
+        item.addEventListener('click', () => openDetail(a.chantier_id));
+        list.appendChild(item);
+      });
+      wrap.appendChild(list);
+    }
+  }
+
   // ---------- Liste ----------
   async function loadChantiers() {
     const res = await fetch('/api/chantiers');
     chantiers = await res.json();
     renderList();
+    loadDashboard();
   }
 
   function renderList() {
@@ -59,16 +111,18 @@
     const wrap = document.getElementById('f-outils');
     wrap.innerHTML = '';
     tools.forEach(t => {
-      const label = el(`<label style="display:inline-flex;align-items:center;gap:6px;margin:4px 12px 4px 0;font-weight:400;">
-        <input type="checkbox" value="${t.id}"> ${t.icon} ${t.name}
-      </label>`);
-      const checkbox = label.querySelector('input');
-      checkbox.checked = selectedOutils.includes(t.id);
-      checkbox.addEventListener('change', () => {
-        if (checkbox.checked) selectedOutils.push(t.id);
+      const chip = el(`
+        <button type="button" class="tool-chip${selectedOutils.includes(t.id) ? ' selected' : ''}" data-id="${t.id}">
+          <span class="tool-chip-icon">${t.icon}</span>
+          <span class="tool-chip-name">${t.name}</span>
+        </button>
+      `);
+      chip.addEventListener('click', () => {
+        const active = chip.classList.toggle('selected');
+        if (active) selectedOutils.push(t.id);
         else selectedOutils = selectedOutils.filter(id => id !== t.id);
       });
-      wrap.appendChild(label);
+      wrap.appendChild(chip);
     });
   }
 
@@ -161,9 +215,7 @@
         </div>
 
         <div class="section-card">
-          <h3>Plan d'action
-            <button class="btn small orange no-print" id="btn-add-action">+ Ajouter une action</button>
-          </h3>
+          <h3>Plan d'action</h3>
           <table class="data-table" id="actions-table">
             <thead><tr><th>Action</th><th>Responsable</th><th>Echeance</th><th>Statut</th><th class="no-print"></th></tr></thead>
             <tbody></tbody>
@@ -171,9 +223,7 @@
         </div>
 
         <div class="section-card">
-          <h3>Indicateurs avant / apres
-            <button class="btn small orange no-print" id="btn-add-indic">+ Ajouter un indicateur</button>
-          </h3>
+          <h3>Indicateurs avant / apres</h3>
           <table class="data-table" id="indics-table">
             <thead><tr><th>Indicateur</th><th>Avant</th><th>Apres</th><th>Gain</th><th class="no-print"></th></tr></thead>
             <tbody></tbody>
@@ -202,22 +252,25 @@
     document.getElementById('btn-ask-expert-detail').addEventListener('click', () => {
       if (window.prefillKaizenChat) window.prefillKaizenChat(c.probleme || c.titre);
     });
-    document.getElementById('btn-add-action').addEventListener('click', () => addActionRow(c));
-    document.getElementById('btn-add-indic').addEventListener('click', () => addIndicRow(c));
-
     renderActionsTable(c);
     renderIndicsTable(c);
+  }
+
+  function isEnRetard(a) {
+    if (!a.echeance || a.statut === 'fait') return false;
+    return a.echeance < new Date().toISOString().slice(0, 10);
   }
 
   function renderActionsTable(c) {
     const tbody = document.querySelector('#actions-table tbody');
     tbody.innerHTML = '';
     (c.actions || []).forEach(a => {
+      const retard = isEnRetard(a);
       const row = el(`
-        <tr>
+        <tr${retard ? ' style="background:#fdeaea"' : ''}>
           <td>${a.description}</td>
           <td>${a.responsable || '-'}</td>
-          <td>${a.echeance || '-'}</td>
+          <td>${a.echeance || '-'} ${retard ? '<span class="badge bloque">En retard</span>' : ''}</td>
           <td><select class="no-print">
             <option value="a_faire">A faire</option>
             <option value="en_cours">En cours</option>
@@ -241,18 +294,27 @@
       });
       tbody.appendChild(row);
     });
-  }
 
-  async function addActionRow(c) {
-    const description = prompt('Description de l\'action :');
-    if (!description) return;
-    const responsable = prompt('Responsable :') || '';
-    const echeance = prompt('Echeance (JJ/MM/AAAA) :') || '';
-    const res = await fetch(`/api/chantiers/${c.id}/actions`, {
-      method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ description, responsable, echeance })
+    const addRow = el(`
+      <tr class="no-print">
+        <td><input type="text" id="new-action-desc" placeholder="Nouvelle action..."></td>
+        <td><input type="text" id="new-action-resp" placeholder="Responsable" style="width:100px"></td>
+        <td><input type="date" id="new-action-echeance"></td>
+        <td colspan="2"><button class="btn small orange" id="btn-submit-action">+ Ajouter</button></td>
+      </tr>
+    `);
+    tbody.appendChild(addRow);
+    addRow.querySelector('#btn-submit-action').addEventListener('click', async () => {
+      const description = document.getElementById('new-action-desc').value.trim();
+      if (!description) return;
+      const responsable = document.getElementById('new-action-resp').value.trim();
+      const echeance = document.getElementById('new-action-echeance').value;
+      const res = await fetch(`/api/chantiers/${c.id}/actions`, {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ description, responsable, echeance })
+      });
+      renderDetail(await res.json());
     });
-    renderDetail(await res.json());
   }
 
   function renderIndicsTable(c) {
@@ -276,23 +338,32 @@
       });
       tbody.appendChild(row);
     });
-  }
 
-  async function addIndicRow(c) {
-    const nom = prompt('Nom de l\'indicateur (ex: Temps de changement de format) :');
-    if (!nom) return;
-    const unite = prompt('Unite (ex: min, %, defauts/jour) :') || '';
-    const valeur_avant = parseFloat(prompt('Valeur avant :'));
-    const valeur_apres = parseFloat(prompt('Valeur apres (laisser vide si pas encore mesuree) :'));
-    const res = await fetch(`/api/chantiers/${c.id}/indicateurs`, {
-      method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        nom, unite,
-        valeur_avant: isNaN(valeur_avant) ? null : valeur_avant,
-        valeur_apres: isNaN(valeur_apres) ? null : valeur_apres
-      })
+    const addRow = el(`
+      <tr class="no-print">
+        <td><input type="text" id="new-indic-nom" placeholder="Nom indicateur"></td>
+        <td><input type="number" id="new-indic-avant" placeholder="Avant" style="width:70px"> <input type="text" id="new-indic-unite" placeholder="unite" style="width:60px"></td>
+        <td><input type="number" id="new-indic-apres" placeholder="Apres" style="width:70px"></td>
+        <td colspan="2"><button class="btn small orange" id="btn-submit-indic">+ Ajouter</button></td>
+      </tr>
+    `);
+    tbody.appendChild(addRow);
+    addRow.querySelector('#btn-submit-indic').addEventListener('click', async () => {
+      const nom = document.getElementById('new-indic-nom').value.trim();
+      if (!nom) return;
+      const unite = document.getElementById('new-indic-unite').value.trim();
+      const valeur_avant = parseFloat(document.getElementById('new-indic-avant').value);
+      const valeur_apres = parseFloat(document.getElementById('new-indic-apres').value);
+      const res = await fetch(`/api/chantiers/${c.id}/indicateurs`, {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          nom, unite,
+          valeur_avant: isNaN(valeur_avant) ? null : valeur_avant,
+          valeur_apres: isNaN(valeur_apres) ? null : valeur_apres
+        })
+      });
+      renderDetail(await res.json());
     });
-    renderDetail(await res.json());
   }
 
   // ---------- Fiche A3 ----------

@@ -1,6 +1,5 @@
 (function () {
-  let mode = 'local';
-  let aiAvailable = false;
+  const mode = 'ai';
   let toolsById = {};
 
   fetch('/api/tools').then(r => r.json()).then(list => {
@@ -24,10 +23,6 @@
             <div class="title">🥋 Expert Lean - Ceinture Noire</div>
             <div class="subtitle">Pose ta question sur un chantier Kaizen</div>
           </div>
-          <div class="chat-mode-toggle">
-            <button data-mode="local" class="active">Local</button>
-            <button data-mode="ai">IA</button>
-          </div>
         </div>
         <div class="chat-messages" id="kaizen-chat-messages"></div>
         <div class="chat-input-row">
@@ -41,26 +36,12 @@
       document.getElementById('kaizen-chat-panel').classList.toggle('open');
     });
 
-    document.querySelectorAll('.chat-mode-toggle button').forEach(btn => {
-      btn.addEventListener('click', () => {
-        if (btn.dataset.mode === 'ai' && !aiAvailable) {
-          addNotice("Mode IA non configure sur ce serveur (variable ANTHROPIC_API_KEY absente). Le moteur local repondra a la place.");
-        }
-        mode = btn.dataset.mode;
-        document.querySelectorAll('.chat-mode-toggle button').forEach(b => b.classList.toggle('active', b === btn));
-      });
-    });
-
     document.getElementById('kaizen-chat-send').addEventListener('click', sendMessage);
     document.getElementById('kaizen-chat-input').addEventListener('keydown', e => {
       if (e.key === 'Enter') sendMessage();
     });
 
     addBotMessage("Bonjour, je suis l'expert Lean. Decris-moi un probleme terrain (qualite, delai, panne, organisation, changement de serie...) et je t'orienterai vers le ou les outils Kaizen adaptes.");
-
-    fetch('/api/chat/status').then(r => r.json()).then(d => {
-      aiAvailable = Boolean(d.aiAvailable);
-    }).catch(() => {});
   }
 
   function scrollToBottom() {

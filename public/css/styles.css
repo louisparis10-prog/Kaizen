@@ -19,7 +19,8 @@
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji";
   background: var(--bg);
   color: var(--text);
 }
@@ -209,6 +210,30 @@ textarea { width: 100%; resize: vertical; }
 .form-grid label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; color: var(--navy); }
 .form-grid input, .form-grid select, .form-grid textarea { width: 100%; }
 
+.tool-checklist {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 8px;
+}
+.tool-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.85rem;
+  text-align: left;
+  color: var(--text);
+}
+.tool-chip:hover { border-color: var(--teal); }
+.tool-chip.selected { background: #e8f4f4; border-color: var(--teal); color: var(--navy); font-weight: 600; }
+.tool-chip-icon { font-size: 1.1rem; flex-shrink: 0; }
+.tool-chip-name { line-height: 1.2; }
+
 table.data-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
 table.data-table th, table.data-table td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); font-size: 0.88rem; }
 table.data-table th { color: var(--text-muted); font-weight: 700; font-size: 0.78rem; text-transform: uppercase; }
@@ -221,6 +246,29 @@ table.data-table th { color: var(--text-muted); font-weight: 700; font-size: 0.7
 
 .gain-positive { color: var(--green); font-weight: 700; }
 .gain-negative { color: var(--red); font-weight: 700; }
+
+/* Dashboard */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
+}
+.dash-card {
+  background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 16px 18px;
+}
+.dash-card.dash-alert { background: #fdeaea; }
+.dash-label { font-size: 0.78rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 6px; }
+.dash-value { font-size: 1.7rem; font-weight: 800; color: var(--navy); }
+.dash-card.dash-alert .dash-value { color: var(--red); }
+.dash-sub { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; }
+.dash-retard-list { margin-bottom: 20px; }
+.dash-retard-item {
+  background: #fff; border-left: 3px solid var(--red); border-radius: 6px;
+  padding: 8px 12px; margin-bottom: 6px; font-size: 0.85rem; cursor: pointer;
+}
+.dash-retard-item:hover { background: #fdeaea; }
 
 /* Chat widget */
 #kaizen-chat-toggle {
@@ -239,12 +287,6 @@ table.data-table th { color: var(--text-muted); font-weight: 700; font-size: 0.7
 }
 .chat-header .title { font-weight: 700; font-size: 0.95rem; }
 .chat-header .subtitle { font-size: 0.72rem; color: #b8cbdc; }
-.chat-mode-toggle { display: flex; gap: 4px; }
-.chat-mode-toggle button {
-  background: rgba(255,255,255,0.12); border: none; color: #cfe0ee; font-size: 0.72rem; font-weight: 700;
-  padding: 5px 8px; border-radius: 6px; cursor: pointer;
-}
-.chat-mode-toggle button.active { background: var(--teal); color: #fff; }
 .chat-messages { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; background: #f7f9fb; }
 .chat-msg { max-width: 85%; padding: 9px 12px; border-radius: 10px; font-size: 0.87rem; line-height: 1.4; white-space: pre-wrap; }
 .chat-msg.user { align-self: flex-end; background: var(--teal); color: #fff; border-bottom-right-radius: 2px; }
