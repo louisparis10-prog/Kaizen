@@ -96,7 +96,7 @@ app.post('/api/chat', async (req, res) => {
 });
 
 app.get('/api/chat/status', (req, res) => {
-  res.json({ aiAvailable: Boolean(process.env.ANTHROPIC_API_KEY || process.env.OPENAI_API_KEY || process.env.GEMINI_API_KEY) });
+  res.json({ aiAvailable: Boolean(process.env.ANTHROPIC_API_KEY || process.env.OPENAI_API_KEY || process.env.GEMINI_API_KEY || process.env.GROQ_API_KEY) });
 });
 
 // ---------- Chantiers ----------
