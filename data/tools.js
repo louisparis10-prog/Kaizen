@@ -592,6 +592,174 @@ const TOOLS = [
       "A utiliser en debut de chantier ou pour choisir entre solutions"
     ],
     keywords: ['brainstorming', 'vote pondere', 'idees', 'creativite groupe', 'choisir une solution', 'consensus equipe', 'atelier collaboratif', 'reunion d\'idees', 'faire emerger des solutions', 'choisir entre plusieurs solutions']
+  },
+  {
+    id: 'matrice-decision',
+    name: 'Matrice de decision',
+    icon: '⚖️',
+    category: 'Pilotage',
+    summary: "Outil de choix multicritere qui compare plusieurs solutions face a des criteres ponderes, pour objectiver une decision plutot que trancher a l'instinct.",
+    whenToUse: [
+      "Plusieurs solutions candidates apres un brainstorming",
+      "Desaccord d'equipe sur la solution a retenir",
+      "Choix d'investissement ou d'organisation a argumenter aupres de la hierarchie"
+    ],
+    steps: [
+      "Lister les solutions candidates (en colonnes)",
+      "Definir les criteres de choix (cout, delai, impact, faisabilite, risque...) et leur poids relatif",
+      "Noter chaque solution sur chaque critere (ex : de 1 a 5)",
+      "Multiplier chaque note par le poids du critere et sommer par solution",
+      "Retenir la solution au meilleur score, en verifiant la coherence avec le bon sens terrain"
+    ],
+    benefits: "Decision objective et argumentee, facilite l'adhesion de l'equipe, evite de choisir la solution la plus 'bruyante' plutot que la plus pertinente.",
+    memo: [
+      "Solutions en colonnes, criteres en lignes",
+      "Chaque critere a un poids (son importance relative)",
+      "Note x poids = score ; on additionne par solution",
+      "La meilleure solution n'est pas toujours celle preferee au depart",
+      "A utiliser juste apres un brainstorming de solutions"
+    ],
+    keywords: ['matrice de decision', 'matrice de choix', 'choisir entre plusieurs solutions', 'comparer des solutions', 'decision multicritere', 'pugh matrix', 'quelle solution choisir', 'aide a la decision', 'criteres ponderes']
+  },
+  {
+    id: 'adkar',
+    name: 'ADKAR',
+    icon: '🧭',
+    category: 'Gestion de projet',
+    summary: "Modele de conduite du changement en 5 etapes individuelles (Awareness, Desire, Knowledge, Ability, Reinforcement) pour que chacun adopte durablement le changement issu d'un chantier Kaizen.",
+    whenToUse: [
+      "Un chantier Kaizen change durablement une facon de travailler",
+      "Resistance au changement observee sur le terrain",
+      "Standard non applique malgre la formation, retour aux anciennes habitudes"
+    ],
+    steps: [
+      "Awareness (Conscience) : expliquer pourquoi le changement est necessaire et quel probleme il resout",
+      "Desire (Desir) : creer l'envie de participer, impliquer les personnes concernees des le diagnostic",
+      "Knowledge (Connaissance) : former concretement au nouveau standard ou a la nouvelle methode",
+      "Ability (Capacite) : accompagner sur le terrain jusqu'a la maitrise reelle, pas seulement la theorie",
+      "Reinforcement (Renforcement) : suivre, feliciter et corriger les ecarts pour ancrer durablement le changement"
+    ],
+    benefits: "Evite l'echec des chantiers Kaizen par manque d'adhesion humaine ; complete les outils techniques par la dimension humaine du changement.",
+    memo: [
+      "A - Awareness : pourquoi changer",
+      "D - Desire : l'envie de changer",
+      "K - Knowledge : savoir comment",
+      "A - Ability : savoir faire en vrai, pas juste en theorie",
+      "R - Reinforcement : ancrer dans la duree",
+      "Un chantier technique sans ADKAR retombe souvent dans les anciennes habitudes"
+    ],
+    keywords: ['adkar', 'conduite du changement', 'resistance au changement', 'gestion du changement', 'adoption du changement', 'perenniser le changement', 'standard pas applique', 'retour aux anciennes habitudes', 'equipe refuse le changement']
+  },
+  {
+    id: 'dmaic',
+    name: 'DMAIC',
+    icon: '🎯',
+    category: 'Pilotage',
+    summary: "Demarche structuree Six Sigma en 5 phases (Define, Measure, Analyze, Improve, Control) pour resoudre un probleme complexe avec rigueur statistique, complementaire du PDCA.",
+    whenToUse: [
+      "Probleme complexe avec plusieurs causes potentielles et des donnees disponibles",
+      "Variabilite de process a reduire durablement",
+      "Projet d'amelioration structurant necessitant une preuve statistique du gain"
+    ],
+    steps: [
+      "Define : definir le probleme, le perimetre, l'objectif chiffre et les parties prenantes",
+      "Measure : mesurer la situation actuelle de facon fiable (donnees, capabilite du process)",
+      "Analyze : analyser les donnees pour identifier les causes racines statistiquement significatives",
+      "Improve : tester puis deployer les solutions correspondant aux causes averees",
+      "Control : mettre en place un controle durable (carte de controle, standard) pour maintenir le gain"
+    ],
+    benefits: "Rigueur statistique, evite d'agir sur de fausses causes, structure les projets d'amelioration complexes et durables.",
+    memo: [
+      "Define -> Measure -> Analyze -> Improve -> Control",
+      "Toujours mesurer avant d'agir (Measure avant Improve)",
+      "S'appuie sur des donnees, pas des impressions",
+      "Control est indispensable pour ne pas retomber dans l'ancien etat",
+      "Plus lourd que le PDCA : reserve aux problemes complexes"
+    ],
+    keywords: ['dmaic', 'six sigma', 'define measure analyze improve control', 'demarche statistique', 'reduire la variabilite', 'projet complexe amelioration', 'capabilite process']
+  },
+  {
+    id: 'sipoc',
+    name: 'SIPOC',
+    icon: '🔗',
+    category: 'Diagnostic',
+    summary: "Cartographie synthetique d'un processus en 5 colonnes (Suppliers, Inputs, Process, Outputs, Customers) pour en cadrer le perimetre avant une analyse plus fine (VSM, DMAIC...).",
+    whenToUse: [
+      "Besoin de cadrer un processus avant de le cartographier en detail",
+      "Equipe qui ne partage pas la meme vision du debut et de la fin du processus",
+      "Demarrage d'un projet DMAIC ou VSM"
+    ],
+    steps: [
+      "Nommer le processus et definir ses bornes precises (debut et fin)",
+      "Lister les Suppliers : qui fournit les entrees du processus",
+      "Lister les Inputs : quelles entrees (matieres, informations, ordres)",
+      "Decrire le Process en 4 a 6 grandes etapes macro (pas le detail)",
+      "Lister les Outputs : les sorties produites",
+      "Lister les Customers : qui recoit ou utilise ces sorties"
+    ],
+    benefits: "Cadrage rapide et partage du perimetre, base commune avant d'aller plus loin (VSM, DMAIC, Ishikawa).",
+    memo: [
+      "Suppliers -> Inputs -> Process -> Outputs -> Customers",
+      "Niveau macro : 4 a 6 etapes maximum pour le Process",
+      "A faire en groupe pour aligner les points de vue",
+      "Etape prealable classique a un VSM ou un DMAIC"
+    ],
+    keywords: ['sipoc', 'cartographie processus macro', 'perimetre du processus', 'fournisseurs entrees sorties clients', 'cadrer un processus']
+  },
+  {
+    id: 'raci',
+    name: 'Matrice RACI',
+    icon: '🗒️',
+    category: 'Gestion de projet',
+    summary: "Matrice qui clarifie les roles de chacun sur un projet ou un chantier : Responsable (fait), Accountable (rend compte), Consulte, Informe.",
+    whenToUse: [
+      "Chantier ou projet avec plusieurs intervenants et des roles flous",
+      "Taches qui trainent car personne ne se sent responsable",
+      "Besoin de clarifier qui decide vs qui execute"
+    ],
+    steps: [
+      "Lister les grandes activites ou decisions du chantier en lignes",
+      "Lister les personnes ou roles impliques en colonnes",
+      "Attribuer un seul R (Responsable de la realisation) par activite",
+      "Attribuer un seul A (Accountable, rend des comptes sur le resultat) par activite",
+      "Identifier les C (Consulte avant decision) et les I (Informe apres coup)"
+    ],
+    benefits: "Clarifie qui fait quoi, evite les taches orphelines ou les doublons, accelere la prise de decision.",
+    memo: [
+      "R = Responsable (fait) / A = Accountable (rend compte)",
+      "C = Consulte / I = Informe",
+      "Un seul A par activite : jamais zero, jamais plusieurs",
+      "Utile des le lancement d'un chantier avec plusieurs services",
+      "A revoir si le chantier change de perimetre"
+    ],
+    keywords: ['raci', 'matrice raci', 'roles et responsabilites', 'qui fait quoi', 'personne responsable', 'taches orphelines', 'clarifier les roles projet']
+  },
+  {
+    id: 'gantt',
+    name: 'Diagramme de Gantt',
+    icon: '📅',
+    category: 'Gestion de projet',
+    summary: "Planning visuel qui represente les taches d'un chantier dans le temps, avec leurs dependances, pour piloter les delais d'un projet d'amelioration.",
+    whenToUse: [
+      "Chantier avec plusieurs actions dependantes les unes des autres",
+      "Besoin de visualiser les delais et les jalons",
+      "Plusieurs personnes a coordonner dans le temps"
+    ],
+    steps: [
+      "Lister toutes les actions du plan d'action avec leur duree estimee",
+      "Identifier les dependances : quelle action doit finir avant qu'une autre commence",
+      "Placer les actions sur une frise chronologique (barres horizontales)",
+      "Identifier le chemin critique : la suite d'actions qui determine la duree totale",
+      "Suivre l'avancement reel vs planifie et ajuster"
+    ],
+    benefits: "Vision claire des delais et des dependances, identifie le chemin critique a surveiller en priorite.",
+    memo: [
+      "Barres horizontales = duree de chaque action dans le temps",
+      "Fleches = dependances entre actions",
+      "Chemin critique = suite d'actions qui ne doit pas prendre de retard",
+      "Complementaire du plan d'action simple quand les dependances sont nombreuses"
+    ],
+    keywords: ['gantt', 'diagramme de gantt', 'planning projet', 'chemin critique', 'jalons', 'dependances entre taches', 'planifier le chantier dans le temps']
   }
 ];
 
