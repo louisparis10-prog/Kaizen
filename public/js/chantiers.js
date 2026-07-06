@@ -269,8 +269,11 @@
       const row = el(`
         <tr${retard ? ' style="background:#fdeaea"' : ''}>
           <td>${a.description}</td>
-          <td>${a.responsable || '-'}</td>
-          <td>${a.echeance || '-'} ${retard ? '<span class="badge bloque">En retard</span>' : ''}</td>
+          <td><input type="text" class="no-print inline-edit" placeholder="Responsable" style="width:110px">
+            <span class="print-only">${a.responsable || '-'}</span></td>
+          <td><input type="date" class="no-print inline-edit">
+            ${retard ? '<span class="badge bloque">En retard</span>' : ''}
+            <span class="print-only">${a.echeance || '-'}</span></td>
           <td><select class="no-print">
             <option value="a_faire">A faire</option>
             <option value="en_cours">En cours</option>
@@ -281,13 +284,21 @@
         </tr>
       `);
       row.querySelector('select').value = a.statut;
-      row.querySelector('select').addEventListener('change', async (e) => {
+      const [respInput, echeanceInput] = row.querySelectorAll('input.inline-edit');
+      respInput.value = a.responsable || '';
+      echeanceInput.value = a.echeance || '';
+
+      async function saveAction(changes) {
         const res = await fetch(`/api/chantiers/${c.id}/actions/${a.id}`, {
           method: 'PUT', headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ ...a, statut: e.target.value })
+          body: JSON.stringify({ ...a, ...changes })
         });
         renderDetail(await res.json());
-      });
+      }
+
+      row.querySelector('select').addEventListener('change', e => saveAction({ statut: e.target.value }));
+      respInput.addEventListener('change', e => saveAction({ responsable: e.target.value.trim() }));
+      echeanceInput.addEventListener('change', e => saveAction({ echeance: e.target.value }));
       row.querySelector('button').addEventListener('click', async () => {
         const res = await fetch(`/api/chantiers/${c.id}/actions/${a.id}`, { method: 'DELETE' });
         renderDetail(await res.json());
