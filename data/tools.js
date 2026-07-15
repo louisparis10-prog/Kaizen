@@ -760,6 +760,413 @@ const TOOLS = [
       "Complementaire du plan d'action simple quand les dependances sont nombreuses"
     ],
     keywords: ['gantt', 'diagramme de gantt', 'planning projet', 'chemin critique', 'jalons', 'dependances entre taches', 'planifier le chantier dans le temps']
+  },
+  {
+    id: 'amdec',
+    name: 'AMDEC (FMEA)',
+    icon: '⚠️',
+    category: 'Qualite',
+    summary: "Analyse des Modes de Defaillance, de leurs Effets et de leur Criticite : methode preventive qui identifie et hierarchise les risques d'un produit ou d'un processus avant qu'ils ne surviennent.",
+    whenToUse: [
+      "Conception d'un nouveau produit, processus ou equipement",
+      "Modification importante d'un processus existant",
+      "Besoin de prioriser les actions preventives selon la criticite reelle du risque"
+    ],
+    steps: [
+      "Lister les fonctions ou etapes du processus/produit a analyser",
+      "Pour chaque etape, identifier les modes de defaillance possibles (comment ca peut echouer)",
+      "Evaluer chaque mode selon 3 criteres : Gravite, Frequence (occurrence), Detection",
+      "Calculer la Criticite = Gravite x Frequence x Detection (indice de priorite du risque)",
+      "Definir des actions preventives sur les risques les plus critiques et recalculer la criticite apres action"
+    ],
+    benefits: "Anticipe les defaillances avant qu'elles ne se produisent, priorise objectivement les actions preventives, capitalise la connaissance du risque pour les projets futurs.",
+    memo: [
+      "Criticite = Gravite x Frequence x Detection",
+      "AMDEC produit (conception) ou AMDEC processus (fabrication)",
+      "Agir en priorite sur les criticites les plus elevees",
+      "Recalculer la criticite apres chaque action pour verifier l'efficacite",
+      "Document vivant, a mettre a jour a chaque evolution"
+    ],
+    keywords: ['amdec', 'fmea', 'analyse des modes de defaillance', 'criticite', 'analyse de risque produit', 'analyse de risque process', 'prevenir les defauts', 'gravite frequence detection']
+  },
+  {
+    id: '7-gaspillages',
+    name: 'Les 7 Gaspillages (Muda)',
+    icon: '🗑️',
+    category: 'Diagnostic',
+    summary: "Grille de lecture qui classe tout gaspillage observe sur le terrain en 7 familles (Muda), pour reperer systematiquement ce qui ne cree pas de valeur pour le client.",
+    whenToUse: [
+      "Premiere observation d'un poste ou d'une ligne avant de choisir un outil Kaizen",
+      "Formation d'une equipe a la culture Lean",
+      "Besoin d'un langage commun pour designer les pertes observees"
+    ],
+    steps: [
+      "Observer le poste ou le processus sur le terrain (Gemba)",
+      "Reperer la Surproduction : produire plus ou avant la demande",
+      "Reperer les Attentes : operateur ou machine qui attend",
+      "Reperer les Transports et les Mouvements inutiles, les Stocks excessifs",
+      "Reperer les Traitements inutiles (sur-qualite) et les Defauts/retouches",
+      "Classer chaque gaspillage observe et le relier a l'outil Kaizen adapte pour le traiter"
+    ],
+    benefits: "Vocabulaire commun et systematique pour ne rien laisser passer, point de depart naturel de tout diagnostic Kaizen.",
+    memo: [
+      "Surproduction, Attente, Transport, Traitement inutile, Stock, Mouvement, Defauts",
+      "A chercher en premier, avant de choisir un outil",
+      "Chaque Muda oriente vers un outil : stock -> Kanban, attente -> SMED/TPM, defaut -> Poka-Yoke",
+      "Outil d'observation, pas de resolution en soi"
+    ],
+    keywords: ['7 gaspillages', 'muda', 'gaspillage', 'surproduction', 'sur-stockage', 'mouvements inutiles', 'traitement inutile', 'sur qualite', 'types de gaspillage', 'chasse au gaspillage']
+  },
+  {
+    id: 'hoshin-kanri',
+    name: 'Hoshin Kanri (Matrice X)',
+    icon: '🧩',
+    category: 'Pilotage',
+    summary: "Methode de deploiement de la strategie qui relie les objectifs annuels de la direction aux chantiers Kaizen concrets menes sur le terrain, via une matrice de coherence (Matrice X).",
+    whenToUse: [
+      "Besoin de relier les chantiers Kaizen locaux a la strategie de l'entreprise",
+      "Trop de chantiers disperses sans priorite claire",
+      "Direction qui souhaite deployer 2-3 objectifs annuels jusqu'au terrain"
+    ],
+    steps: [
+      "Definir 2 a 4 objectifs strategiques annuels au niveau direction",
+      "Decliner ces objectifs en objectifs intermediaires par service ou atelier",
+      "Identifier les chantiers Kaizen concrets qui contribuent a chaque objectif intermediaire",
+      "Formaliser les liens dans la Matrice X (strategie / objectifs annuels / projets / indicateurs)",
+      "Suivre regulierement (revue mensuelle) l'avancement des chantiers vs les objectifs"
+    ],
+    benefits: "Aligne les chantiers Kaizen du terrain avec la strategie globale, evite la dispersion, donne du sens aux equipes.",
+    memo: [
+      "Relie Strategie -> Objectifs annuels -> Chantiers -> Indicateurs",
+      "La Matrice X visualise ces liens sur une seule page",
+      "A revoir a frequence annuelle (strategie) et mensuelle (suivi chantiers)",
+      "Evite les chantiers Kaizen sans lien avec les priorites de l'entreprise"
+    ],
+    keywords: ['hoshin kanri', 'matrice x', 'deploiement strategique', 'alignement strategie', 'objectifs annuels', 'priorites chantiers', 'trop de chantiers disperses']
+  },
+  {
+    id: 'swot',
+    name: 'Analyse SWOT (FFOM)',
+    icon: '🧱',
+    category: 'Pilotage',
+    summary: "Grille qui croise Forces et Faiblesses internes avec Opportunites et Menaces externes, pour cadrer une reflexion strategique avant de lancer une demarche d'amelioration a grande echelle.",
+    whenToUse: [
+      "Lancement d'un programme Kaizen a l'echelle d'un site ou d'un service",
+      "Besoin de prendre du recul avant de choisir les priorites d'amelioration",
+      "Preparation d'une revue de direction ou d'un plan strategique"
+    ],
+    steps: [
+      "Lister les Forces : atouts internes actuels (competences, equipements, reputation)",
+      "Lister les Faiblesses : points internes a ameliorer",
+      "Lister les Opportunites : elements externes favorables (marche, technologie, reglementation)",
+      "Lister les Menaces : elements externes defavorables",
+      "Croiser les 4 categories pour degager des priorites d'action (ex : utiliser une Force pour saisir une Opportunite)"
+    ],
+    benefits: "Vision d'ensemble avant l'action, evite de lancer des chantiers Kaizen deconnectes du contexte global.",
+    memo: [
+      "Interne : Forces / Faiblesses - Externe : Opportunites / Menaces",
+      "Utile en amont, pas pour un probleme ponctuel precis",
+      "Croiser les cases pour en tirer des priorites, pas juste lister",
+      "A refaire periodiquement (le contexte evolue)"
+    ],
+    keywords: ['swot', 'ffom', 'forces faiblesses opportunites menaces', 'analyse strategique', 'diagnostic global', 'avant de lancer un programme kaizen']
+  },
+  {
+    id: 'histogramme',
+    name: 'Histogramme',
+    icon: '📶',
+    category: 'Diagnostic',
+    summary: "Representation graphique de la distribution d'une donnee mesuree, pour visualiser la dispersion, la tendance centrale et detecter des anomalies de process.",
+    whenToUse: [
+      "Donnees chiffrees continues disponibles (dimensions, temps de cycle, poids...)",
+      "Besoin de visualiser la variabilite d'un process, pas seulement sa moyenne",
+      "Suspicion de process instable ou de melange de deux populations"
+    ],
+    steps: [
+      "Collecter un echantillon suffisant de mesures (au moins 30 a 50 valeurs)",
+      "Definir des classes (intervalles) couvrant l'etendue des valeurs",
+      "Compter le nombre de valeurs dans chaque classe",
+      "Tracer les barres : hauteur = frequence de chaque classe",
+      "Analyser la forme (normale, asymetrique, bimodale) et la comparer aux limites specifiees"
+    ],
+    benefits: "Rend visible la variabilite reelle du process, detecte les melanges de populations ou les derives invisibles sur une simple moyenne.",
+    memo: [
+      "Barres = frequence de chaque classe de valeurs",
+      "Regarder la forme : normale, decalee, deux pics (bimodale)",
+      "Comparer la dispersion aux limites specifiees (tolerance)",
+      "Necessite un echantillon suffisant pour etre fiable"
+    ],
+    keywords: ['histogramme', 'distribution', 'dispersion des mesures', 'variabilite process', 'frequence des valeurs', 'process instable']
+  },
+  {
+    id: 'diagramme-dispersion',
+    name: 'Diagramme de dispersion',
+    icon: '🔬',
+    category: 'Diagnostic',
+    summary: "Nuage de points qui teste visuellement une correlation potentielle entre deux variables (ex : une cause suspectee et un defaut), avant de conclure a un lien de cause a effet.",
+    whenToUse: [
+      "Hypothese de lien entre une cause potentielle et un effet mesurable",
+      "Besoin de verifier objectivement une correlation avant d'agir",
+      "Donnees chiffrees disponibles pour les deux variables"
+    ],
+    steps: [
+      "Choisir la variable suspectee comme cause (axe X) et l'effet mesure (axe Y)",
+      "Collecter des couples de valeurs (X,Y) sur un echantillon representatif",
+      "Placer chaque couple comme un point sur le graphique",
+      "Observer la forme du nuage : correlation positive, negative, ou absence de lien",
+      "Confirmer la piste retenue par une analyse complementaire (5 Pourquoi, Ishikawa) avant d'agir"
+    ],
+    benefits: "Evite d'agir sur une fausse cause juste par intuition, teste objectivement une hypothese avec des donnees.",
+    memo: [
+      "Axe X = cause suspectee, Axe Y = effet mesure",
+      "Nuage qui monte = correlation positive, qui descend = negative",
+      "Nuage disperse sans forme = pas de lien visible",
+      "Correlation n'est pas toujours causalite : rester prudent"
+    ],
+    keywords: ['diagramme de dispersion', 'nuage de points', 'correlation', 'lien cause effet', 'verifier une hypothese', 'scatter plot']
+  },
+  {
+    id: 'carte-controle',
+    name: 'Carte de controle (MSP)',
+    icon: '📉',
+    category: 'Qualite',
+    summary: "Suivi dans le temps d'une caracteristique mesuree avec des limites de controle statistiques, pour distinguer la variabilite normale d'un process d'une derive reelle a corriger.",
+    whenToUse: [
+      "Process repetitif dont il faut surveiller la stabilite dans la duree",
+      "Besoin de distinguer un incident isole d'une derive systematique",
+      "Apres un chantier Kaizen, pour verifier que le gain se maintient (phase Control)"
+    ],
+    steps: [
+      "Choisir la caracteristique critique a suivre (cote, poids, temps de cycle...)",
+      "Collecter des mesures a intervalles reguliers (echantillons)",
+      "Calculer la moyenne et les limites de controle statistiques (typiquement +/- 3 sigma)",
+      "Tracer les points mesures dans le temps avec ces limites",
+      "Reagir uniquement quand un point ou une tendance sort des limites de controle (pas a chaque variation normale)"
+    ],
+    benefits: "Evite de sur-reagir a la variabilite normale, detecte tot les vraies derives de process, perennise les gains d'un chantier Kaizen.",
+    memo: [
+      "Limites de controle statistiques, pas des limites de specification client",
+      "Reagir seulement si un point sort des limites ou si une tendance anormale apparait",
+      "Outil typique de la phase Control d'un DMAIC",
+      "Ne pas confondre variabilite normale et derive reelle"
+    ],
+    keywords: ['carte de controle', 'msp', 'maitrise statistique des processus', 'spc', 'derive process', 'surveillance process', 'limites de controle']
+  },
+  {
+    id: 'capabilite-process',
+    name: 'Capabilite process (Cp/Cpk)',
+    icon: '📏',
+    category: 'Qualite',
+    summary: "Indicateur statistique qui compare la variabilite reelle d'un process aux tolerances specifiees, pour juger si le process est capable de produire durablement dans les specifications.",
+    whenToUse: [
+      "Verifier qu'un process de production est capable de tenir la tolerance client",
+      "Comparer objectivement deux processus ou deux equipements",
+      "Phase Measure/Analyze d'un DMAIC ou validation d'un nouveau process"
+    ],
+    steps: [
+      "Collecter un echantillon representatif de mesures en process stable",
+      "Calculer la moyenne et l'ecart-type du process",
+      "Calculer le Cp (capabilite potentielle) : etendue de tolerance / etendue du process",
+      "Calculer le Cpk (capabilite reelle) qui tient compte du centrage du process",
+      "Interpreter : Cpk < 1 process non capable, Cpk >= 1.33 generalement considere satisfaisant"
+    ],
+    benefits: "Chiffre objectivement si un process tient ses tolerances, argumente un investissement ou un changement de process.",
+    memo: [
+      "Cp = capabilite potentielle (dispersion seule)",
+      "Cpk = capabilite reelle (dispersion + centrage)",
+      "Cpk >= 1.33 = process generalement satisfaisant (seuil courant, a adapter au secteur)",
+      "Necessite un process stable (sous controle) pour etre interprete correctement"
+    ],
+    keywords: ['cp', 'cpk', 'capabilite process', 'capabilite machine', 'process capable', 'tolerance specification', 'ecart type process']
+  },
+  {
+    id: 'charte-projet',
+    name: 'Charte de projet',
+    icon: '📃',
+    category: 'Gestion de projet',
+    summary: "Document de cadrage initial d'un projet ou chantier qui formalise son objectif, son perimetre, ses parties prenantes et ses contraintes avant le lancement operationnel.",
+    whenToUse: [
+      "Lancement officiel d'un chantier ou projet d'amelioration important",
+      "Besoin d'un accord formel de la direction avant de mobiliser une equipe",
+      "Plusieurs services impliques necessitant un cadrage partage"
+    ],
+    steps: [
+      "Formuler l'objectif du projet et le probleme qu'il resout",
+      "Definir le perimetre : ce qui est inclus et ce qui est explicitement exclu",
+      "Identifier les parties prenantes : sponsor, pilote, equipe, parties consultees",
+      "Lister les contraintes (delai, budget, ressources) et les risques majeurs",
+      "Faire valider la charte par le sponsor avant de demarrer les travaux"
+    ],
+    benefits: "Evite les malentendus sur l'objectif et le perimetre, engage formellement la direction et les ressources necessaires.",
+    memo: [
+      "Objectif, perimetre (inclus/exclus), parties prenantes, contraintes",
+      "Validee par le sponsor avant tout demarrage operationnel",
+      "Document court (1-2 pages), pas un cahier des charges detaille",
+      "A referencer tout au long du projet en cas de derive de perimetre"
+    ],
+    keywords: ['charte de projet', 'project charter', 'lancement de projet', 'cadrage initial', 'sponsor projet', 'perimetre projet']
+  },
+  {
+    id: 'matrice-risques',
+    name: 'Matrice des risques projet',
+    icon: '🧯',
+    category: 'Gestion de projet',
+    summary: "Grille qui identifie et hierarchise les risques pouvant compromettre un chantier ou un projet, en croisant leur probabilite d'occurrence et leur impact potentiel.",
+    whenToUse: [
+      "Lancement d'un chantier ou projet avec des enjeux ou une duree significative",
+      "Besoin d'anticiper ce qui pourrait faire echouer le projet",
+      "Suivi regulier d'un projet complexe (revue de risques)"
+    ],
+    steps: [
+      "Lister les risques potentiels du projet (techniques, humains, delais, budget)",
+      "Evaluer chaque risque selon sa Probabilite d'occurrence et son Impact",
+      "Positionner chaque risque dans une matrice Probabilite x Impact",
+      "Definir un plan d'action pour les risques prioritaires (eviter, reduire, transferer, accepter)",
+      "Revoir la matrice regulierement pendant la duree du projet"
+    ],
+    benefits: "Anticipe les obstacles plutot que de les subir, priorise les efforts de prevention sur les risques les plus critiques.",
+    memo: [
+      "Matrice Probabilite x Impact",
+      "4 strategies possibles : eviter, reduire, transferer, accepter",
+      "A revoir regulierement, pas juste au lancement",
+      "Complementaire de l'AMDEC mais a l'echelle du projet, pas du produit/process"
+    ],
+    keywords: ['matrice des risques', 'risques projet', 'gestion des risques', 'anticiper les problemes projet', 'probabilite impact', 'risk management']
+  },
+  {
+    id: 'flux-unitaire',
+    name: 'Flux unitaire (One-Piece-Flow)',
+    icon: '➡️',
+    category: 'Organisation',
+    summary: "Principe qui consiste a faire circuler les pieces une par une (ou par tres petits lots) entre les postes, plutot que par gros lots, pour reduire drastiquement le lead time et les stocks intermediaires.",
+    whenToUse: [
+      "Gros lots qui generent des stocks intermediaires importants entre postes",
+      "Lead time long alors que le temps de traitement reel est court",
+      "Reimplantation de ligne ou passage a une cellule en U envisage"
+    ],
+    steps: [
+      "Cartographier le flux actuel et mesurer la taille des lots entre chaque poste",
+      "Reduire progressivement la taille des lots (souvent en s'appuyant sur un SMED efficace)",
+      "Rapprocher physiquement les postes pour limiter les transports et attentes",
+      "Faire circuler une piece (ou un tres petit lot) a la fois d'un poste au suivant",
+      "Stabiliser le nouveau flux et mesurer le gain de lead time"
+    ],
+    benefits: "Reduit drastiquement le lead time et les stocks intermediaires, rend les problemes qualite visibles immediatement (pas caches dans un gros lot).",
+    memo: [
+      "Une piece (ou un tres petit lot) circule a la fois, pas un gros lot",
+      "S'appuie souvent sur un SMED performant pour rester rentable",
+      "Rapprocher les postes physiquement facilite le flux unitaire",
+      "Un defaut est detecte immediatement, pas apres tout un lot"
+    ],
+    keywords: ['flux unitaire', 'one piece flow', 'flux piece a piece', 'gros lots', 'reduire le lead time', 'cellule en u', 'stock entre les postes']
+  },
+  {
+    id: 'obeya',
+    name: 'Obeya (Salle de pilotage)',
+    icon: '🏫',
+    category: 'Pilotage',
+    summary: "Salle de management visuel dediee ou l'equipe projet ou chantier affiche ses objectifs, indicateurs et plans d'action, pour piloter en un seul lieu et favoriser la coordination rapide.",
+    whenToUse: [
+      "Projet ou chantier avec plusieurs equipes a coordonner",
+      "Informations de pilotage dispersees dans des fichiers ou reunions separees",
+      "Besoin d'accelerer la prise de decision et la remontee des blocages"
+    ],
+    steps: [
+      "Choisir un lieu (physique ou un mur/ecran dedie) accessible a toute l'equipe",
+      "Afficher les objectifs, le planning, les indicateurs cles et le plan d'action",
+      "Definir un rituel de reunion courte et reguliere devant ce management visuel",
+      "Mettre a jour les affichages en continu, pas seulement lors des reunions",
+      "Faire remonter et traiter les blocages directement depuis la salle"
+    ],
+    benefits: "Coordination plus rapide entre equipes, information de pilotage centralisee et toujours a jour, reduit les reunions eparpillees.",
+    memo: [
+      "Obeya = 'grande piece' en japonais, salle de pilotage dediee",
+      "Tout le pilotage visible en un seul endroit",
+      "Rituel court et regulier devant le mur visuel",
+      "Mise a jour continue, pas juste au moment des reunions"
+    ],
+    keywords: ['obeya', 'salle de pilotage', 'management visuel', 'war room', 'coordination equipes', 'salle de projet']
+  },
+  {
+    id: 'wbs',
+    name: 'WBS (Structure de decoupage projet)',
+    icon: '🌳',
+    category: 'Gestion de projet',
+    summary: "Decomposition hierarchique d'un projet en lots de travail plus petits et gerables, pour s'assurer que rien n'est oublie avant de planifier et d'affecter les ressources.",
+    whenToUse: [
+      "Projet ou chantier complexe avec de nombreuses taches a organiser",
+      "Risque d'oublier des livrables ou des taches importantes",
+      "Besoin de repartir le travail entre plusieurs equipes avant de planifier (Gantt)"
+    ],
+    steps: [
+      "Partir du livrable final du projet",
+      "Decomposer en grands lots de travail (niveau 1)",
+      "Decomposer chaque lot en sous-taches gerables (niveau 2, 3...)",
+      "Verifier que la somme des taches couvre bien 100% du perimetre, sans trou ni doublon",
+      "Utiliser cette decomposition comme base pour le planning (Gantt) et les responsabilites (RACI)"
+    ],
+    benefits: "Rien n'est oublie, base fiable pour planifier et estimer, facilite la repartition du travail entre equipes.",
+    memo: [
+      "Partir du livrable final, puis decomposer en lots puis en taches",
+      "Regle des 100% : toutes les taches ensemble couvrent tout le perimetre",
+      "Sert de base au Gantt (planning) et au RACI (responsabilites)",
+      "A faire avant de planifier, pas en meme temps"
+    ],
+    keywords: ['wbs', 'structure de decoupage projet', 'decomposition du projet', 'lots de travail', 'organiser un projet complexe', 'work breakdown structure']
+  },
+  {
+    id: 'feuille-releve',
+    name: 'Feuille de releve',
+    icon: '📝',
+    category: 'Diagnostic',
+    summary: "Support simple et standardise de collecte de donnees terrain (comptage, pointage) qui garantit une saisie fiable et exploitable avant toute analyse (Pareto, Histogramme...).",
+    whenToUse: [
+      "Besoin de donnees fiables avant de lancer un Pareto ou un Histogramme",
+      "Collecte manuelle sur le terrain par plusieurs operateurs",
+      "Suspicion de probleme mais aucune donnee chiffree encore disponible"
+    ],
+    steps: [
+      "Definir precisement ce qui doit etre releve (quel defaut, quelle mesure)",
+      "Concevoir un support simple : cases a cocher ou a remplir, sans ambiguite",
+      "Former les operateurs a remplir la feuille de la meme facon",
+      "Collecter sur une periode representative",
+      "Compiler les donnees pour alimenter un Pareto, un Histogramme ou une carte de controle"
+    ],
+    benefits: "Donnees fiables et comparables des la source, evite les analyses biaisees par une collecte approximative.",
+    memo: [
+      "Support simple, sans ambiguite, rempli directement sur le terrain",
+      "Tout le monde doit remplir la feuille de la meme facon",
+      "Etape prealable classique a un Pareto ou un Histogramme",
+      "La qualite de l'analyse depend de la qualite de cette collecte"
+    ],
+    keywords: ['feuille de releve', 'check sheet', 'collecte de donnees terrain', 'comptage defauts', 'pointage', 'fiabiliser les donnees']
+  },
+  {
+    id: 'retour-experience',
+    name: 'Retour d\'experience (REX)',
+    icon: '📚',
+    category: 'Pilotage',
+    summary: "Bilan structure realise a la fin d'un chantier Kaizen pour capitaliser ce qui a bien ou mal fonctionne, et ne pas repeter les memes erreurs sur les chantiers suivants.",
+    whenToUse: [
+      "Cloture d'un chantier Kaizen ou d'un projet",
+      "Difficultes rencontrees pendant le chantier meritant d'etre partagees",
+      "Besoin de capitaliser l'experience pour les futurs chantiers similaires"
+    ],
+    steps: [
+      "Reunir l'equipe rapidement apres la fin du chantier (a chaud)",
+      "Lister ce qui a bien fonctionne et doit etre reproduit",
+      "Lister ce qui a pose probleme et pourquoi (sans chercher de coupable)",
+      "Identifier les enseignements et les actions pour les chantiers futurs",
+      "Diffuser le REX aux autres equipes ou pilotes de chantiers"
+    ],
+    benefits: "Capitalise l'experience collective, evite de repeter les memes erreurs, ameliore la maniere de mener les chantiers suivants.",
+    memo: [
+      "A faire a chaud, juste apres la fin du chantier",
+      "Ce qui a marche + ce qui a pose probleme + enseignements",
+      "Sans chercher de coupable : esprit d'amelioration, pas de sanction",
+      "A diffuser pour que les autres chantiers en profitent"
+    ],
+    keywords: ['rex', 'retour d\'experience', 'lessons learned', 'bilan de chantier', 'cloture de projet', 'capitaliser l\'experience']
   }
 ];
 
