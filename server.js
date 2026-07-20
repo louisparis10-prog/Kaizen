@@ -24,7 +24,9 @@ db.exec(`
     outils          TEXT,
     date_debut      TEXT,
     date_fin        TEXT,
-    statut          TEXT DEFAULT 'en_cours',
+    statut          TEXT DEFAULT 'a_traiter',
+    eligible_kaizen INTEGER,
+    quiz_reponses   TEXT,
     created_at      DATETIME DEFAULT CURRENT_TIMESTAMP
   );
 
@@ -48,9 +50,30 @@ db.exec(`
     valeur_apres    REAL,
     FOREIGN KEY (chantier_id) REFERENCES chantiers(id)
   );
+
+  CREATE TABLE IF NOT EXISTS photos (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    chantier_id     INTEGER NOT NULL,
+    action_id       INTEGER,
+    filename        TEXT,
+    mime_type       TEXT,
+    data            TEXT NOT NULL,
+    created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (chantier_id) REFERENCES chantiers(id)
+  );
 `);
 
-app.use(express.json());
+// Ajoute les colonnes du questionnaire d'eligibilite aux bases deja existantes
+// (les nouvelles installations les ont deja via le CREATE TABLE ci-dessus).
+['eligible_kaizen', 'quiz_reponses'].forEach(col => {
+  try {
+    db.exec(`ALTER TABLE chantiers ADD COLUMN ${col} ${col === 'eligible_kaizen' ? 'INTEGER' : 'TEXT'}`);
+  } catch (err) {
+    // colonne deja presente
+  }
+});
+
+app.use(express.json({ limit: '15mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 function transaction(fn) {
@@ -70,8 +93,16 @@ function getChantierFull(id) {
   if (!chantier) return null;
   chantier.equipe = JSON.parse(chantier.equipe || '[]');
   chantier.outils = JSON.parse(chantier.outils || '[]');
+  chantier.quiz_reponses = chantier.quiz_reponses ? JSON.parse(chantier.quiz_reponses) : null;
   chantier.actions = db.prepare('SELECT * FROM actions WHERE chantier_id = ? ORDER BY created_at ASC').all([id]);
   chantier.indicateurs = db.prepare('SELECT * FROM indicateurs WHERE chantier_id = ? ORDER BY id ASC').all([id]);
+
+  const photos = db.prepare('SELECT id, action_id, filename, mime_type, data, created_at FROM photos WHERE chantier_id = ? ORDER BY created_at ASC').all([id]);
+  chantier.photos = photos.filter(p => p.action_id == null);
+  chantier.actions.forEach(a => {
+    a.photos = photos.filter(p => p.action_id === a.id);
+  });
+
   return chantier;
 }
 
@@ -116,17 +147,22 @@ app.get('/api/chantiers/:id', (req, res) => {
 });
 
 app.post('/api/chantiers', (req, res) => {
-  const { titre, probleme, perimetre, pilote, equipe, objectif, outils, date_debut, date_fin } = req.body;
+  const {
+    titre, probleme, perimetre, pilote, equipe, objectif, outils, date_debut, date_fin,
+    statut, eligible_kaizen, quiz_reponses
+  } = req.body;
   if (!titre) return res.status(400).json({ error: 'titre requis' });
 
   const chantier_id = transaction(() => {
     const { lastInsertRowid } = db.prepare(`
-      INSERT INTO chantiers (titre, probleme, perimetre, pilote, equipe, objectif, outils, date_debut, date_fin)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO chantiers (titre, probleme, perimetre, pilote, equipe, objectif, outils, date_debut, date_fin, statut, eligible_kaizen, quiz_reponses)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run([
       titre, probleme || '', perimetre || '', pilote || '',
       JSON.stringify(equipe || []), objectif || '', JSON.stringify(outils || []),
-      date_debut || '', date_fin || ''
+      date_debut || '', date_fin || '', statut || 'a_traiter',
+      eligible_kaizen === undefined || eligible_kaizen === null ? null : (eligible_kaizen ? 1 : 0),
+      quiz_reponses ? JSON.stringify(quiz_reponses) : null
     ]);
 
     // Pre-remplit le plan d'action avec les etapes types de chaque outil selectionne,
@@ -258,6 +294,22 @@ app.put('/api/chantiers/:id/indicateurs/:indicId', (req, res) => {
 
 app.delete('/api/chantiers/:id/indicateurs/:indicId', (req, res) => {
   db.prepare('DELETE FROM indicateurs WHERE id = ? AND chantier_id = ?').run([req.params.indicId, req.params.id]);
+  res.json(getChantierFull(req.params.id));
+});
+
+// ---------- Photos (fiche chantier ou action specifique) ----------
+app.post('/api/chantiers/:id/photos', (req, res) => {
+  const { filename, mime_type, data, action_id } = req.body;
+  if (!data) return res.status(400).json({ error: 'data (base64) requise' });
+  db.prepare(`
+    INSERT INTO photos (chantier_id, action_id, filename, mime_type, data)
+    VALUES (?, ?, ?, ?, ?)
+  `).run([req.params.id, action_id || null, filename || '', mime_type || '', data]);
+  res.json(getChantierFull(req.params.id));
+});
+
+app.delete('/api/chantiers/:id/photos/:photoId', (req, res) => {
+  db.prepare('DELETE FROM photos WHERE id = ? AND chantier_id = ?').run([req.params.photoId, req.params.id]);
   res.json(getChantierFull(req.params.id));
 });
 

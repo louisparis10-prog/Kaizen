@@ -11,13 +11,80 @@
   }
 
   function show(viewId) {
-    ['view-list', 'view-form', 'view-detail'].forEach(id => {
+    ['view-list', 'view-quiz', 'view-form', 'view-detail'].forEach(id => {
       document.getElementById(id).style.display = id === viewId ? 'block' : 'none';
     });
   }
 
   function statutLabel(s) {
-    return { en_cours: 'En cours', termine: 'Termine' }[s] || s;
+    return { a_traiter: 'A traiter', en_cours: 'En cours', termine: 'Termine' }[s] || s;
+  }
+
+  // ---------- Questionnaire d'eligibilite Kaizen ----------
+  const QUIZ_QUESTIONS = [
+    "Le probleme touche-t-il un poste, une machine, une zone ou une tache precise (pas toute l'organisation) ?",
+    "Peut-on agir avec les moyens et l'autorite du secteur, sans investissement lourd ni validation d'un niveau superieur ?",
+    "Le probleme est-il recurrent ou a-t-il un impact reel (pas un incident isole unique) ?",
+    "Une premiere piste de cause ou de solution est-elle deja envisageable ?",
+    "Le probleme peut-il raisonnablement etre traite en quelques jours a quelques semaines (pas un projet de plusieurs mois) ?"
+  ];
+  let quizResult = null; // { reponses: ['oui'|'non', ...], score, eligible }
+  let pendingOutils = [];
+
+  function renderQuiz() {
+    const wrap = document.getElementById('quiz-questions');
+    wrap.innerHTML = '';
+    document.getElementById('quiz-result').style.display = 'none';
+    document.getElementById('quiz-result').innerHTML = '';
+    QUIZ_QUESTIONS.forEach((q, i) => {
+      const block = el(`
+        <div class="quiz-question">
+          <p>${i + 1}. ${q}</p>
+          <label class="quiz-radio"><input type="radio" name="quiz-q${i}" value="oui"> Oui</label>
+          <label class="quiz-radio"><input type="radio" name="quiz-q${i}" value="non"> Non</label>
+        </div>
+      `);
+      wrap.appendChild(block);
+    });
+  }
+
+  function startNewChantierFlow(presetOutils) {
+    pendingOutils = presetOutils || [];
+    quizResult = null;
+    renderQuiz();
+    show('view-quiz');
+  }
+
+  function evaluateQuiz() {
+    const reponses = QUIZ_QUESTIONS.map((_, i) => {
+      const checked = document.querySelector(`input[name="quiz-q${i}"]:checked`);
+      return checked ? checked.value : null;
+    });
+    if (reponses.includes(null)) {
+      alert('Merci de repondre a toutes les questions.');
+      return;
+    }
+    const score = reponses.filter(r => r === 'oui').length;
+    const eligible = score >= 4;
+    quizResult = { reponses, score, eligible };
+
+    if (eligible) {
+      openForm(null);
+    } else {
+      const box = document.getElementById('quiz-result');
+      box.style.display = 'block';
+      box.innerHTML = `
+        <div class="memo-box" style="border-color:#d64545;background:#fdeaea;margin-top:16px;">
+          <strong>Score : ${score}/5 — ce probleme semble plus adapte a un projet structure (investissement, decision de direction, RH...) qu'a un chantier Kaizen classique.</strong>
+          <p style="margin:10px 0 0">Tu peux quand meme creer le chantier si tu penses que c'est justifie.</p>
+        </div>
+      `;
+      const actions = el(`<div class="modal-actions"></div>`);
+      const forceBtn = el(`<button class="btn orange">Creer quand meme</button>`);
+      forceBtn.addEventListener('click', () => openForm(null));
+      actions.appendChild(forceBtn);
+      box.appendChild(actions);
+    }
   }
   function actionStatutLabel(s) {
     return { a_faire: 'A faire', en_cours: 'En cours', fait: 'Fait', bloque: 'Bloque' }[s] || s;
@@ -32,6 +99,7 @@
 
   function renderDashboard(d) {
     const wrap = document.getElementById('dashboard');
+    const aTraiter = d.chantiersParStatut.a_traiter || 0;
     const enCours = d.chantiersParStatut.en_cours || 0;
     const termine = d.chantiersParStatut.termine || 0;
     const gainHtml = d.gainMoyen === null
@@ -41,6 +109,10 @@
     wrap.innerHTML = '';
     const box = el(`
       <div class="dashboard-grid">
+        <div class="dash-card">
+          <div class="dash-label">Kaizen a traiter</div>
+          <div class="dash-value">${aTraiter}</div>
+        </div>
         <div class="dash-card">
           <div class="dash-label">Chantiers en cours</div>
           <div class="dash-value">${enCours}</div>
@@ -82,14 +154,34 @@
     loadDashboard();
   }
 
+  let statutFilter = 'tous';
+
+  function renderStatutFilters() {
+    const wrap = document.getElementById('statut-filters');
+    if (!wrap) return;
+    const counts = { tous: chantiers.length };
+    ['a_traiter', 'en_cours', 'termine'].forEach(s => {
+      counts[s] = chantiers.filter(c => c.statut === s).length;
+    });
+    const labels = { tous: 'Tous', a_traiter: 'A traiter', en_cours: 'En cours', termine: 'Termine' };
+    wrap.innerHTML = '';
+    Object.keys(labels).forEach(key => {
+      const chip = el(`<button type="button" class="chip-filter${statutFilter === key ? ' active' : ''}">${labels[key]} (${counts[key]})</button>`);
+      chip.addEventListener('click', () => { statutFilter = key; renderList(); });
+      wrap.appendChild(chip);
+    });
+  }
+
   function renderList() {
+    renderStatutFilters();
     const wrap = document.getElementById('chantiers-list');
     wrap.innerHTML = '';
-    if (chantiers.length === 0) {
-      wrap.appendChild(el(`<p style="color:#5a6b78">Aucun chantier pour le moment. Cree ton premier chantier Kaizen !</p>`));
+    const filtered = statutFilter === 'tous' ? chantiers : chantiers.filter(c => c.statut === statutFilter);
+    if (filtered.length === 0) {
+      wrap.appendChild(el(`<p style="color:#5a6b78">Aucun chantier ici pour le moment.</p>`));
       return;
     }
-    chantiers.forEach(c => {
+    filtered.forEach(c => {
       const card = el(`
         <div class="chantier-card">
           <span class="badge ${c.statut}">${statutLabel(c.statut)}</span>
@@ -128,7 +220,7 @@
 
   function openForm(chantier) {
     editingId = chantier ? chantier.id : null;
-    selectedOutils = chantier ? [...(chantier.outils || [])] : [];
+    selectedOutils = chantier ? [...(chantier.outils || [])] : [...pendingOutils];
     document.getElementById('form-title').textContent = chantier ? 'Modifier le chantier' : 'Nouveau chantier';
     document.getElementById('f-titre').value = chantier ? chantier.titre : '';
     document.getElementById('f-probleme').value = chantier ? chantier.probleme : '';
@@ -139,6 +231,17 @@
     document.getElementById('f-date-debut').value = chantier ? chantier.date_debut : '';
     document.getElementById('f-date-fin').value = chantier ? chantier.date_fin : '';
     renderOutilsChecklist();
+
+    const eligibiliteP = document.getElementById('form-eligibilite');
+    if (!chantier && quizResult) {
+      eligibiliteP.style.display = 'block';
+      eligibiliteP.innerHTML = quizResult.eligible
+        ? `<span class="badge en_cours">Eligible Kaizen (${quizResult.score}/5)</span>`
+        : `<span class="badge bloque">Cree malgre un score faible (${quizResult.score}/5)</span>`;
+    } else {
+      eligibiliteP.style.display = 'none';
+    }
+
     show('view-form');
   }
 
@@ -156,10 +259,16 @@
     };
     if (!payload.titre) { alert('Le titre est obligatoire.'); return; }
 
+    if (!editingId && quizResult) {
+      payload.eligible_kaizen = quizResult.eligible;
+      payload.quiz_reponses = quizResult.reponses;
+    }
+
     const url = editingId ? `/api/chantiers/${editingId}` : '/api/chantiers';
     const method = editingId ? 'PUT' : 'POST';
     const res = await fetch(url, { method, headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) });
     const chantier = await res.json();
+    quizResult = null;
     await loadChantiers();
     openDetail(chantier.id);
   }
@@ -172,11 +281,60 @@
     show('view-detail');
   }
 
+  function nextStatut(s) {
+    if (s === 'a_traiter') return { next: 'en_cours', label: 'Demarrer le chantier' };
+    if (s === 'en_cours') return { next: 'termine', label: 'Marquer termine' };
+    return { next: 'en_cours', label: 'Rouvrir' };
+  }
+
   function computeGain(indic) {
     if (indic.valeur_avant == null || indic.valeur_apres == null || indic.valeur_avant === '' || indic.valeur_apres === '') return null;
     const avant = Number(indic.valeur_avant), apres = Number(indic.valeur_apres);
     if (!avant) return null;
     return ((avant - apres) / avant) * 100;
+  }
+
+  function pickAndUploadPhoto(chantierId, actionId, onDone) {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.addEventListener('change', () => {
+      const file = input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64 = reader.result.split(',')[1];
+        const res = await fetch(`/api/chantiers/${chantierId}/photos`, {
+          method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ filename: file.name, mime_type: file.type, data: base64, action_id: actionId })
+        });
+        onDone(await res.json());
+      };
+      reader.readAsDataURL(file);
+    });
+    input.click();
+  }
+
+  function renderPhotoGrid(container, photos, chantierId) {
+    container.innerHTML = '';
+    photos.forEach(p => {
+      const thumb = el(`
+        <div class="photo-thumb">
+          <img src="data:${p.mime_type};base64,${p.data}" alt="${p.filename || 'photo'}">
+          <button type="button" class="photo-delete no-print" title="Supprimer">&times;</button>
+        </div>
+      `);
+      thumb.querySelector('img').addEventListener('click', () => {
+        const w = window.open();
+        w.document.write(`<img src="data:${p.mime_type};base64,${p.data}" style="max-width:100%">`);
+      });
+      thumb.querySelector('.photo-delete').addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const res = await fetch(`/api/chantiers/${chantierId}/photos/${p.id}`, { method: 'DELETE' });
+        renderDetail(await res.json());
+      });
+      container.appendChild(thumb);
+    });
   }
 
   function renderDetail(c) {
@@ -198,7 +356,7 @@
           <h3>Fiche chantier
             <span class="no-print">
               <button class="btn secondary small" id="btn-edit">Modifier</button>
-              <button class="btn secondary small" id="btn-toggle-statut">${c.statut === 'en_cours' ? 'Marquer termine' : 'Rouvrir'}</button>
+              <button class="btn secondary small" id="btn-toggle-statut">${nextStatut(c.statut).label}</button>
               <button class="btn danger small" id="btn-delete">Supprimer</button>
             </span>
           </h3>
@@ -212,6 +370,13 @@
             <button class="btn orange" id="btn-a3">Generer la fiche A3</button>
             <button class="btn secondary" id="btn-ask-expert-detail">Demander conseil a l'expert</button>
           </div>
+        </div>
+
+        <div class="section-card">
+          <h3>Photos du chantier
+            <button class="btn small orange no-print" id="btn-add-photo-chantier">+ Ajouter une photo</button>
+          </h3>
+          <div class="photo-grid" id="chantier-photos"></div>
         </div>
 
         <div class="section-card">
@@ -243,7 +408,7 @@
     document.getElementById('btn-toggle-statut').addEventListener('click', async () => {
       const res = await fetch(`/api/chantiers/${c.id}`, {
         method: 'PUT', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ ...c, statut: c.statut === 'en_cours' ? 'termine' : 'en_cours' })
+        body: JSON.stringify({ ...c, statut: nextStatut(c.statut).next })
       });
       const updated = await res.json();
       renderDetail(updated);
@@ -252,6 +417,10 @@
     document.getElementById('btn-ask-expert-detail').addEventListener('click', () => {
       if (window.prefillKaizenChat) window.prefillKaizenChat(c.probleme || c.titre);
     });
+    document.getElementById('btn-add-photo-chantier').addEventListener('click', () => {
+      pickAndUploadPhoto(c.id, null, updated => renderDetail(updated));
+    });
+    renderPhotoGrid(document.getElementById('chantier-photos'), c.photos || [], c.id);
     renderActionsTable(c);
     renderIndicsTable(c);
   }
@@ -268,7 +437,10 @@
       const retard = isEnRetard(a);
       const row = el(`
         <tr${retard ? ' style="background:#fdeaea"' : ''}>
-          <td>${a.description}</td>
+          <td>${a.description}
+            <div class="photo-grid photo-grid-small" id="action-photos-${a.id}"></div>
+            <button type="button" class="btn secondary small no-print btn-add-action-photo">Photo</button>
+          </td>
           <td><input type="text" class="no-print inline-edit" placeholder="Responsable" style="width:110px">
             <span class="print-only">${a.responsable || '-'}</span></td>
           <td><input type="date" class="no-print inline-edit">
@@ -303,6 +475,10 @@
         const res = await fetch(`/api/chantiers/${c.id}/actions/${a.id}`, { method: 'DELETE' });
         renderDetail(await res.json());
       });
+      row.querySelector('.btn-add-action-photo').addEventListener('click', () => {
+        pickAndUploadPhoto(c.id, a.id, updated => renderDetail(updated));
+      });
+      renderPhotoGrid(row.querySelector(`#action-photos-${a.id}`), a.photos || [], c.id);
       tbody.appendChild(row);
     });
 
@@ -429,13 +605,15 @@
     tools = await toolsRes.json();
     await loadChantiers();
 
-    document.getElementById('btn-new-chantier').addEventListener('click', () => openForm(null));
+    document.getElementById('btn-new-chantier').addEventListener('click', () => startNewChantierFlow([]));
     document.getElementById('btn-cancel-chantier').addEventListener('click', () => { show('view-list'); });
     document.getElementById('btn-save-chantier').addEventListener('click', saveChantier);
     document.getElementById('btn-ask-expert-form').addEventListener('click', () => {
       const txt = document.getElementById('f-probleme').value || document.getElementById('f-titre').value;
       if (window.prefillKaizenChat && txt) window.prefillKaizenChat(txt);
     });
+    document.getElementById('btn-quiz-continue').addEventListener('click', evaluateQuiz);
+    document.getElementById('btn-quiz-cancel').addEventListener('click', () => show('view-list'));
 
     const params = new URLSearchParams(location.search);
     const preselect = params.get('preselect');
@@ -450,9 +628,7 @@
     if (!tool) return;
 
     if (chantiers.length === 0) {
-      openForm(null);
-      selectedOutils = [toolId];
-      renderOutilsChecklist();
+      startNewChantierFlow([toolId]);
       return;
     }
 
@@ -493,9 +669,7 @@
 
     backdrop.querySelector('#btn-chooser-new').addEventListener('click', () => {
       root.innerHTML = '';
-      openForm(null);
-      selectedOutils = [toolId];
-      renderOutilsChecklist();
+      startNewChantierFlow([toolId]);
     });
 
     root.appendChild(backdrop);

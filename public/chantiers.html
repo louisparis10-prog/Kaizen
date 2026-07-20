@@ -25,12 +25,29 @@
     <div class="toolbar">
       <button class="btn orange" id="btn-new-chantier">+ Nouveau chantier</button>
     </div>
+    <div class="toolbar" id="statut-filters"></div>
     <div id="chantiers-list"></div>
+  </div>
+
+  <div id="view-quiz" style="display:none">
+    <div class="page-header">
+      <h1>Ce probleme peut-il etre traite par un chantier Kaizen ?</h1>
+      <p>Reponds a ces 5 questions pour verifier que la problematique est bien adaptee a un chantier Kaizen (par opposition a un projet lourd, une decision RH ou un investissement majeur).</p>
+    </div>
+    <div class="section-card">
+      <div id="quiz-questions"></div>
+      <div class="modal-actions">
+        <button class="btn orange" id="btn-quiz-continue">Continuer</button>
+        <button class="btn secondary" id="btn-quiz-cancel">Annuler</button>
+      </div>
+      <div id="quiz-result" style="display:none"></div>
+    </div>
   </div>
 
   <div id="view-form" style="display:none">
     <div class="page-header">
       <h1 id="form-title">Nouveau chantier</h1>
+      <p id="form-eligibilite" style="display:none"></p>
     </div>
     <div class="section-card">
       <div class="form-grid">
