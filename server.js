@@ -185,17 +185,26 @@ app.post('/api/chantiers', (req, res) => {
 });
 
 app.put('/api/chantiers/:id', (req, res) => {
-  const { titre, probleme, perimetre, pilote, equipe, objectif, outils, date_debut, date_fin, statut } = req.body;
-  const existing = db.prepare('SELECT id FROM chantiers WHERE id = ?').get([req.params.id]);
+  const {
+    titre, probleme, perimetre, pilote, equipe, objectif, outils, date_debut, date_fin, statut,
+    eligible_kaizen, quiz_reponses
+  } = req.body;
+  const existing = db.prepare('SELECT * FROM chantiers WHERE id = ?').get([req.params.id]);
   if (!existing) return res.status(404).json({ error: 'Non trouve' });
+
+  // eligible_kaizen / quiz_reponses ne sont fournis que par le flux questionnaire ;
+  // une simple edition du formulaire ne doit pas effacer une reponse deja enregistree.
+  const nextEligible = eligible_kaizen === undefined ? existing.eligible_kaizen : (eligible_kaizen ? 1 : 0);
+  const nextQuiz = quiz_reponses === undefined ? existing.quiz_reponses : JSON.stringify(quiz_reponses);
+
   db.prepare(`
     UPDATE chantiers SET titre = ?, probleme = ?, perimetre = ?, pilote = ?, equipe = ?,
-      objectif = ?, outils = ?, date_debut = ?, date_fin = ?, statut = ?
+      objectif = ?, outils = ?, date_debut = ?, date_fin = ?, statut = ?, eligible_kaizen = ?, quiz_reponses = ?
     WHERE id = ?
   `).run([
     titre, probleme || '', perimetre || '', pilote || '',
     JSON.stringify(equipe || []), objectif || '', JSON.stringify(outils || []),
-    date_debut || '', date_fin || '', statut || 'en_cours', req.params.id
+    date_debut || '', date_fin || '', statut || 'en_cours', nextEligible, nextQuiz, req.params.id
   ]);
   res.json(getChantierFull(req.params.id));
 });

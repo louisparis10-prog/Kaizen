@@ -30,6 +30,8 @@
   ];
   let quizResult = null; // { reponses: ['oui'|'non', ...], score, eligible }
   let pendingOutils = [];
+  let quizMode = 'create'; // 'create' | 'start'
+  let quizStartChantier = null;
 
   function renderQuiz() {
     const wrap = document.getElementById('quiz-questions');
@@ -49,10 +51,33 @@
   }
 
   function startNewChantierFlow(presetOutils) {
+    quizMode = 'create';
+    quizStartChantier = null;
     pendingOutils = presetOutils || [];
     quizResult = null;
     renderQuiz();
     show('view-quiz');
+  }
+
+  function startExistingChantierFlow(chantier) {
+    quizMode = 'start';
+    quizStartChantier = chantier;
+    quizResult = null;
+    renderQuiz();
+    show('view-quiz');
+  }
+
+  async function applyQuizToExistingChantier(chantier, result) {
+    const res = await fetch(`/api/chantiers/${chantier.id}`, {
+      method: 'PUT', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        ...chantier, statut: 'en_cours',
+        eligible_kaizen: result.eligible, quiz_reponses: result.reponses
+      })
+    });
+    const updated = await res.json();
+    await loadChantiers();
+    openDetail(updated.id);
   }
 
   function evaluateQuiz() {
@@ -68,20 +93,24 @@
     const eligible = score >= 4;
     quizResult = { reponses, score, eligible };
 
+    const proceed = () => quizMode === 'start'
+      ? applyQuizToExistingChantier(quizStartChantier, quizResult)
+      : openForm(null);
+
     if (eligible) {
-      openForm(null);
+      proceed();
     } else {
       const box = document.getElementById('quiz-result');
       box.style.display = 'block';
       box.innerHTML = `
         <div class="memo-box" style="border-color:#d64545;background:#fdeaea;margin-top:16px;">
           <strong>Score : ${score}/5 — ce probleme semble plus adapte a un projet structure (investissement, decision de direction, RH...) qu'a un chantier Kaizen classique.</strong>
-          <p style="margin:10px 0 0">Tu peux quand meme creer le chantier si tu penses que c'est justifie.</p>
+          <p style="margin:10px 0 0">Tu peux quand meme ${quizMode === 'start' ? 'demarrer' : 'creer'} le chantier si tu penses que c'est justifie.</p>
         </div>
       `;
       const actions = el(`<div class="modal-actions"></div>`);
-      const forceBtn = el(`<button class="btn orange">Creer quand meme</button>`);
-      forceBtn.addEventListener('click', () => openForm(null));
+      const forceBtn = el(`<button class="btn orange">${quizMode === 'start' ? 'Demarrer' : 'Creer'} quand meme</button>`);
+      forceBtn.addEventListener('click', proceed);
       actions.appendChild(forceBtn);
       box.appendChild(actions);
     }
@@ -294,25 +323,54 @@
     return ((avant - apres) / avant) * 100;
   }
 
+  function uploadPhotoFile(file, chantierId, actionId, onDone) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const base64 = reader.result.split(',')[1];
+      const res = await fetch(`/api/chantiers/${chantierId}/photos`, {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ filename: file.name, mime_type: file.type, data: base64, action_id: actionId })
+      });
+      onDone(await res.json());
+    };
+    reader.readAsDataURL(file);
+  }
+
   function pickAndUploadPhoto(chantierId, actionId, onDone) {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.addEventListener('change', () => {
-      const file = input.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = async () => {
-        const base64 = reader.result.split(',')[1];
-        const res = await fetch(`/api/chantiers/${chantierId}/photos`, {
-          method: 'POST', headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ filename: file.name, mime_type: file.type, data: base64, action_id: actionId })
-        });
-        onDone(await res.json());
-      };
-      reader.readAsDataURL(file);
-    });
-    input.click();
+    const root = document.getElementById('modal-root');
+    root.innerHTML = '';
+    const backdrop = el(`
+      <div class="modal-backdrop">
+        <div class="modal" style="max-width:340px">
+          <button class="modal-close">&times;</button>
+          <h2>Ajouter une photo</h2>
+          <div class="modal-actions" style="flex-direction:column">
+            <button class="btn orange" id="btn-photo-camera" style="width:100%">Prendre une photo</button>
+            <button class="btn secondary" id="btn-photo-file" style="width:100%">Choisir un fichier</button>
+          </div>
+        </div>
+      </div>
+    `);
+    backdrop.addEventListener('click', e => { if (e.target === backdrop) root.innerHTML = ''; });
+    backdrop.querySelector('.modal-close').addEventListener('click', () => { root.innerHTML = ''; });
+
+    function makeInput(capture) {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      if (capture) input.capture = capture;
+      input.addEventListener('change', () => {
+        root.innerHTML = '';
+        uploadPhotoFile(input.files[0], chantierId, actionId, onDone);
+      });
+      return input;
+    }
+
+    backdrop.querySelector('#btn-photo-camera').addEventListener('click', () => makeInput('environment').click());
+    backdrop.querySelector('#btn-photo-file').addEventListener('click', () => makeInput(false).click());
+
+    root.appendChild(backdrop);
   }
 
   function renderPhotoGrid(container, photos, chantierId) {
@@ -381,18 +439,22 @@
 
         <div class="section-card">
           <h3>Plan d'action</h3>
-          <table class="data-table" id="actions-table">
-            <thead><tr><th>Action</th><th>Responsable</th><th>Echeance</th><th>Statut</th><th class="no-print"></th></tr></thead>
-            <tbody></tbody>
-          </table>
+          <div class="table-scroll">
+            <table class="data-table" id="actions-table">
+              <thead><tr><th>Action</th><th>Responsable</th><th>Echeance</th><th>Statut</th><th class="no-print"></th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
         </div>
 
         <div class="section-card">
           <h3>Indicateurs avant / apres</h3>
-          <table class="data-table" id="indics-table">
-            <thead><tr><th>Indicateur</th><th>Avant</th><th>Apres</th><th>Gain</th><th class="no-print"></th></tr></thead>
-            <tbody></tbody>
-          </table>
+          <div class="table-scroll">
+            <table class="data-table" id="indics-table">
+              <thead><tr><th>Indicateur</th><th>Avant</th><th>Apres</th><th>Gain</th><th class="no-print"></th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
         </div>
       </div>
     `));
@@ -406,6 +468,10 @@
       show('view-list');
     });
     document.getElementById('btn-toggle-statut').addEventListener('click', async () => {
+      if (c.statut === 'a_traiter') {
+        startExistingChantierFlow(c);
+        return;
+      }
       const res = await fetch(`/api/chantiers/${c.id}`, {
         method: 'PUT', headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ ...c, statut: nextStatut(c.statut).next })
@@ -613,7 +679,10 @@
       if (window.prefillKaizenChat && txt) window.prefillKaizenChat(txt);
     });
     document.getElementById('btn-quiz-continue').addEventListener('click', evaluateQuiz);
-    document.getElementById('btn-quiz-cancel').addEventListener('click', () => show('view-list'));
+    document.getElementById('btn-quiz-cancel').addEventListener('click', () => {
+      if (quizMode === 'start' && quizStartChantier) openDetail(quizStartChantier.id);
+      else show('view-list');
+    });
 
     const params = new URLSearchParams(location.search);
     const preselect = params.get('preselect');
