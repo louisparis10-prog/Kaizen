@@ -193,18 +193,18 @@ app.post('/api/chantiers', (req, res) => {
       quiz_reponses ? JSON.stringify(quiz_reponses) : null
     ]);
 
-    // Pre-remplit le plan d'action avec les etapes types de chaque outil selectionne,
-    // dans l'ordre des phases (Identification -> ... -> Standardisation) pour une
-    // liste d'actions chronologique.
+    // Pre-remplit le plan d'action avec une action par outil selectionne (pas une par
+    // etape : les supports/templates de chaque outil existent deja en interne, la
+    // methode detaillee n'a donc pas besoin d'etre repetee action par action).
+    // Ordre des phases (Identification -> ... -> Standardisation) pour une liste
+    // d'actions chronologique.
     outilsTries.forEach(outilId => {
       const tool = TOOLS_BY_ID[outilId];
       if (!tool) return;
-      tool.steps.forEach(step => {
-        db.prepare(`
-          INSERT INTO actions (chantier_id, description, responsable, echeance, statut)
-          VALUES (?, ?, '', '', 'a_faire')
-        `).run([lastInsertRowid, step]);
-      });
+      db.prepare(`
+        INSERT INTO actions (chantier_id, description, responsable, echeance, statut)
+        VALUES (?, ?, '', '', 'a_faire')
+      `).run([lastInsertRowid, `Realiser : ${tool.name}`]);
     });
 
     return lastInsertRowid;
