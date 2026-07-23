@@ -148,6 +148,9 @@
   }
 
   // ---------- Tableau de bord ----------
+  // Cible de gain moyen : prudente mais un minimum engageante pour des chantiers Kaizen (petits pas).
+  const GAIN_MOYEN_CIBLE = 15;
+
   async function loadDashboard() {
     const res = await fetch('/api/dashboard');
     const d = await res.json();
@@ -162,6 +165,10 @@
     const gainHtml = d.gainMoyen === null
       ? '<span class="dash-value">-</span>'
       : `<span class="dash-value ${d.gainMoyen >= 0 ? 'gain-positive' : 'gain-negative'}">${d.gainMoyen >= 0 ? '-' : '+'}${Math.abs(d.gainMoyen).toFixed(0)}%</span>`;
+    const cibleAtteinte = d.gainMoyen !== null && d.gainMoyen >= GAIN_MOYEN_CIBLE;
+    const cibleHtml = d.gainMoyen === null
+      ? `Cible : ${GAIN_MOYEN_CIBLE}%`
+      : `Cible : ${GAIN_MOYEN_CIBLE}% <span class="${cibleAtteinte ? 'gain-positive' : ''}">${cibleAtteinte ? '— atteinte' : '— pas encore atteinte'}</span>`;
 
     wrap.innerHTML = '';
     const box = el(`
@@ -186,6 +193,7 @@
           <div class="dash-label">Gain moyen constate</div>
           ${gainHtml}
           <div class="dash-sub">${d.indicateursSuivis} indicateur(s) suivi(s)</div>
+          <div class="dash-sub">${cibleHtml}</div>
         </div>
       </div>
     `);
