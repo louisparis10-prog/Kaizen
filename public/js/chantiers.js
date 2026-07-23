@@ -674,6 +674,17 @@
       return `<tr><td>${i.nom}</td><td>${i.valeur_avant ?? '-'} ${i.unite || ''}</td><td>${i.valeur_apres ?? '-'} ${i.unite || ''}</td><td>${gain === null ? '-' : gain.toFixed(0) + '%'}</td></tr>`;
     }).join('');
 
+    const toutesLesPhotos = [
+      ...(c.photos || []).map(p => ({ ...p, legende: 'Photo chantier' })),
+      ...(c.actions || []).flatMap(a => (a.photos || []).map(p => ({ ...p, legende: a.description })))
+    ];
+    const photosHtml = toutesLesPhotos.map(p => `
+      <figure>
+        <img src="data:${p.mime_type};base64,${p.data}" alt="${p.filename || 'photo'}">
+        <figcaption>${p.legende}</figcaption>
+      </figure>
+    `).join('');
+
     const w = window.open('', '_blank');
     w.document.write(`
       <html><head><title>A3 - ${c.titre}</title>
@@ -684,6 +695,10 @@
         table{width:100%;border-collapse:collapse;margin-top:6px;}
         th,td{border:1px solid #e1e6ea;padding:6px 8px;font-size:0.85rem;text-align:left;}
         .grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+        .photos-grid{display:flex;flex-wrap:wrap;gap:12px;margin-top:8px;}
+        .photos-grid figure{width:150px;margin:0;}
+        .photos-grid img{width:100%;height:110px;object-fit:cover;border-radius:4px;border:1px solid #e1e6ea;display:block;}
+        .photos-grid figcaption{font-size:0.75rem;color:#5a6b78;margin-top:3px;text-align:center;}
       </style></head>
       <body>
         <h1>Rapport A3 - ${c.titre}</h1>
@@ -705,6 +720,7 @@
             <table><thead><tr><th>Indicateur</th><th>Avant</th><th>Apres</th><th>Gain</th></tr></thead><tbody>${indicsHtml || '<tr><td colspan=4>Pas encore mesure</td></tr>'}</tbody></table>
           </div>
         </div>
+        ${toutesLesPhotos.length ? `<h2>Photos</h2><div class="photos-grid">${photosHtml}</div>` : ''}
       </body></html>
     `);
     w.document.close();
