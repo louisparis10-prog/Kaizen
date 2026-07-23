@@ -26,6 +26,15 @@
     return t.content.firstChild;
   }
 
+  // Echappe les caracteres HTML sensibles avant d'injecter une valeur saisie par
+  // l'utilisateur (titre, probleme, nom d'action...) dans du HTML via innerHTML.
+  // Sans cela, un titre comme "<img src=x onerror=...>" executerait du code (XSS stocke).
+  function esc(v) {
+    return String(v == null ? '' : v).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+
   function show(viewId) {
     ['view-list', 'view-quiz', 'view-form', 'view-detail'].forEach(id => {
       document.getElementById(id).style.display = id === viewId ? 'block' : 'none';
@@ -54,8 +63,8 @@
     if (quizMode === 'start' && quizStartChantier) {
       contextWrap.style.display = 'block';
       contextWrap.innerHTML = `
-        <strong>${quizStartChantier.titre}</strong>
-        <p style="margin:6px 0 0">${quizStartChantier.probleme || 'Aucune description de probleme renseignee.'}</p>
+        <strong>${esc(quizStartChantier.titre)}</strong>
+        <p style="margin:6px 0 0">${esc(quizStartChantier.probleme || 'Aucune description de probleme renseignee.')}</p>
       `;
     } else {
       contextWrap.style.display = 'none';
@@ -203,7 +212,7 @@
       const list = el(`<div class="dash-retard-list"></div>`);
       d.actionsEnRetard.forEach(a => {
         const item = el(`<div class="dash-retard-item"></div>`);
-        item.innerHTML = `<strong>${a.echeance}</strong> - ${a.description} <span class="tool-tag">${a.chantier_titre}</span>`;
+        item.innerHTML = `<strong>${esc(a.echeance)}</strong> - ${esc(a.description)} <span class="tool-tag">${esc(a.chantier_titre)}</span>`;
         item.addEventListener('click', () => openDetail(a.chantier_id));
         list.appendChild(item);
       });
@@ -250,11 +259,11 @@
       const card = el(`
         <div class="chantier-card">
           <span class="badge ${c.statut}">${statutLabel(c.statut)}</span>
-          <h3>${c.titre}</h3>
-          <div class="meta">${c.perimetre || 'Perimetre non defini'} ${c.pilote ? '- Pilote : ' + c.pilote : ''}</div>
+          <h3>${esc(c.titre)}</h3>
+          <div class="meta">${esc(c.perimetre || 'Perimetre non defini')} ${c.pilote ? '- Pilote : ' + esc(c.pilote) : ''}</div>
           <div>${(c.outils || []).map(id => {
             const t = tools.find(tt => tt.id === id);
-            return t ? `<span class="tool-tag">${t.icon} ${t.name}</span>` : '';
+            return t ? `<span class="tool-tag">${t.icon} ${esc(t.name)}</span>` : '';
           }).join('')}</div>
         </div>
       `);
@@ -447,13 +456,13 @@
     photos.forEach(p => {
       const thumb = el(`
         <div class="photo-thumb">
-          <img src="data:${p.mime_type};base64,${p.data}" alt="${p.filename || 'photo'}">
+          <img src="data:${esc(p.mime_type)};base64,${esc(p.data)}" alt="${esc(p.filename || 'photo')}">
           <button type="button" class="photo-delete no-print" title="Supprimer">&times;</button>
         </div>
       `);
       thumb.querySelector('img').addEventListener('click', () => {
         const w = window.open();
-        w.document.write(`<img src="data:${p.mime_type};base64,${p.data}" style="max-width:100%">`);
+        w.document.write(`<img src="data:${esc(p.mime_type)};base64,${esc(p.data)}" style="max-width:100%">`);
       });
       thumb.querySelector('.photo-delete').addEventListener('click', async (e) => {
         e.stopPropagation();
@@ -468,7 +477,7 @@
     const wrap = document.getElementById('view-detail');
     const outilsBadges = (c.outils || []).map(id => {
       const t = tools.find(tt => tt.id === id);
-      return t ? `<span class="tool-tag">${t.icon} ${t.name}</span>` : '';
+      return t ? `<span class="tool-tag">${t.icon} ${esc(t.name)}</span>` : '';
     }).join('');
 
     wrap.innerHTML = '';
@@ -476,7 +485,7 @@
       <div>
         <div class="page-header">
           <button class="btn secondary no-print" id="btn-back">&larr; Retour aux chantiers</button>
-          <h1 style="margin-top:10px">${c.titre} <span class="badge ${c.statut}">${statutLabel(c.statut)}</span></h1>
+          <h1 style="margin-top:10px">${esc(c.titre)} <span class="badge ${c.statut}">${statutLabel(c.statut)}</span></h1>
         </div>
 
         <div class="section-card">
@@ -487,11 +496,11 @@
               <button class="btn danger small" id="btn-delete">Supprimer</button>
             </span>
           </h3>
-          <p><strong>Probleme :</strong> ${c.probleme || '-'}</p>
-          <p><strong>Perimetre :</strong> ${c.perimetre || '-'} &nbsp; | &nbsp; <strong>Pilote :</strong> ${c.pilote || '-'}</p>
-          <p><strong>Equipe :</strong> ${(c.equipe || []).join(', ') || '-'}</p>
-          <p><strong>Objectif :</strong> ${c.objectif || '-'}</p>
-          <p><strong>Periode :</strong> ${c.date_debut || '?'} &rarr; ${c.date_fin || '?'}</p>
+          <p><strong>Probleme :</strong> ${esc(c.probleme || '-')}</p>
+          <p><strong>Perimetre :</strong> ${esc(c.perimetre || '-')} &nbsp; | &nbsp; <strong>Pilote :</strong> ${esc(c.pilote || '-')}</p>
+          <p><strong>Equipe :</strong> ${(c.equipe || []).map(esc).join(', ') || '-'}</p>
+          <p><strong>Objectif :</strong> ${esc(c.objectif || '-')}</p>
+          <p><strong>Periode :</strong> ${esc(c.date_debut || '?')} &rarr; ${esc(c.date_fin || '?')}</p>
           <p><strong>Outils utilises :</strong> ${outilsBadges || 'Aucun'}</p>
           <div class="modal-actions no-print">
             <button class="btn orange" id="btn-a3">Generer la fiche A3</button>
@@ -572,15 +581,15 @@
       const retard = isEnRetard(a);
       const row = el(`
         <tr${retard ? ' style="background:#fdeaea"' : ''}>
-          <td>${a.description}
+          <td>${esc(a.description)}
             <div class="photo-grid photo-grid-small" id="action-photos-${a.id}"></div>
             <button type="button" class="btn secondary small no-print btn-add-action-photo">Photo</button>
           </td>
           <td><input type="text" class="no-print inline-edit" placeholder="Responsable" style="width:110px">
-            <span class="print-only">${a.responsable || '-'}</span></td>
+            <span class="print-only">${esc(a.responsable || '-')}</span></td>
           <td><input type="date" class="no-print inline-edit">
             ${retard ? '<span class="badge bloque">En retard</span>' : ''}
-            <span class="print-only">${a.echeance || '-'}</span></td>
+            <span class="print-only">${esc(a.echeance || '-')}</span></td>
           <td><select class="no-print">
             <option value="a_faire">A faire</option>
             <option value="en_cours">En cours</option>
@@ -647,9 +656,9 @@
       const gainHtml = gain === null ? '-' : `<span class="${gain >= 0 ? 'gain-positive' : 'gain-negative'}">${gain >= 0 ? '-' : '+'}${Math.abs(gain).toFixed(0)}%</span>`;
       const row = el(`
         <tr>
-          <td>${i.nom}</td>
-          <td>${i.valeur_avant ?? '-'} ${i.unite || ''}</td>
-          <td>${i.valeur_apres ?? '-'} ${i.unite || ''}</td>
+          <td>${esc(i.nom)}</td>
+          <td>${esc(i.valeur_avant ?? '-')} ${esc(i.unite || '')}</td>
+          <td>${esc(i.valeur_apres ?? '-')} ${esc(i.unite || '')}</td>
           <td>${gainHtml}</td>
           <td class="no-print"><button class="btn danger small">Suppr.</button></td>
         </tr>
@@ -690,11 +699,11 @@
 
   // ---------- Fiche A3 ----------
   function openA3(c) {
-    const outilsNames = (c.outils || []).map(id => tools.find(t => t.id === id)?.name).filter(Boolean).join(', ');
-    const actionsHtml = (c.actions || []).map(a => `<tr><td>${a.description}</td><td>${a.responsable || '-'}</td><td>${a.echeance || '-'}</td><td>${actionStatutLabel(a.statut)}</td></tr>`).join('');
+    const outilsNames = (c.outils || []).map(id => tools.find(t => t.id === id)?.name).filter(Boolean).map(esc).join(', ');
+    const actionsHtml = (c.actions || []).map(a => `<tr><td>${esc(a.description)}</td><td>${esc(a.responsable || '-')}</td><td>${esc(a.echeance || '-')}</td><td>${actionStatutLabel(a.statut)}</td></tr>`).join('');
     const indicsHtml = (c.indicateurs || []).map(i => {
       const gain = computeGain(i);
-      return `<tr><td>${i.nom}</td><td>${i.valeur_avant ?? '-'} ${i.unite || ''}</td><td>${i.valeur_apres ?? '-'} ${i.unite || ''}</td><td>${gain === null ? '-' : gain.toFixed(0) + '%'}</td></tr>`;
+      return `<tr><td>${esc(i.nom)}</td><td>${esc(i.valeur_avant ?? '-')} ${esc(i.unite || '')}</td><td>${esc(i.valeur_apres ?? '-')} ${esc(i.unite || '')}</td><td>${gain === null ? '-' : gain.toFixed(0) + '%'}</td></tr>`;
     }).join('');
 
     const toutesLesPhotos = [
@@ -703,14 +712,14 @@
     ];
     const photosHtml = toutesLesPhotos.map(p => `
       <figure>
-        <img src="data:${p.mime_type};base64,${p.data}" alt="${p.filename || 'photo'}">
-        <figcaption>${p.legende}</figcaption>
+        <img src="data:${esc(p.mime_type)};base64,${esc(p.data)}" alt="${esc(p.filename || 'photo')}">
+        <figcaption>${esc(p.legende)}</figcaption>
       </figure>
     `).join('');
 
     const w = window.open('', '_blank');
     w.document.write(`
-      <html><head><title>A3 - ${c.titre}</title>
+      <html><head><title>A3 - ${esc(c.titre)}</title>
       <style>
         body{font-family:Arial,sans-serif;padding:24px;color:#202a33;}
         h1{color:#10243e;font-size:1.3rem;border-bottom:3px solid #e8722c;padding-bottom:8px;}
@@ -724,15 +733,15 @@
         .photos-grid figcaption{font-size:0.75rem;color:#5a6b78;margin-top:3px;text-align:center;}
       </style></head>
       <body>
-        <h1>Rapport A3 - ${c.titre}</h1>
+        <h1>Rapport A3 - ${esc(c.titre)}</h1>
         <div class="grid">
           <div>
             <h2>Contexte / Probleme</h2>
-            <p>${c.probleme || '-'}</p>
-            <p><strong>Perimetre :</strong> ${c.perimetre || '-'}<br><strong>Pilote :</strong> ${c.pilote || '-'}<br><strong>Equipe :</strong> ${(c.equipe || []).join(', ') || '-'}</p>
+            <p>${esc(c.probleme || '-')}</p>
+            <p><strong>Perimetre :</strong> ${esc(c.perimetre || '-')}<br><strong>Pilote :</strong> ${esc(c.pilote || '-')}<br><strong>Equipe :</strong> ${(c.equipe || []).map(esc).join(', ') || '-'}</p>
             <h2>Objectif cible</h2>
-            <p>${c.objectif || '-'}</p>
-            <p><strong>Periode :</strong> ${c.date_debut || '?'} &rarr; ${c.date_fin || '?'}</p>
+            <p>${esc(c.objectif || '-')}</p>
+            <p><strong>Periode :</strong> ${esc(c.date_debut || '?')} &rarr; ${esc(c.date_fin || '?')}</p>
             <h2>Outils Kaizen mobilises</h2>
             <p>${outilsNames || '-'}</p>
           </div>
@@ -793,7 +802,7 @@
       <div class="modal-backdrop">
         <div class="modal">
           <button class="modal-close">&times;</button>
-          <h2>${tool.icon} Ajouter ${tool.name} a un chantier</h2>
+          <h2>${tool.icon} Ajouter ${esc(tool.name)} a un chantier</h2>
           <p>Choisis un chantier existant, ou cree un nouveau chantier avec cet outil.</p>
           <div id="chooser-list"></div>
           <div class="modal-actions">
@@ -807,7 +816,7 @@
 
     const list = backdrop.querySelector('#chooser-list');
     chantiers.forEach(c => {
-      const item = el(`<div class="chantier-card"><span class="badge ${c.statut}">${statutLabel(c.statut)}</span><h3>${c.titre}</h3></div>`);
+      const item = el(`<div class="chantier-card"><span class="badge ${c.statut}">${statutLabel(c.statut)}</span><h3>${esc(c.titre)}</h3></div>`);
       item.addEventListener('click', async () => {
         const outils = Array.from(new Set([...(c.outils || []), toolId]));
         const res = await fetch(`/api/chantiers/${c.id}`, {

@@ -78,12 +78,28 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Trie une liste d'ids d'outils selon l'ordre des phases (Identification -> ... -> Standardisation),
 // pour que les badges affiches et le plan d'action genere suivent toujours cet ordre chronologique.
+// Defensif : renvoie [] si l'entree n'est pas un tableau (evite un crash sur une entree malformee).
 function sortOutilsByPhase(outilIds) {
+  if (!Array.isArray(outilIds)) return [];
   return [...outilIds].sort((a, b) => {
     const orderA = PHASES_BY_ID[TOOLS_BY_ID[a]?.phase]?.order ?? 99;
     const orderB = PHASES_BY_ID[TOOLS_BY_ID[b]?.phase]?.order ?? 99;
     return orderA - orderB;
   });
+}
+
+// Renvoie true si le chantier existe, pour repondre 404 (plutot que 500) sur les
+// sous-ressources (actions, indicateurs, photos) rattachees a un chantier inexistant.
+function chantierExists(id) {
+  return Boolean(db.prepare('SELECT 1 FROM chantiers WHERE id = ?').get([id]));
+}
+
+// Convertit une valeur en nombre fini, ou null si ce n'en est pas un (empeche de
+// stocker du texte dans les colonnes numeriques d'indicateur, qui polluerait le tableau de bord).
+function toNumberOrNull(v) {
+  if (v === '' || v === null || v === undefined) return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
 }
 
 // Verifie qu'au moins un outil de chaque phase obligatoire (Identification, Analyse, Solution) est choisi.
@@ -172,6 +188,8 @@ app.post('/api/chantiers', (req, res) => {
     statut, eligible_kaizen, quiz_reponses
   } = req.body;
   if (!titre) return res.status(400).json({ error: 'titre requis' });
+  if (equipe !== undefined && !Array.isArray(equipe)) return res.status(400).json({ error: 'equipe doit etre une liste' });
+  if (outils !== undefined && !Array.isArray(outils)) return res.status(400).json({ error: 'outils doit etre une liste' });
 
   const outilsTries = sortOutilsByPhase(outils || []);
   // Un chantier "a traiter" sans aucun outil est un irritant brut, pas encore
@@ -225,6 +243,8 @@ app.put('/api/chantiers/:id', (req, res) => {
   } = req.body;
   const existing = db.prepare('SELECT * FROM chantiers WHERE id = ?').get([req.params.id]);
   if (!existing) return res.status(404).json({ error: 'Non trouve' });
+  if (equipe !== undefined && !Array.isArray(equipe)) return res.status(400).json({ error: 'equipe doit etre une liste' });
+  if (outils !== undefined && !Array.isArray(outils)) return res.status(400).json({ error: 'outils doit etre une liste' });
 
   // eligible_kaizen / quiz_reponses ne sont fournis que par le flux questionnaire ;
   // une simple edition du formulaire ne doit pas effacer une reponse deja enregistree.
@@ -283,6 +303,10 @@ app.get('/api/dashboard', (req, res) => {
 
 app.delete('/api/chantiers/:id', (req, res) => {
   transaction(() => {
+    // L'ordre compte : les photos, actions et indicateurs referencent le chantier
+    // via une cle etrangere (PRAGMA foreign_keys = ON). Il faut donc tout supprimer
+    // AVANT le chantier, sinon la suppression echoue (contrainte violee -> 500).
+    db.prepare('DELETE FROM photos WHERE chantier_id = ?').run([req.params.id]);
     db.prepare('DELETE FROM actions WHERE chantier_id = ?').run([req.params.id]);
     db.prepare('DELETE FROM indicateurs WHERE chantier_id = ?').run([req.params.id]);
     db.prepare('DELETE FROM chantiers WHERE id = ?').run([req.params.id]);
@@ -293,6 +317,7 @@ app.delete('/api/chantiers/:id', (req, res) => {
 // ---------- Actions (plan d'action) ----------
 app.post('/api/chantiers/:id/actions', (req, res) => {
   const { description, responsable, echeance, statut } = req.body;
+  if (!chantierExists(req.params.id)) return res.status(404).json({ error: 'Chantier non trouve' });
   if (!description) return res.status(400).json({ error: 'description requise' });
   db.prepare(`
     INSERT INTO actions (chantier_id, description, responsable, echeance, statut)
@@ -318,11 +343,12 @@ app.delete('/api/chantiers/:id/actions/:actionId', (req, res) => {
 // ---------- Indicateurs (avant / apres) ----------
 app.post('/api/chantiers/:id/indicateurs', (req, res) => {
   const { nom, unite, valeur_avant, valeur_apres } = req.body;
+  if (!chantierExists(req.params.id)) return res.status(404).json({ error: 'Chantier non trouve' });
   if (!nom) return res.status(400).json({ error: 'nom requis' });
   db.prepare(`
     INSERT INTO indicateurs (chantier_id, nom, unite, valeur_avant, valeur_apres)
     VALUES (?, ?, ?, ?, ?)
-  `).run([req.params.id, nom, unite || '', valeur_avant ?? null, valeur_apres ?? null]);
+  `).run([req.params.id, nom, unite || '', toNumberOrNull(valeur_avant), toNumberOrNull(valeur_apres)]);
   res.json(getChantierFull(req.params.id));
 });
 
@@ -331,7 +357,7 @@ app.put('/api/chantiers/:id/indicateurs/:indicId', (req, res) => {
   db.prepare(`
     UPDATE indicateurs SET nom = ?, unite = ?, valeur_avant = ?, valeur_apres = ?
     WHERE id = ? AND chantier_id = ?
-  `).run([nom, unite || '', valeur_avant ?? null, valeur_apres ?? null, req.params.indicId, req.params.id]);
+  `).run([nom, unite || '', toNumberOrNull(valeur_avant), toNumberOrNull(valeur_apres), req.params.indicId, req.params.id]);
   res.json(getChantierFull(req.params.id));
 });
 
@@ -343,6 +369,7 @@ app.delete('/api/chantiers/:id/indicateurs/:indicId', (req, res) => {
 // ---------- Photos (fiche chantier ou action specifique) ----------
 app.post('/api/chantiers/:id/photos', (req, res) => {
   const { filename, mime_type, data, action_id } = req.body;
+  if (!chantierExists(req.params.id)) return res.status(404).json({ error: 'Chantier non trouve' });
   if (!data) return res.status(400).json({ error: 'data (base64) requise' });
   db.prepare(`
     INSERT INTO photos (chantier_id, action_id, filename, mime_type, data)
