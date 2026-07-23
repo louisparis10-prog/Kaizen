@@ -174,11 +174,16 @@ app.post('/api/chantiers', (req, res) => {
   if (!titre) return res.status(400).json({ error: 'titre requis' });
 
   const outilsTries = sortOutilsByPhase(outils || []);
-  const manquantes = missingRequiredPhases(outilsTries);
-  if (manquantes.length) {
-    return res.status(400).json({
-      error: `Choisis au moins un outil de : ${manquantes.map(p => p.label).join(', ')}`
-    });
+  // Un chantier "a traiter" sans aucun outil est un irritant brut, pas encore
+  // qualifie (ex: import en masse avant le questionnaire d'eligibilite) : on ne
+  // bloque que si des outils sont deja choisis mais couvrent mal les 3 phases requises.
+  if (outilsTries.length) {
+    const manquantes = missingRequiredPhases(outilsTries);
+    if (manquantes.length) {
+      return res.status(400).json({
+        error: `Choisis au moins un outil de : ${manquantes.map(p => p.label).join(', ')}`
+      });
+    }
   }
 
   const chantier_id = transaction(() => {

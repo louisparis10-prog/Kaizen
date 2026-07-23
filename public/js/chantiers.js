@@ -50,6 +50,18 @@
   let quizStartChantier = null;
 
   function renderQuiz() {
+    const contextWrap = document.getElementById('quiz-context');
+    if (quizMode === 'start' && quizStartChantier) {
+      contextWrap.style.display = 'block';
+      contextWrap.innerHTML = `
+        <strong>${quizStartChantier.titre}</strong>
+        <p style="margin:6px 0 0">${quizStartChantier.probleme || 'Aucune description de probleme renseignee.'}</p>
+      `;
+    } else {
+      contextWrap.style.display = 'none';
+      contextWrap.innerHTML = '';
+    }
+
     const wrap = document.getElementById('quiz-questions');
     wrap.innerHTML = '';
     document.getElementById('quiz-result').style.display = 'none';
@@ -238,7 +250,10 @@
           }).join('')}</div>
         </div>
       `);
-      card.addEventListener('click', () => openDetail(c.id));
+      card.addEventListener('click', () => {
+        if (c.statut === 'a_traiter') startExistingChantierFlow(c);
+        else openDetail(c.id);
+      });
       wrap.appendChild(card);
     });
   }
