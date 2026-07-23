@@ -212,6 +212,30 @@ textarea { width: 100%; resize: vertical; }
 .form-grid input, .form-grid select, .form-grid textarea { width: 100%; }
 
 .tool-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.tool-phase-group + .tool-phase-group { border-top: 1px solid var(--border); padding-top: 14px; }
+.tool-phase-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.tool-phase-order {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--navy); color: #fff; font-size: 0.72rem; font-weight: 700; flex-shrink: 0;
+}
+.tool-phase-label { font-weight: 700; color: var(--navy); font-size: 0.9rem; }
+.tool-phase-required, .tool-phase-optional {
+  font-size: 0.7rem; text-transform: uppercase; font-weight: 700;
+  padding: 2px 8px; border-radius: 999px;
+}
+.tool-phase-required { background: #fdeaea; color: var(--red); }
+.tool-phase-optional { background: #eef1f4; color: var(--text-muted); }
+.tool-phase-chips {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 8px;

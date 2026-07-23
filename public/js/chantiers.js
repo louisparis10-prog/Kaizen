@@ -1,8 +1,24 @@
 (function () {
   let tools = [];
+  let phases = [];
   let chantiers = [];
   let editingId = null;
   let selectedOutils = [];
+
+  function toolPhaseOrder(toolId) {
+    const tool = tools.find(t => t.id === toolId);
+    const phase = tool && phases.find(p => p.id === tool.phase);
+    return phase ? phase.order : 99;
+  }
+
+  function sortOutilsByPhase(ids) {
+    return [...ids].sort((a, b) => toolPhaseOrder(a) - toolPhaseOrder(b));
+  }
+
+  function missingRequiredPhases(ids) {
+    const phasesPresentes = new Set(ids.map(id => tools.find(t => t.id === id)?.phase).filter(Boolean));
+    return phases.filter(p => p.required && !phasesPresentes.has(p.id));
+  }
 
   function el(html) {
     const t = document.createElement('template');
@@ -231,19 +247,38 @@
   function renderOutilsChecklist() {
     const wrap = document.getElementById('f-outils');
     wrap.innerHTML = '';
-    tools.forEach(t => {
-      const chip = el(`
-        <button type="button" class="tool-chip${selectedOutils.includes(t.id) ? ' selected' : ''}" data-id="${t.id}">
-          <span class="tool-chip-icon">${t.icon}</span>
-          <span class="tool-chip-name">${t.name}</span>
-        </button>
+    [...phases].sort((a, b) => a.order - b.order).forEach(phase => {
+      const toolsDePhase = tools.filter(t => t.phase === phase.id);
+      if (!toolsDePhase.length) return;
+
+      const section = el(`
+        <div class="tool-phase-group">
+          <div class="tool-phase-header">
+            <span class="tool-phase-order">${phase.order}</span>
+            <span class="tool-phase-label">${phase.label}</span>
+            ${phase.required ? '<span class="tool-phase-required">obligatoire</span>' : '<span class="tool-phase-optional">optionnel</span>'}
+          </div>
+          <div class="tool-phase-chips"></div>
+        </div>
       `);
-      chip.addEventListener('click', () => {
-        const active = chip.classList.toggle('selected');
-        if (active) selectedOutils.push(t.id);
-        else selectedOutils = selectedOutils.filter(id => id !== t.id);
+      const chipsWrap = section.querySelector('.tool-phase-chips');
+
+      toolsDePhase.forEach(t => {
+        const chip = el(`
+          <button type="button" class="tool-chip${selectedOutils.includes(t.id) ? ' selected' : ''}" data-id="${t.id}">
+            <span class="tool-chip-icon">${t.icon}</span>
+            <span class="tool-chip-name">${t.name}</span>
+          </button>
+        `);
+        chip.addEventListener('click', () => {
+          const active = chip.classList.toggle('selected');
+          if (active) selectedOutils.push(t.id);
+          else selectedOutils = selectedOutils.filter(id => id !== t.id);
+        });
+        chipsWrap.appendChild(chip);
       });
-      wrap.appendChild(chip);
+
+      wrap.appendChild(section);
     });
   }
 
@@ -282,11 +317,17 @@
       pilote: document.getElementById('f-pilote').value.trim(),
       equipe: document.getElementById('f-equipe').value.split(',').map(s => s.trim()).filter(Boolean),
       objectif: document.getElementById('f-objectif').value.trim(),
-      outils: selectedOutils,
+      outils: sortOutilsByPhase(selectedOutils),
       date_debut: document.getElementById('f-date-debut').value,
       date_fin: document.getElementById('f-date-fin').value
     };
     if (!payload.titre) { alert('Le titre est obligatoire.'); return; }
+
+    const manquantes = missingRequiredPhases(payload.outils);
+    if (manquantes.length) {
+      alert(`Choisis au moins un outil de : ${manquantes.map(p => p.label).join(', ')}.`);
+      return;
+    }
 
     if (!editingId && quizResult) {
       payload.eligible_kaizen = quizResult.eligible;
@@ -296,6 +337,11 @@
     const url = editingId ? `/api/chantiers/${editingId}` : '/api/chantiers';
     const method = editingId ? 'PUT' : 'POST';
     const res = await fetch(url, { method, headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      alert(err.error || "Erreur lors de l'enregistrement du chantier.");
+      return;
+    }
     const chantier = await res.json();
     quizResult = null;
     await loadChantiers();
@@ -667,8 +713,9 @@
 
   // ---------- Init ----------
   async function init() {
-    const [toolsRes] = await Promise.all([fetch('/api/tools')]);
+    const [toolsRes, phasesRes] = await Promise.all([fetch('/api/tools'), fetch('/api/phases')]);
     tools = await toolsRes.json();
+    phases = await phasesRes.json();
     await loadChantiers();
 
     document.getElementById('btn-new-chantier').addEventListener('click', () => startNewChantierFlow([]));

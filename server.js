@@ -1,7 +1,7 @@
 const express = require('express');
 const path = require('path');
 const { Database } = require('node-sqlite3-wasm');
-const { TOOLS, TOOLS_BY_ID } = require('./data/tools.js');
+const { TOOLS, TOOLS_BY_ID, PHASES, PHASES_BY_ID } = require('./data/tools.js');
 const leanExpert = require('./lib/leanExpert.js');
 
 const app = express();
@@ -76,6 +76,22 @@ db.exec(`
 app.use(express.json({ limit: '15mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Trie une liste d'ids d'outils selon l'ordre des phases (Identification -> ... -> Standardisation),
+// pour que les badges affiches et le plan d'action genere suivent toujours cet ordre chronologique.
+function sortOutilsByPhase(outilIds) {
+  return [...outilIds].sort((a, b) => {
+    const orderA = PHASES_BY_ID[TOOLS_BY_ID[a]?.phase]?.order ?? 99;
+    const orderB = PHASES_BY_ID[TOOLS_BY_ID[b]?.phase]?.order ?? 99;
+    return orderA - orderB;
+  });
+}
+
+// Verifie qu'au moins un outil de chaque phase obligatoire (Identification, Analyse, Solution) est choisi.
+function missingRequiredPhases(outilIds) {
+  const phasesPresentes = new Set(outilIds.map(id => TOOLS_BY_ID[id]?.phase).filter(Boolean));
+  return PHASES.filter(p => p.required && !phasesPresentes.has(p.id));
+}
+
 function transaction(fn) {
   db.exec('BEGIN');
   try {
@@ -109,6 +125,10 @@ function getChantierFull(id) {
 // ---------- Outils (bibliotheque Kaizen) ----------
 app.get('/api/tools', (req, res) => {
   res.json(TOOLS);
+});
+
+app.get('/api/phases', (req, res) => {
+  res.json(PHASES);
 });
 
 // ---------- Chat expert ----------
@@ -153,21 +173,30 @@ app.post('/api/chantiers', (req, res) => {
   } = req.body;
   if (!titre) return res.status(400).json({ error: 'titre requis' });
 
+  const outilsTries = sortOutilsByPhase(outils || []);
+  const manquantes = missingRequiredPhases(outilsTries);
+  if (manquantes.length) {
+    return res.status(400).json({
+      error: `Choisis au moins un outil de : ${manquantes.map(p => p.label).join(', ')}`
+    });
+  }
+
   const chantier_id = transaction(() => {
     const { lastInsertRowid } = db.prepare(`
       INSERT INTO chantiers (titre, probleme, perimetre, pilote, equipe, objectif, outils, date_debut, date_fin, statut, eligible_kaizen, quiz_reponses)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run([
       titre, probleme || '', perimetre || '', pilote || '',
-      JSON.stringify(equipe || []), objectif || '', JSON.stringify(outils || []),
+      JSON.stringify(equipe || []), objectif || '', JSON.stringify(outilsTries),
       date_debut || '', date_fin || '', statut || 'a_traiter',
       eligible_kaizen === undefined || eligible_kaizen === null ? null : (eligible_kaizen ? 1 : 0),
       quiz_reponses ? JSON.stringify(quiz_reponses) : null
     ]);
 
     // Pre-remplit le plan d'action avec les etapes types de chaque outil selectionne,
-    // pour transformer le choix d'un outil en demarrage concret du chantier.
-    (outils || []).forEach(outilId => {
+    // dans l'ordre des phases (Identification -> ... -> Standardisation) pour une
+    // liste d'actions chronologique.
+    outilsTries.forEach(outilId => {
       const tool = TOOLS_BY_ID[outilId];
       if (!tool) return;
       tool.steps.forEach(step => {
@@ -203,7 +232,7 @@ app.put('/api/chantiers/:id', (req, res) => {
     WHERE id = ?
   `).run([
     titre, probleme || '', perimetre || '', pilote || '',
-    JSON.stringify(equipe || []), objectif || '', JSON.stringify(outils || []),
+    JSON.stringify(equipe || []), objectif || '', JSON.stringify(sortOutilsByPhase(outils || [])),
     date_debut || '', date_fin || '', statut || 'en_cours', nextEligible, nextQuiz, req.params.id
   ]);
   res.json(getChantierFull(req.params.id));

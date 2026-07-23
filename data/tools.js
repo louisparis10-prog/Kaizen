@@ -1,12 +1,25 @@
 // Bibliotheque des outils Lean / Kaizen.
 // keywords: sert au moteur de chat local pour orienter vers le bon outil.
 
+// Les 5 phases d'un chantier Kaizen. Identification / Analyse / Solution sont
+// obligatoires (au moins 1 outil de chacune) pour creer un chantier ; Plan
+// d'action et Standardisation sont recommandees mais pas obligatoires.
+const PHASES = [
+  { id: 'identification', order: 1, label: 'Identification', required: true, description: "Reperer et cadrer le probleme sur le terrain." },
+  { id: 'analyse', order: 2, label: 'Analyse', required: true, description: "Comprendre les causes racines et quantifier le probleme." },
+  { id: 'solution', order: 3, label: 'Solution', required: true, description: "Choisir et mettre en oeuvre la solution." },
+  { id: 'plan-action', order: 4, label: "Plan d'action", required: false, description: "Planifier, piloter et suivre les actions." },
+  { id: 'standardisation', order: 5, label: 'Standardisation et capitalisation', required: false, description: "Ancrer le gain dans la duree et capitaliser l'experience." }
+];
+const PHASES_BY_ID = Object.fromEntries(PHASES.map(p => [p.id, p]));
+
 const TOOLS = [
   {
     id: '5s',
     name: '5S',
     icon: '🧹',
     category: 'Organisation',
+    phase: 'solution',
     summary: "Methode d'organisation du poste de travail en 5 etapes : Trier, Ranger, Nettoyer, Standardiser, Maintenir.",
     whenToUse: [
       "Poste de travail encombre, desordonne ou dangereux",
@@ -37,6 +50,7 @@ const TOOLS = [
     name: 'PDCA (Roue de Deming)',
     icon: '🔄',
     category: 'Pilotage',
+    phase: 'plan-action',
     summary: "Cycle d'amelioration continue en 4 phases : Plan, Do, Check, Act. Le fil conducteur de toute demarche Kaizen.",
     whenToUse: [
       "Pour structurer n'importe quelle demarche d'amelioration",
@@ -64,6 +78,7 @@ const TOOLS = [
     name: 'Diagramme d\'Ishikawa (5M)',
     icon: '🐟',
     category: 'Diagnostic',
+    phase: 'analyse',
     summary: "Diagramme causes-effet en arete de poisson, structure autour des 5M : Main d'oeuvre, Methode, Materiel, Matiere, Milieu.",
     whenToUse: [
       "Probleme dont les causes racines ne sont pas evidentes",
@@ -92,6 +107,7 @@ const TOOLS = [
     name: '5 Pourquoi',
     icon: '❓',
     category: 'Diagnostic',
+    phase: 'analyse',
     summary: "Technique qui consiste a demander 'Pourquoi ?' successivement (environ 5 fois) pour remonter jusqu'a la cause racine d'un probleme.",
     whenToUse: [
       "Probleme ponctuel ou simple a analyser rapidement",
@@ -120,6 +136,7 @@ const TOOLS = [
     name: 'Diagramme de Pareto',
     icon: '📊',
     category: 'Diagnostic',
+    phase: 'analyse',
     summary: "Outil de priorisation base sur la loi des 80/20 : 20% des causes generent 80% des effets. Classe les causes/defauts par frequence ou impact decroissant.",
     whenToUse: [
       "Trop de causes ou de defauts a traiter, besoin de prioriser",
@@ -148,6 +165,7 @@ const TOOLS = [
     name: 'QQOQCCP',
     icon: '📋',
     category: 'Diagnostic',
+    phase: 'identification',
     summary: "Grille de questionnement (Quoi, Qui, Ou, Quand, Comment, Combien, Pourquoi) pour cadrer un probleme de maniere exhaustive avant de chercher des solutions.",
     whenToUse: [
       "Debut d'analyse d'un probleme mal defini ou flou",
@@ -177,6 +195,7 @@ const TOOLS = [
     name: 'VSM (Value Stream Mapping)',
     icon: '🗺️',
     category: 'Diagnostic',
+    phase: 'analyse',
     summary: "Cartographie de la chaine de valeur : represente tous les flux physiques et d'information, du fournisseur au client, pour reperer les gaspillages.",
     whenToUse: [
       "Besoin d'une vision globale du flux (pas seulement un poste isole)",
@@ -205,6 +224,7 @@ const TOOLS = [
     name: 'Diagramme Spaghetti',
     icon: '🍝',
     category: 'Diagnostic',
+    phase: 'analyse',
     summary: "Trace sur un plan les deplacements reels d'un operateur, d'une piece ou d'un document pour visualiser les trajets inutiles.",
     whenToUse: [
       "Suspicion de deplacements excessifs (operateur, chariot, document)",
@@ -233,6 +253,7 @@ const TOOLS = [
     name: 'SMED',
     icon: '⏱️',
     category: 'Organisation',
+    phase: 'solution',
     summary: "Single Minute Exchange of Die : methode pour reduire drastiquement les temps de changement de serie/format/outillage.",
     whenToUse: [
       "Changements de serie ou de format longs",
@@ -261,6 +282,7 @@ const TOOLS = [
     name: 'Kanban',
     icon: '🗂️',
     category: 'Organisation',
+    phase: 'solution',
     summary: "Systeme visuel de pilotage des flux en tire (juste a temps), base sur des cartes ou signaux qui declenchent la production ou le reapprovisionnement.",
     whenToUse: [
       "Stocks intermediaires trop importants ou mal maitrises",
@@ -289,6 +311,7 @@ const TOOLS = [
     name: 'Poka-Yoke',
     icon: '🛡️',
     category: 'Qualite',
+    phase: 'solution',
     summary: "Systeme anti-erreur qui rend physiquement impossible ou immediatement detectable une erreur humaine, sans dependre de la vigilance de l'operateur.",
     whenToUse: [
       "Erreurs recurrentes liees a l'inattention ou a l'oubli",
@@ -317,6 +340,7 @@ const TOOLS = [
     name: 'Standard Work',
     icon: '📐',
     category: 'Organisation',
+    phase: 'standardisation',
     summary: "Description precise et partagee de la meilleure facon connue a un instant T de realiser une operation, servant de reference et de base d'amelioration.",
     whenToUse: [
       "Variabilite de performance ou de qualite selon l'operateur",
@@ -345,6 +369,7 @@ const TOOLS = [
     name: 'TPM (Maintenance Productive Totale)',
     icon: '🔧',
     category: 'Qualite',
+    phase: 'solution',
     summary: "Demarche visant a maximiser la disponibilite des equipements en impliquant les operateurs dans la maintenance de premier niveau (auto-maintenance).",
     whenToUse: [
       "Pannes frequentes ou imprevues sur un equipement",
@@ -373,6 +398,7 @@ const TOOLS = [
     name: 'Andon',
     icon: '🚨',
     category: 'Qualite',
+    phase: 'solution',
     summary: "Systeme d'alerte visuel et/ou sonore permettant a tout operateur de signaler immediatement un probleme et de declencher une reaction rapide.",
     whenToUse: [
       "Anomalies detectees mais signalees trop tard ou pas du tout",
@@ -401,6 +427,7 @@ const TOOLS = [
     name: 'Jidoka',
     icon: '🤖',
     category: 'Qualite',
+    phase: 'solution',
     summary: "Principe qui consiste a donner a la machine ou a l'operateur la capacite de detecter une anomalie et d'arreter automatiquement le processus pour ne jamais transmettre un defaut en aval.",
     whenToUse: [
       "Des defauts sont transmis au poste suivant ou jusqu'au client",
@@ -429,6 +456,7 @@ const TOOLS = [
     name: 'Heijunka (Lissage)',
     icon: '📈',
     category: 'Organisation',
+    phase: 'solution',
     summary: "Lissage de la production en volume et en variete pour eviter les a-coups (Mura) et produire regulierement selon la demande moyenne plutot que par gros lots.",
     whenToUse: [
       "Production tres irreguliere avec pics et creux importants",
@@ -457,6 +485,7 @@ const TOOLS = [
     name: 'Takt Time',
     icon: '⏲️',
     category: 'Organisation',
+    phase: 'analyse',
     summary: "Rythme de production necessaire pour repondre exactement a la demande client, calcule en divisant le temps d'ouverture disponible par la demande client sur la periode.",
     whenToUse: [
       "Besoin de dimensionner une ligne ou un poste par rapport a la demande reelle",
@@ -485,6 +514,7 @@ const TOOLS = [
     name: 'Rapport A3',
     icon: '📄',
     category: 'Pilotage',
+    phase: 'standardisation',
     summary: "Methode de resolution de probleme et de communication tenant sur une seule feuille A3, structurant la demarche PDCA de facon visuelle et synthetique.",
     whenToUse: [
       "Besoin de presenter un chantier Kaizen de facon synthetique a la hierarchie",
@@ -514,6 +544,7 @@ const TOOLS = [
     name: 'Gemba Walk',
     icon: '🚶',
     category: 'Pilotage',
+    phase: 'identification',
     summary: "Pratique consistant a se rendre sur le terrain (le Gemba, \"lieu reel\") pour observer directement le travail, dialoguer avec les operateurs et constater les faits.",
     whenToUse: [
       "Decision a prendre sur un probleme terrain sans etre alle constater soi-meme",
@@ -542,6 +573,7 @@ const TOOLS = [
     name: 'Kata Kaizen',
     icon: '🥋',
     category: 'Pilotage',
+    phase: 'plan-action',
     summary: "Routine quotidienne d'amelioration continue structuree : viser un etat cible, comprendre l'etat actuel, avancer par petits pas experimentaux (PDCA a haute frequence).",
     whenToUse: [
       "Volonte d'ancrer une culture d'amelioration continue durable, pas seulement des chantiers ponctuels",
@@ -570,6 +602,7 @@ const TOOLS = [
     name: 'Brainstorming & Vote pondere',
     icon: '💡',
     category: 'Pilotage',
+    phase: 'solution',
     summary: "Technique de production collective d'idees suivie d'une methode de priorisation par vote pondere entre les participants d'un chantier Kaizen.",
     whenToUse: [
       "Recherche de causes ou de solutions en groupe pluridisciplinaire",
@@ -598,6 +631,7 @@ const TOOLS = [
     name: 'Matrice de decision',
     icon: '⚖️',
     category: 'Pilotage',
+    phase: 'solution',
     summary: "Outil de choix multicritere qui compare plusieurs solutions face a des criteres ponderes, pour objectiver une decision plutot que trancher a l'instinct.",
     whenToUse: [
       "Plusieurs solutions candidates apres un brainstorming",
@@ -626,6 +660,7 @@ const TOOLS = [
     name: 'ADKAR',
     icon: '🧭',
     category: 'Gestion de projet',
+    phase: 'standardisation',
     summary: "Modele de conduite du changement en 5 etapes individuelles (Awareness, Desire, Knowledge, Ability, Reinforcement) pour que chacun adopte durablement le changement issu d'un chantier Kaizen.",
     whenToUse: [
       "Un chantier Kaizen change durablement une facon de travailler",
@@ -655,6 +690,7 @@ const TOOLS = [
     name: 'DMAIC',
     icon: '🎯',
     category: 'Pilotage',
+    phase: 'analyse',
     summary: "Demarche structuree Six Sigma en 5 phases (Define, Measure, Analyze, Improve, Control) pour resoudre un probleme complexe avec rigueur statistique, complementaire du PDCA.",
     whenToUse: [
       "Probleme complexe avec plusieurs causes potentielles et des donnees disponibles",
@@ -683,6 +719,7 @@ const TOOLS = [
     name: 'SIPOC',
     icon: '🔗',
     category: 'Diagnostic',
+    phase: 'identification',
     summary: "Cartographie synthetique d'un processus en 5 colonnes (Suppliers, Inputs, Process, Outputs, Customers) pour en cadrer le perimetre avant une analyse plus fine (VSM, DMAIC...).",
     whenToUse: [
       "Besoin de cadrer un processus avant de le cartographier en detail",
@@ -711,6 +748,7 @@ const TOOLS = [
     name: 'Matrice RACI',
     icon: '🗒️',
     category: 'Gestion de projet',
+    phase: 'plan-action',
     summary: "Matrice qui clarifie les roles de chacun sur un projet ou un chantier : Responsable (fait), Accountable (rend compte), Consulte, Informe.",
     whenToUse: [
       "Chantier ou projet avec plusieurs intervenants et des roles flous",
@@ -739,6 +777,7 @@ const TOOLS = [
     name: 'Diagramme de Gantt',
     icon: '📅',
     category: 'Gestion de projet',
+    phase: 'plan-action',
     summary: "Planning visuel qui represente les taches d'un chantier dans le temps, avec leurs dependances, pour piloter les delais d'un projet d'amelioration.",
     whenToUse: [
       "Chantier avec plusieurs actions dependantes les unes des autres",
@@ -766,6 +805,7 @@ const TOOLS = [
     name: 'AMDEC (FMEA)',
     icon: '⚠️',
     category: 'Qualite',
+    phase: 'analyse',
     summary: "Analyse des Modes de Defaillance, de leurs Effets et de leur Criticite : methode preventive qui identifie et hierarchise les risques d'un produit ou d'un processus avant qu'ils ne surviennent.",
     whenToUse: [
       "Conception d'un nouveau produit, processus ou equipement",
@@ -794,6 +834,7 @@ const TOOLS = [
     name: 'Les 7 Gaspillages (Muda)',
     icon: '🗑️',
     category: 'Diagnostic',
+    phase: 'identification',
     summary: "Grille de lecture qui classe tout gaspillage observe sur le terrain en 7 familles (Muda), pour reperer systematiquement ce qui ne cree pas de valeur pour le client.",
     whenToUse: [
       "Premiere observation d'un poste ou d'une ligne avant de choisir un outil Kaizen",
@@ -822,6 +863,7 @@ const TOOLS = [
     name: 'Hoshin Kanri (Matrice X)',
     icon: '🧩',
     category: 'Pilotage',
+    phase: 'identification',
     summary: "Methode de deploiement de la strategie qui relie les objectifs annuels de la direction aux chantiers Kaizen concrets menes sur le terrain, via une matrice de coherence (Matrice X).",
     whenToUse: [
       "Besoin de relier les chantiers Kaizen locaux a la strategie de l'entreprise",
@@ -849,6 +891,7 @@ const TOOLS = [
     name: 'Analyse SWOT (FFOM)',
     icon: '🧱',
     category: 'Pilotage',
+    phase: 'identification',
     summary: "Grille qui croise Forces et Faiblesses internes avec Opportunites et Menaces externes, pour cadrer une reflexion strategique avant de lancer une demarche d'amelioration a grande echelle.",
     whenToUse: [
       "Lancement d'un programme Kaizen a l'echelle d'un site ou d'un service",
@@ -876,6 +919,7 @@ const TOOLS = [
     name: 'Histogramme',
     icon: '📶',
     category: 'Diagnostic',
+    phase: 'analyse',
     summary: "Representation graphique de la distribution d'une donnee mesuree, pour visualiser la dispersion, la tendance centrale et detecter des anomalies de process.",
     whenToUse: [
       "Donnees chiffrees continues disponibles (dimensions, temps de cycle, poids...)",
@@ -903,6 +947,7 @@ const TOOLS = [
     name: 'Diagramme de dispersion',
     icon: '🔬',
     category: 'Diagnostic',
+    phase: 'analyse',
     summary: "Nuage de points qui teste visuellement une correlation potentielle entre deux variables (ex : une cause suspectee et un defaut), avant de conclure a un lien de cause a effet.",
     whenToUse: [
       "Hypothese de lien entre une cause potentielle et un effet mesurable",
@@ -930,6 +975,7 @@ const TOOLS = [
     name: 'Carte de controle (MSP)',
     icon: '📉',
     category: 'Qualite',
+    phase: 'standardisation',
     summary: "Suivi dans le temps d'une caracteristique mesuree avec des limites de controle statistiques, pour distinguer la variabilite normale d'un process d'une derive reelle a corriger.",
     whenToUse: [
       "Process repetitif dont il faut surveiller la stabilite dans la duree",
@@ -957,6 +1003,7 @@ const TOOLS = [
     name: 'Capabilite process (Cp/Cpk)',
     icon: '📏',
     category: 'Qualite',
+    phase: 'analyse',
     summary: "Indicateur statistique qui compare la variabilite reelle d'un process aux tolerances specifiees, pour juger si le process est capable de produire durablement dans les specifications.",
     whenToUse: [
       "Verifier qu'un process de production est capable de tenir la tolerance client",
@@ -984,6 +1031,7 @@ const TOOLS = [
     name: 'Charte de projet',
     icon: '📃',
     category: 'Gestion de projet',
+    phase: 'identification',
     summary: "Document de cadrage initial d'un projet ou chantier qui formalise son objectif, son perimetre, ses parties prenantes et ses contraintes avant le lancement operationnel.",
     whenToUse: [
       "Lancement officiel d'un chantier ou projet d'amelioration important",
@@ -1011,6 +1059,7 @@ const TOOLS = [
     name: 'Matrice des risques projet',
     icon: '🧯',
     category: 'Gestion de projet',
+    phase: 'plan-action',
     summary: "Grille qui identifie et hierarchise les risques pouvant compromettre un chantier ou un projet, en croisant leur probabilite d'occurrence et leur impact potentiel.",
     whenToUse: [
       "Lancement d'un chantier ou projet avec des enjeux ou une duree significative",
@@ -1038,6 +1087,7 @@ const TOOLS = [
     name: 'Flux unitaire (One-Piece-Flow)',
     icon: '➡️',
     category: 'Organisation',
+    phase: 'solution',
     summary: "Principe qui consiste a faire circuler les pieces une par une (ou par tres petits lots) entre les postes, plutot que par gros lots, pour reduire drastiquement le lead time et les stocks intermediaires.",
     whenToUse: [
       "Gros lots qui generent des stocks intermediaires importants entre postes",
@@ -1065,6 +1115,7 @@ const TOOLS = [
     name: 'Obeya (Salle de pilotage)',
     icon: '🏫',
     category: 'Pilotage',
+    phase: 'plan-action',
     summary: "Salle de management visuel dediee ou l'equipe projet ou chantier affiche ses objectifs, indicateurs et plans d'action, pour piloter en un seul lieu et favoriser la coordination rapide.",
     whenToUse: [
       "Projet ou chantier avec plusieurs equipes a coordonner",
@@ -1092,6 +1143,7 @@ const TOOLS = [
     name: 'WBS (Structure de decoupage projet)',
     icon: '🌳',
     category: 'Gestion de projet',
+    phase: 'plan-action',
     summary: "Decomposition hierarchique d'un projet en lots de travail plus petits et gerables, pour s'assurer que rien n'est oublie avant de planifier et d'affecter les ressources.",
     whenToUse: [
       "Projet ou chantier complexe avec de nombreuses taches a organiser",
@@ -1119,6 +1171,7 @@ const TOOLS = [
     name: 'Feuille de releve',
     icon: '📝',
     category: 'Diagnostic',
+    phase: 'analyse',
     summary: "Support simple et standardise de collecte de donnees terrain (comptage, pointage) qui garantit une saisie fiable et exploitable avant toute analyse (Pareto, Histogramme...).",
     whenToUse: [
       "Besoin de donnees fiables avant de lancer un Pareto ou un Histogramme",
@@ -1146,6 +1199,7 @@ const TOOLS = [
     name: 'Retour d\'experience (REX)',
     icon: '📚',
     category: 'Pilotage',
+    phase: 'standardisation',
     summary: "Bilan structure realise a la fin d'un chantier Kaizen pour capitaliser ce qui a bien ou mal fonctionne, et ne pas repeter les memes erreurs sur les chantiers suivants.",
     whenToUse: [
       "Cloture d'un chantier Kaizen ou d'un projet",
@@ -1172,4 +1226,4 @@ const TOOLS = [
 
 const TOOLS_BY_ID = Object.fromEntries(TOOLS.map(t => [t.id, t]));
 
-module.exports = { TOOLS, TOOLS_BY_ID };
+module.exports = { TOOLS, TOOLS_BY_ID, PHASES, PHASES_BY_ID };

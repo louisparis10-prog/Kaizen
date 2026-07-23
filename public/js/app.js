@@ -1,6 +1,7 @@
 (function () {
   let tools = [];
-  let activeCategory = 'Toutes';
+  let phases = [];
+  let activePhase = 'toutes';
 
   function el(html) {
     const t = document.createElement('template');
@@ -8,18 +9,26 @@
     return t.content.firstChild;
   }
 
-  function categories() {
-    return ['Toutes', ...new Set(tools.map(t => t.category))];
+  function phaseLabel(phaseId) {
+    const phase = phases.find(p => p.id === phaseId);
+    return phase ? phase.label : phaseId;
+  }
+
+  function orderedPhases() {
+    return [...phases].sort((a, b) => a.order - b.order);
   }
 
   function renderFilters() {
     const wrap = document.getElementById('category-filters');
     wrap.innerHTML = '';
-    categories().forEach(cat => {
-      const chip = el(`<button class="chip-filter${cat === activeCategory ? ' active' : ''}"></button>`);
-      chip.textContent = cat;
+    const allChip = el(`<button class="chip-filter${activePhase === 'toutes' ? ' active' : ''}">Toutes</button>`);
+    allChip.addEventListener('click', () => { activePhase = 'toutes'; renderFilters(); renderGrid(); });
+    wrap.appendChild(allChip);
+
+    orderedPhases().forEach(phase => {
+      const chip = el(`<button class="chip-filter${phase.id === activePhase ? ' active' : ''}">${phase.order}. ${phase.label}</button>`);
       chip.addEventListener('click', () => {
-        activeCategory = cat;
+        activePhase = phase.id;
         renderFilters();
         renderGrid();
       });
@@ -32,13 +41,13 @@
     const query = (document.getElementById('search').value || '').toLowerCase();
     grid.innerHTML = '';
     tools
-      .filter(t => activeCategory === 'Toutes' || t.category === activeCategory)
+      .filter(t => activePhase === 'toutes' || t.phase === activePhase)
       .filter(t => !query || t.name.toLowerCase().includes(query) || t.summary.toLowerCase().includes(query) || t.keywords.some(k => k.includes(query)))
       .forEach(tool => {
         const card = el(`
           <div class="tool-card" id="tool-${tool.id}">
             <div class="icon">${tool.icon}</div>
-            <span class="category">${tool.category}</span>
+            <span class="category">${phaseLabel(tool.phase)}</span>
             <h3>${tool.name}</h3>
             <p>${tool.summary}</p>
           </div>
@@ -55,7 +64,7 @@
       <div class="modal-backdrop">
         <div class="modal">
           <button class="modal-close">&times;</button>
-          <span class="category">${tool.category}</span>
+          <span class="category">${phaseLabel(tool.phase)}</span>
           <h2>${tool.icon} ${tool.name}</h2>
           <p>${tool.summary}</p>
 
@@ -115,8 +124,9 @@
   }
 
   async function init() {
-    const res = await fetch('/api/tools');
-    tools = await res.json();
+    const [toolsRes, phasesRes] = await Promise.all([fetch('/api/tools'), fetch('/api/phases')]);
+    tools = await toolsRes.json();
+    phases = await phasesRes.json();
     renderFilters();
     renderGrid();
     document.getElementById('search').addEventListener('input', renderGrid);
