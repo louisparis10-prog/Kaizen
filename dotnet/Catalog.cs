@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Text;
 using System.Text.Json;
 
 namespace KaizenApp;
@@ -16,20 +18,30 @@ public sealed class Catalog
     private readonly Dictionary<string, int> _phaseOrder = new();     // phaseId -> ordre
     private readonly Dictionary<string, string> _phaseLabel = new();  // phaseId -> libelle
     private readonly List<string> _requiredPhases = new();            // phaseId obligatoires
+    private readonly List<(string Id, string NormName)> _toolMatch = new(); // pour repErer les outils cites dans un texte
+
+    public IReadOnlyList<string> ToolNames { get; }
 
     public Catalog(string dataDir)
     {
         ToolsJson = File.ReadAllText(Path.Combine(dataDir, "tools.json"));
         PhasesJson = File.ReadAllText(Path.Combine(dataDir, "phases.json"));
 
+        var names = new List<string>();
         using var tools = JsonDocument.Parse(ToolsJson);
         foreach (var t in tools.RootElement.EnumerateArray())
         {
             var id = t.GetProperty("id").GetString()!;
-            _toolName[id] = t.GetProperty("name").GetString() ?? id;
+            var name = t.GetProperty("name").GetString() ?? id;
+            _toolName[id] = name;
+            names.Add(name);
+            // Nom simplifie (sans la parenthese finale) pour matcher dans une reponse en langage naturel.
+            var baseName = name.Split('(')[0].Trim();
+            _toolMatch.Add((id, Normalize(baseName)));
             if (t.TryGetProperty("phase", out var ph) && ph.ValueKind == JsonValueKind.String)
                 _toolPhase[id] = ph.GetString()!;
         }
+        ToolNames = names;
 
         using var phases = JsonDocument.Parse(PhasesJson);
         foreach (var p in phases.RootElement.EnumerateArray())
@@ -67,4 +79,32 @@ public sealed class Catalog
     }
 
     public string? ToolName(string id) => _toolName.TryGetValue(id, out var n) ? n : null;
+
+    // Repere jusqu'a `max` outils dont le nom apparait dans un texte (reponse de l'IA),
+    // pour proposer des liens cliquables vers leur fiche. Best-effort, insensible aux accents.
+    public List<string> FindToolIdsInText(string text, int max = 3)
+    {
+        var norm = Normalize(text);
+        var found = new List<string>();
+        foreach (var (id, normName) in _toolMatch)
+        {
+            if (normName.Length >= 2 && norm.Contains(normName) && !found.Contains(id))
+            {
+                found.Add(id);
+                if (found.Count >= max) break;
+            }
+        }
+        return found;
+    }
+
+    // Minuscule + suppression des accents, pour une comparaison tolerante.
+    private static string Normalize(string s)
+    {
+        var decomposed = (s ?? "").ToLowerInvariant().Normalize(NormalizationForm.FormD);
+        var sb = new StringBuilder(decomposed.Length);
+        foreach (var c in decomposed)
+            if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+                sb.Append(c);
+        return sb.ToString();
+    }
 }

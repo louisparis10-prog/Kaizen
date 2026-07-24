@@ -51,9 +51,19 @@ touchant `dotnet/`. C'est la validation de compilation (aucun SDK requis en loca
 5. Le schéma est créé automatiquement au premier démarrage (`schema.sql` idempotent) —
    contrairement à Render, **les données ne sont pas effacées** aux redéploiements.
 
+## Chat expert (IA)
+
+Le chat (`Chat.cs`, endpoints `/api/chat` et `/api/chat/status`) est **100 % IA**,
+via l'API Claude (Anthropic) appelée en HTTP direct. Configuration par variables
+d'environnement (App Settings Azure), jamais en dur :
+
+- `ANTHROPIC_API_KEY` — la clé API (obligatoire pour activer le chat)
+- `ANTHROPIC_MODEL` — le modèle Claude (optionnel ; défaut `claude-opus-4-8`).
+  L'IT peut choisir un modèle moins coûteux (ex. `claude-haiku-4-5`, `claude-sonnet-5`).
+
+Sans clé configurée, le chat renvoie un message clair invitant à se tourner vers
+la bibliothèque d'outils (l'appli reste pleinement fonctionnelle).
+
 ## Reste à faire
 
-- Portage du chat expert (`../lib/leanExpert.js`) : moteur local par mots-clés +
-  appels LLM (Anthropic/OpenAI/Gemini/Groq). Aujourd'hui `/api/chat` renvoie un
-  message d'attente ; `/api/chat/status` est fonctionnel.
 - Étape de publication incluant `public/` dans l'artefact pour Azure.

@@ -23,6 +23,9 @@ var catalog = new Catalog(dataDir);
 var store = new Store(connStr, catalog);
 store.InitDb(Path.Combine(dataDir, "schema.sql"));
 
+var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(60) };
+var chat = new Chat(catalog, httpClient);
+
 var app = builder.Build();
 
 // Sert le frontend statique (le meme dossier public/ que l'app Node) via le meme service.
@@ -46,12 +49,8 @@ if (Directory.Exists(publicDir))
 app.MapGet("/api/tools", () => Results.Content(catalog.ToolsJson, "application/json; charset=utf-8"));
 app.MapGet("/api/phases", () => Results.Content(catalog.PhasesJson, "application/json; charset=utf-8"));
 
-// ---------- Chat expert (portage complet en cours — voir Chat.cs a venir) ----------
-app.MapGet("/api/chat/status", () => Results.Json(new
-{
-    aiAvailable = new[] { "ANTHROPIC_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY", "GROQ_API_KEY" }
-        .Any(k => !string.IsNullOrEmpty(Environment.GetEnvironmentVariable(k)))
-}));
+// ---------- Chat expert Lean (100 % IA, Claude / Anthropic) ----------
+app.MapGet("/api/chat/status", () => Results.Json(new { aiAvailable = Chat.AiAvailable }));
 
 app.MapPost("/api/chat", async (HttpRequest req) =>
 {
@@ -59,12 +58,15 @@ app.MapPost("/api/chat", async (HttpRequest req) =>
     var message = Str(body, "message");
     if (string.IsNullOrWhiteSpace(message))
         return Results.Json(new { error = "message requis" }, statusCode: 400);
-    return Results.Json(new
+    try
     {
-        text = "Le chat expert est en cours de portage vers la nouvelle version .NET et sera disponible tres prochainement.",
-        tools = Array.Empty<string>(),
-        source = "stub"
-    });
+        return Results.Json(await chat.ReplyAsync(message!));
+    }
+    catch (Exception ex)
+    {
+        Console.Error.WriteLine(ex);
+        return Results.Json(new { error = ex.Message }, statusCode: 500);
+    }
 });
 
 // ---------- Chantiers ----------
