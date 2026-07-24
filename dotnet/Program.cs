@@ -211,10 +211,11 @@ app.MapDelete("/api/chantiers/{id:int}/photos/{photoId:int}", (int id, int photo
 // Fallback SPA : toute route non-API renvoie index.html.
 if (Directory.Exists(publicDir))
 {
+    var indexPath = Path.Combine(publicDir, "index.html");
     app.MapFallback(async (HttpContext ctx) =>
     {
         ctx.Response.ContentType = "text/html; charset=utf-8";
-        await ctx.Response.SendFileAsync(new PhysicalFileInfo(new FileInfo(Path.Combine(publicDir, "index.html"))));
+        await ctx.Response.SendFileAsync(indexPath);
     });
 }
 
@@ -228,9 +229,8 @@ partial class Program
     {
         try
         {
-            // ReadFromJsonAsync<JsonElement> renvoie un JsonElement? : corps vide -> Undefined (traite comme "aucun champ").
-            var el = await req.ReadFromJsonAsync<JsonElement>();
-            return el ?? default;
+            // Corps vide -> JsonException (capturee ci-dessous) ; sinon un JsonElement exploitable.
+            return await req.ReadFromJsonAsync<JsonElement>();
         }
         catch (JsonException)
         {
