@@ -23,6 +23,7 @@ public sealed class Chat
             "- Tu ne reponds QUE aux questions en lien avec le Lean management, l'amelioration continue et les chantiers Kaizen (organisation du travail, qualite, production, flux, maintenance, gaspillages).\n" +
             "- Si la question sort de ce cadre (sujet personnel, general, autre domaine), decline poliment en une phrase et recentre sur le Lean.\n" +
             "- Sois concret et bref (environ 5-8 lignes maximum).\n" +
+            "- Reponds en texte simple, sans mise en forme Markdown (pas d'asterisques ** ni de #) : l'interface affiche le texte brut.\n" +
             "- Oriente TOUJOURS vers un ou plusieurs outils precis parmi cette liste : " + string.Join(", ", _catalog.ToolNames) + ".\n" +
             "- Explique en 2-3 phrases pourquoi cet outil est adapte au cas decrit et donne une premiere etape concrete pour s'y mettre.\n" +
             "- Termine si pertinent par une question pour approfondir le diagnostic (ex: as-tu des donnees chiffrees ? depuis quand ce probleme existe-t-il ?).";
