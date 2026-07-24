@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>KaizenApp</RootNamespace>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.2" />
+  </ItemGroup>
+
+  <!-- Les fichiers de donnees (catalogue outils + schema SQL) sont copies a cote du binaire.
+       On retire d'abord toute classification par defaut pour eviter les doublons, puis on
+       les inclut explicitement en None avec copie vers le dossier de sortie. -->
+  <ItemGroup>
+    <Content Remove="Data\**\*" />
+    <None Remove="Data\**\*" />
+    <None Include="Data\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>
