@@ -785,8 +785,12 @@
         .photos-grid figure{width:150px;margin:0;}
         .photos-grid img{width:100%;height:110px;object-fit:cover;border-radius:4px;border:1px solid #e1e6ea;display:block;}
         .photos-grid figcaption{font-size:0.75rem;color:#5a6b78;margin-top:3px;text-align:center;}
+        .barre-print{margin-bottom:16px;}
+        .btn-print{background:#e8722c;color:#fff;border:none;padding:9px 18px;border-radius:6px;font-size:0.9rem;cursor:pointer;}
+        @media print{.no-print{display:none;}}
       </style></head>
       <body>
+        <div class="barre-print no-print"><button class="btn-print" onclick="window.print()">Imprimer / Enregistrer en PDF</button></div>
         <h1>Rapport A3 - ${esc(c.titre)}</h1>
         <div class="grid">
           <div>
@@ -807,10 +811,13 @@
           </div>
         </div>
         ${toutesLesPhotos.length ? `<h2>Photos</h2><div class="photos-grid">${photosHtml}</div>` : ''}
+        <script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>
       </body></html>
     `);
+    // L'impression est declenchee DANS l'onglet A3 (script ci-dessus), pas depuis
+    // l'application : sinon window.print() bloque le fil principal et fige l'app
+    // tant que la boite d'impression n'est pas fermee.
     w.document.close();
-    w.print();
   }
 
   // ---------- Init ----------

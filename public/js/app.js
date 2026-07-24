@@ -109,15 +109,19 @@
         <style>
           body{font-family:Arial,sans-serif;padding:30px;color:#202a33;}
           h1{color:#10243e;} li{margin-bottom:8px;}
+          .btn-print{background:#e8722c;color:#fff;border:none;padding:9px 18px;border-radius:6px;font-size:0.9rem;cursor:pointer;margin-bottom:16px;}
+          @media print{.no-print{display:none;}}
         </style></head>
         <body>
+          <button class="btn-print no-print" onclick="window.print()">Imprimer / Enregistrer en PDF</button>
           <h1>${tool.icon} ${tool.name} - Memo Kaizen</h1>
           <p>${tool.summary}</p>
           <ul>${tool.memo.map(x => `<li>${x}</li>`).join('')}</ul>
+          <script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>
         </body></html>
       `);
+      // Impression declenchee dans l'onglet du memo (pas depuis l'app) pour ne pas figer la page.
       w.document.close();
-      w.print();
     });
 
     root.appendChild(backdrop);
