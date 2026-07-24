@@ -33,7 +33,9 @@
     `));
 
     document.getElementById('kaizen-chat-toggle').addEventListener('click', () => {
-      document.getElementById('kaizen-chat-panel').classList.toggle('open');
+      const panel = document.getElementById('kaizen-chat-panel');
+      if (panel.classList.contains('open')) closeChat();
+      else openChat();
     });
 
     document.getElementById('kaizen-chat-send').addEventListener('click', sendMessage);
@@ -42,6 +44,25 @@
     });
 
     addBotMessage("Bonjour, je suis l'expert Lean. Decris-moi un probleme terrain (qualite, delai, panne, organisation, changement de serie...) et je t'orienterai vers le ou les outils Kaizen adaptes.");
+  }
+
+  // Ferme le chat si on clique en dehors du panneau (et pas sur la bulle).
+  function outsideClick(e) {
+    const panel = document.getElementById('kaizen-chat-panel');
+    const toggle = document.getElementById('kaizen-chat-toggle');
+    if (panel.contains(e.target) || toggle.contains(e.target)) return;
+    closeChat();
+  }
+
+  function openChat() {
+    document.getElementById('kaizen-chat-panel').classList.add('open');
+    // Attache le listener au tour suivant pour ne pas capter le clic d'ouverture lui-meme.
+    setTimeout(() => document.addEventListener('click', outsideClick), 0);
+  }
+
+  function closeChat() {
+    document.getElementById('kaizen-chat-panel').classList.remove('open');
+    document.removeEventListener('click', outsideClick);
   }
 
   function scrollToBottom() {
@@ -106,7 +127,7 @@
   }
 
   window.prefillKaizenChat = function (text) {
-    document.getElementById('kaizen-chat-panel').classList.add('open');
+    openChat();
     document.getElementById('kaizen-chat-input').value = text;
     document.getElementById('kaizen-chat-input').focus();
   };
