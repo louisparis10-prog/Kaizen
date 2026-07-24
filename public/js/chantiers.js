@@ -35,6 +35,54 @@
     }[c]));
   }
 
+  // Message non bloquant (remplace les alert() natifs, qui figent la page).
+  function toast(message, type) {
+    let root = document.getElementById('toast-root');
+    if (!root) {
+      root = document.createElement('div');
+      root.id = 'toast-root';
+      document.body.appendChild(root);
+    }
+    const t = el(`<div class="toast${type === 'error' ? ' toast-error' : ''}"></div>`);
+    t.textContent = message;
+    root.appendChild(t);
+    setTimeout(() => { t.classList.add('toast-hide'); setTimeout(() => t.remove(), 300); }, 3500);
+  }
+
+  // Redimensionne et recompresse une image cote client avant l'envoi.
+  // Evite les echecs sur les grosses photos (limite serveur) et allege fortement
+  // le stockage et tous les chargements ulterieurs. Les fichiers non-image passent tels quels.
+  function readPhoto(file, maxSize, quality) {
+    return new Promise((resolve, reject) => {
+      if (!file.type || !file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = () => resolve({ base64: reader.result.split(',')[1], mime: file.type || '', name: file.name || 'fichier' });
+        reader.onerror = () => reject(new Error('Lecture impossible'));
+        reader.readAsDataURL(file);
+        return;
+      }
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        let w = img.naturalWidth, h = img.naturalHeight;
+        if (Math.max(w, h) > maxSize) {
+          const scale = maxSize / Math.max(w, h);
+          w = Math.round(w * scale);
+          h = Math.round(h * scale);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+        const name = (file.name || 'photo').replace(/\.[^.]+$/, '') + '.jpg';
+        resolve({ base64: dataUrl.split(',')[1], mime: 'image/jpeg', name });
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Image illisible')); };
+      img.src = url;
+    });
+  }
+
   function show(viewId) {
     ['view-list', 'view-quiz', 'view-form', 'view-detail'].forEach(id => {
       document.getElementById(id).style.display = id === viewId ? 'block' : 'none';
@@ -123,7 +171,7 @@
       return checked ? checked.value : null;
     });
     if (reponses.includes(null)) {
-      alert('Merci de repondre a toutes les questions.');
+      toast('Merci de repondre a toutes les questions.', 'error');
       return;
     }
     const score = reponses.filter(r => r === 'oui').length;
@@ -353,11 +401,11 @@
       date_debut: document.getElementById('f-date-debut').value,
       date_fin: document.getElementById('f-date-fin').value
     };
-    if (!payload.titre) { alert('Le titre est obligatoire.'); return; }
+    if (!payload.titre) { toast('Le titre est obligatoire.', 'error'); return; }
 
     const manquantes = missingRequiredPhases(payload.outils);
     if (manquantes.length) {
-      alert(`Choisis au moins un outil de : ${manquantes.map(p => p.label).join(', ')}.`);
+      toast(`Choisis au moins un outil de : ${manquantes.map(p => p.label).join(', ')}.`, 'error');
       return;
     }
 
@@ -371,7 +419,7 @@
     const res = await fetch(url, { method, headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      alert(err.error || "Erreur lors de l'enregistrement du chantier.");
+      toast(err.error || "Erreur lors de l'enregistrement du chantier.", 'error');
       return;
     }
     const chantier = await res.json();
@@ -401,18 +449,19 @@
     return ((avant - apres) / avant) * 100;
   }
 
-  function uploadPhotoFile(file, chantierId, actionId, onDone) {
+  async function uploadPhotoFile(file, chantierId, actionId, onDone) {
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async () => {
-      const base64 = reader.result.split(',')[1];
+    try {
+      const { base64, mime, name } = await readPhoto(file, 1600, 0.8);
       const res = await fetch(`/api/chantiers/${chantierId}/photos`, {
         method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ filename: file.name, mime_type: file.type, data: base64, action_id: actionId })
+        body: JSON.stringify({ filename: name, mime_type: mime, data: base64, action_id: actionId })
       });
+      if (!res.ok) { toast("Echec de l'ajout de la photo.", 'error'); return; }
       onDone(await res.json());
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      toast("Impossible de lire cette image.", 'error');
+    }
   }
 
   function pickAndUploadPhoto(chantierId, actionId, onDone) {
@@ -605,9 +654,14 @@
       echeanceInput.value = a.echeance || '';
 
       async function saveAction(changes) {
+        // On n'envoie que les champs modifiables (pas a.photos en base64, inutile et lourd).
+        const payload = {
+          description: a.description, responsable: a.responsable,
+          echeance: a.echeance, statut: a.statut, ...changes
+        };
         const res = await fetch(`/api/chantiers/${c.id}/actions/${a.id}`, {
           method: 'PUT', headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ ...a, ...changes })
+          body: JSON.stringify(payload)
         });
         renderDetail(await res.json());
       }
