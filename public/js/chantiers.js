@@ -669,7 +669,9 @@
       row.querySelector('select').addEventListener('change', e => saveAction({ statut: e.target.value }));
       respInput.addEventListener('change', e => saveAction({ responsable: e.target.value.trim() }));
       echeanceInput.addEventListener('change', e => saveAction({ echeance: e.target.value }));
-      row.querySelector('button').addEventListener('click', async () => {
+      // Cibler le bouton Suppr. explicitement : la ligne contient aussi le bouton "Photo"
+      // (premier bouton du DOM), donc querySelector('button') tombait sur le mauvais.
+      row.querySelector('.btn.danger').addEventListener('click', async () => {
         const res = await fetch(`/api/chantiers/${c.id}/actions/${a.id}`, { method: 'DELETE' });
         renderDetail(await res.json());
       });
