@@ -23,4 +23,18 @@
     </None>
   </ItemGroup>
 
+  <!-- Rend le dossier publie autonome : copie le frontend (../public, partage avec la
+       version Node) directement a cote du binaire publie. Resultat : `dotnet publish`
+       produit un seul dossier contenant tout (API + interface), copiable tel quel sur
+       n'importe quel serveur interne (IIS, Linux, Azure App Service) sans dependre du
+       reste du depot source. Voir Program.cs pour la resolution de ce dossier au demarrage. -->
+  <Target Name="CopyPublicFolder" AfterTargets="Publish">
+    <ItemGroup>
+      <PublicFiles Include="$(MSBuildProjectDirectory)\..\public\**\*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(PublicFiles)"
+          DestinationFolder="$(PublishDir)public\%(RecursiveDir)"
+          SkipUnchangedFiles="true" />
+  </Target>
+
 </Project>

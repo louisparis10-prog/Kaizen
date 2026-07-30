@@ -29,8 +29,15 @@ var chat = new Chat(catalog, httpClient);
 var app = builder.Build();
 
 // Sert le frontend statique (le meme dossier public/ que l'app Node) via le meme service.
-var publicDir = Path.GetFullPath(Path.Combine(
-    Directory.GetCurrentDirectory(), app.Configuration["PublicPath"] ?? "../public"));
+// Priorite a un dossier "public" juste a cote du binaire : c'est ce que produit
+// `dotnet publish` (voir KaizenApp.csproj, cible CopyPublicFolder), pour que le dossier
+// publie soit autonome et copiable tel quel sur n'importe quel serveur (IIS, Linux, Azure).
+// En developpement local (`dotnet run` depuis dotnet/), ce dossier n'existe pas a cote du
+// binaire : on retombe alors sur le chemin relatif au code source (PublicPath, "../public").
+var publicNextToApp = Path.Combine(AppContext.BaseDirectory, "public");
+var publicDir = Directory.Exists(publicNextToApp)
+    ? publicNextToApp
+    : Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), app.Configuration["PublicPath"] ?? "../public"));
 if (Directory.Exists(publicDir))
 {
     app.UseDefaultFiles(new DefaultFilesOptions

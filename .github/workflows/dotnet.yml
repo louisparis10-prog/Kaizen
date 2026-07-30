@@ -7,10 +7,12 @@ on:
     branches: ['**']
     paths:
       - 'dotnet/**'
+      - 'public/**'
       - '.github/workflows/dotnet.yml'
   pull_request:
     paths:
       - 'dotnet/**'
+      - 'public/**'
       - '.github/workflows/dotnet.yml'
 
 jobs:
@@ -35,6 +37,12 @@ jobs:
 
       - name: Publish (artefact deployable)
         run: dotnet publish --configuration Release --no-build --output ./publish
+
+      - name: Verifie que le dossier publie est autonome (code + interface)
+        run: |
+          test -f ./publish/public/index.html || (echo "public/index.html manquant dans l'artefact publie" && exit 1)
+          test -f ./publish/Data/schema.sql || (echo "Data/schema.sql manquant dans l'artefact publie" && exit 1)
+          echo "Artefact autonome OK : $(ls ./publish | wc -l) elements a la racine"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
