@@ -877,10 +877,13 @@
         <div class="modal template-form-modal">
           <button class="modal-close">&times;</button>
           <h2>${tool.icon} ${esc(tool.name)}</h2>
-          <p>Remplis les rubriques ci-dessous pour generer une version pre-remplie du support, prete a imprimer.</p>
+          <p>${t.remplissable
+            ? 'Remplis les rubriques ci-dessous : tes reponses seront ecrites directement dans la trame SWM.'
+            : 'Remplis les rubriques ci-dessous pour obtenir le support pre-rempli, pret a imprimer.'}</p>
           <form id="template-form"></form>
           <div class="modal-actions">
-            <button class="btn orange" type="button" id="btn-generate-template">Generer le document</button>
+            ${t.remplissable ? '<button class="btn orange" type="button" id="btn-generate-trame">Remplir la trame SWM (PowerPoint)</button>' : ''}
+            <button class="btn ${t.remplissable ? 'secondary' : 'orange'}" type="button" id="btn-generate-template">Version imprimable (PDF)</button>
           </div>
         </div>
       </div>
@@ -933,7 +936,7 @@
       form.appendChild(section);
     });
 
-    backdrop.querySelector('#btn-generate-template').addEventListener('click', () => {
+    function collecterValeurs() {
       const headerValues = {};
       (t.header || []).forEach(h => { headerValues[h.id] = form.querySelector(`[data-header="${h.id}"]`).value.trim(); });
 
@@ -945,7 +948,44 @@
           fieldValues[f.id] = form.querySelector(`[data-field="${f.id}"]`).value.trim();
         }
       });
+      return { headerValues, fieldValues };
+    }
 
+    // Remplit le vrai fichier PowerPoint SWM et le telecharge.
+    const btnTrame = backdrop.querySelector('#btn-generate-trame');
+    btnTrame.addEventListener('click', async () => {
+      const { headerValues, fieldValues } = collecterValeurs();
+      btnTrame.disabled = true;
+      btnTrame.textContent = 'Remplissage en cours...';
+      try {
+        const res = await fetch(`/api/tools/${tool.id}/trame`, {
+          method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ header: headerValues, fields: fieldValues })
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          toast(err.error || "Impossible de remplir la trame SWM.", 'error');
+          return;
+        }
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${tool.id}-rempli.pptx`;
+        a.click();
+        URL.revokeObjectURL(url);
+        root.innerHTML = '';
+        toast('Trame SWM remplie et telechargee.');
+      } catch (err) {
+        toast("Impossible de remplir la trame SWM.", 'error');
+      } finally {
+        btnTrame.disabled = false;
+        btnTrame.textContent = 'Remplir la trame SWM (PowerPoint)';
+      }
+    });
+
+    backdrop.querySelector('#btn-generate-template').addEventListener('click', () => {
+      const { headerValues, fieldValues } = collecterValeurs();
       root.innerHTML = '';
       // Mise en page identique a la trame SWM (public/js/supports.js).
       window.KaizenSupports.generer(tool, headerValues, fieldValues);

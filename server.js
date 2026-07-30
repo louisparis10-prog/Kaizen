@@ -3,6 +3,7 @@ const path = require('path');
 const { Pool } = require('pg');
 const { TOOLS, TOOLS_BY_ID, PHASES, PHASES_BY_ID } = require('./data/tools.js');
 const leanExpert = require('./lib/leanExpert.js');
+const trameSwm = require('./lib/trameSwm.js');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -172,8 +173,28 @@ async function getChantierFull(id) {
 }
 
 // ---------- Outils (bibliotheque Kaizen) ----------
-app.get('/api/tools', (req, res) => res.json(TOOLS));
+// On signale au passage les outils dont la vraie trame SWM peut etre remplie
+// automatiquement (lib/trameSwm.js reste la seule source de verite).
+app.get('/api/tools', (req, res) => res.json(TOOLS.map(t => {
+  if (!t.template) return t;
+  return { ...t, template: { ...t.template, remplissable: trameSwm.trameDisponible(t.id) } };
+})));
 app.get('/api/phases', (req, res) => res.json(PHASES));
+
+// Renvoie la vraie trame SWM (.pptx) deja remplie avec les reponses saisies.
+app.post('/api/tools/:toolId/trame', wrap(async (req, res) => {
+  const { toolId } = req.params;
+  const tool = TOOLS_BY_ID[toolId];
+  if (!tool || !trameSwm.trameDisponible(toolId)) {
+    return res.status(404).json({ error: 'Aucune trame SWM remplissable pour cet outil' });
+  }
+  const { header, fields } = req.body || {};
+  const buffer = await trameSwm.remplir(toolId, header || {}, fields || {});
+  const nomFichier = `${toolId}-rempli.pptx`;
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
+  res.setHeader('Content-Disposition', `attachment; filename="${nomFichier}"`);
+  res.send(buffer);
+}));
 
 // ---------- Chat expert ----------
 // Construit un instantane des chantiers de l'application, transmis au chat expert
