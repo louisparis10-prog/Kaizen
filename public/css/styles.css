@@ -197,6 +197,41 @@ textarea { width: 100%; resize: vertical; }
 
 .modal-actions { margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
 
+.template-box {
+  background: #e8f4f4; border: 1px dashed var(--teal); border-radius: 8px; padding: 14px 16px; margin-top: 8px;
+}
+.template-box ol { margin: 0; padding-left: 20px; }
+.template-box li { font-size: 0.9rem; margin-bottom: 4px; }
+.template-badge {
+  display: inline-block; background: #e8f4f4; color: var(--teal); font-size: 0.7rem; font-weight: 700;
+  padding: 2px 8px; border-radius: 999px; margin-left: 6px; vertical-align: middle;
+}
+
+.section-hint { font-size: 0.85rem; color: var(--text-muted); margin: 0 0 12px; }
+
+.outil-bloc {
+  border: 1px solid var(--border, #e1e6ea); border-radius: 8px; padding: 12px 14px; margin-bottom: 10px;
+}
+.outil-bloc-header {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+}
+.outil-bloc-nom { font-weight: 600; color: var(--navy); }
+.outil-bloc .photo-grid:empty { display: none; }
+.outil-bloc .photo-grid { margin-top: 10px; }
+
+.template-form-modal { max-width: 760px; }
+.form-section { margin-top: 16px; }
+.form-section h4 { margin: 0 0 10px; color: var(--navy); font-size: 0.95rem; }
+.form-field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+.form-field span { font-size: 0.85rem; font-weight: 600; color: var(--navy); }
+.form-field input[type="text"], .form-field textarea, .form-field select {
+  border: 1px solid var(--border, #d8dee3); border-radius: 6px; padding: 8px 10px; font: inherit; width: 100%;
+}
+.repeatable-field table input[type="text"], .repeatable-field table select {
+  border: 1px solid var(--border, #d8dee3); border-radius: 6px; padding: 6px 8px; font: inherit; width: 100%;
+}
+.repeatable-field .btn-add-repeatable-row { margin-top: 8px; }
+
 /* Chantiers */
 .chantier-card {
   background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow);

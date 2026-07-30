@@ -100,7 +100,32 @@ const TOOLS = [
       "Combiner avec les 5 Pourquoi pour creuser chaque cause",
       "Toujours verifier sur le terrain (Gemba) avant d'agir"
     ],
-    keywords: ['ishikawa', 'arete de poisson', 'diagramme causes', 'cause effet', '5m', 'cause racine', 'pourquoi le probleme arrive', 'panne recurrente', 'defaut qualite recurrent', 'diagramme causal', 'recherche de causes', 'brainstorming des causes', 'analyse multicritere probleme', 'main d\'oeuvre methode materiel matiere milieu', 'cause profonde', 'cause multiple', 'trouver l\'origine du probleme', 'analyse de defaillance', 'facteurs explicatifs probleme']
+    keywords: ['ishikawa', 'arete de poisson', 'diagramme causes', 'cause effet', '5m', 'cause racine', 'pourquoi le probleme arrive', 'panne recurrente', 'defaut qualite recurrent', 'diagramme causal', 'recherche de causes', 'brainstorming des causes', 'analyse multicritere probleme', 'main d\'oeuvre methode materiel matiere milieu', 'cause profonde', 'cause multiple', 'trouver l\'origine du probleme', 'analyse de defaillance', 'facteurs explicatifs probleme'],
+    template: {
+      file: 'templates/ishikawa-swm.pdf',
+      label: 'Trame Ishikawa (support SWM)',
+      usage: [
+        "Imprimer ou projeter la trame : elle a deja les 6 branches tracees et le cadre \"Probleme\" a droite",
+        "Remplir l'entete (Chantier, Date) avant de commencer",
+        "Note : la trame SWM utilise 6 branches (Main d'oeuvre, Materiel, Machine, Milieu, Methode, Mesure) au lieu des 5M classiques",
+        "Ecrire le probleme (l'effet) dans le cadre a droite",
+        "En groupe, noter les causes possibles sur chaque branche au feutre",
+        "Encadrer ou surligner la ou les causes retenues comme prioritaires avant de passer au plan d'action"
+      ],
+      header: [
+        { id: 'chantier', label: 'Chantier', auto: 'titre' },
+        { id: 'date', label: 'Date', auto: 'date_debut' }
+      ],
+      fields: [
+        { id: 'probleme', label: 'Probleme (effet)', type: 'textarea', auto: 'probleme' },
+        { id: 'main_oeuvre', label: "Main d'oeuvre", type: 'textarea' },
+        { id: 'materiel', label: 'Materiel', type: 'textarea' },
+        { id: 'machine', label: 'Machine', type: 'textarea' },
+        { id: 'milieu', label: 'Milieu', type: 'textarea' },
+        { id: 'methode', label: 'Methode', type: 'textarea' },
+        { id: 'mesure', label: 'Mesure', type: 'textarea' }
+      ]
+    }
   },
   {
     id: '5-pourquoi',
@@ -129,7 +154,31 @@ const TOOLS = [
       "Toujours verifier en remontant la chaine logique",
       "A utiliser en groupe pour eviter les biais individuels"
     ],
-    keywords: ['5 pourquoi', 'pourquoi pourquoi', 'cause racine', 'root cause', 'analyse rapide', 'probleme ponctuel', 'creuser la cause', 'cause profonde incident', 'analyse rapide incident', 'remonter a la source', 'pourquoi ce probleme', 'comprendre l\'origine']
+    keywords: ['5 pourquoi', 'pourquoi pourquoi', 'cause racine', 'root cause', 'analyse rapide', 'probleme ponctuel', 'creuser la cause', 'cause profonde incident', 'analyse rapide incident', 'remonter a la source', 'pourquoi ce probleme', 'comprendre l\'origine'],
+    template: {
+      file: 'templates/5-pourquoi-swm.pptx',
+      label: 'Trame 5 Pourquoi (support SWM)',
+      usage: [
+        "Remplir l'entete : Animateur, Secteur, Date",
+        "Ecrire le probleme de depart dans la premiere case",
+        "Repondre \"Pourquoi ?\" et noter la reponse dans la case suivante, en descendant la chaine (jusqu'a 5 cases)",
+        "Relier les cases entre elles pour bien visualiser l'enchainement logique",
+        "Encadrer la case correspondant a la cause racine retenue"
+      ],
+      header: [
+        { id: 'animateur', label: 'Animateur', auto: 'pilote' },
+        { id: 'secteur', label: 'Secteur', auto: 'perimetre' },
+        { id: 'date', label: 'Date', auto: 'date_debut' }
+      ],
+      fields: [
+        { id: 'probleme', label: 'Probleme de depart', type: 'textarea', auto: 'probleme' },
+        { id: 'pourquoi1', label: 'Pourquoi 1', type: 'text' },
+        { id: 'pourquoi2', label: 'Pourquoi 2', type: 'text' },
+        { id: 'pourquoi3', label: 'Pourquoi 3', type: 'text' },
+        { id: 'pourquoi4', label: 'Pourquoi 4', type: 'text' },
+        { id: 'pourquoi5', label: 'Pourquoi 5 (cause racine)', type: 'text' }
+      ]
+    }
   },
   {
     id: 'pareto',
@@ -188,7 +237,32 @@ const TOOLS = [
       "Se baser sur des faits verifies, pas des impressions",
       "Sert aussi a cadrer le perimetre d'un chantier Kaizen"
     ],
-    keywords: ['qqoqccp', 'cadrage', 'cadrer le probleme', 'definir le probleme', 'perimetre du chantier', 'grille de questionnement', 'questionnement structure', 'collecte de faits', 'definir le perimetre', 'probleme mal defini', 'probleme flou', 'clarifier le sujet']
+    keywords: ['qqoqccp', 'cadrage', 'cadrer le probleme', 'definir le probleme', 'perimetre du chantier', 'grille de questionnement', 'questionnement structure', 'collecte de faits', 'definir le perimetre', 'probleme mal defini', 'probleme flou', 'clarifier le sujet'],
+    template: {
+      file: 'templates/qqoqccp-swm.pptx',
+      label: 'Trame QQOQCCP (support SWM)',
+      usage: [
+        "Remplir l'entete : Animateur, Secteur, Date",
+        "Repondre a chaque question autour du hub central (Quoi, Qui, Ou, Quand, Comment, Combien, Pourquoi)",
+        "Commencer par \"Quoi\" (le probleme), les 6 autres questions viennent completer le cadrage",
+        "Joindre une photo du terrain si utile (emplacement prevu sur la trame)",
+        "Utiliser ce cadrage comme base avant de lancer un Ishikawa ou des 5 Pourquoi"
+      ],
+      header: [
+        { id: 'animateur', label: 'Animateur', auto: 'pilote' },
+        { id: 'secteur', label: 'Secteur', auto: 'perimetre' },
+        { id: 'date', label: 'Date', auto: 'date_debut' }
+      ],
+      fields: [
+        { id: 'quoi', label: 'Quoi', type: 'textarea' },
+        { id: 'qui', label: 'Qui', type: 'textarea' },
+        { id: 'ou', label: 'Ou', type: 'textarea' },
+        { id: 'quand', label: 'Quand', type: 'textarea' },
+        { id: 'comment', label: 'Comment', type: 'textarea' },
+        { id: 'combien', label: 'Combien', type: 'textarea' },
+        { id: 'pourquoi', label: 'Pourquoi', type: 'textarea' }
+      ]
+    }
   },
   {
     id: 'vsm',
@@ -656,6 +730,60 @@ const TOOLS = [
     keywords: ['matrice de decision', 'matrice de choix', 'choisir entre plusieurs solutions', 'comparer des solutions', 'decision multicritere', 'pugh matrix', 'quelle solution choisir', 'aide a la decision', 'criteres ponderes']
   },
   {
+    id: 'matrice-gain-effort',
+    name: 'Matrice Gain / Effort',
+    icon: '🎯',
+    category: 'Pilotage',
+    phase: 'solution',
+    summary: "Matrice 2x2 qui positionne chaque solution selon son gain attendu et l'effort necessaire pour la mettre en oeuvre, afin de reperer en un coup d'oeil les 'quick wins' a lancer en priorite.",
+    whenToUse: [
+      "Plusieurs solutions ou actions candidates apres un brainstorming",
+      "Besoin de prioriser rapidement sans grille de criteres lourde",
+      "Volonte de demarrer par des victoires rapides pour embarquer l'equipe"
+    ],
+    steps: [
+      "Lister toutes les solutions ou actions candidates",
+      "Pour chaque solution, estimer le Gain attendu (faible a fort) et l'Effort necessaire (faible a fort)",
+      "Placer chaque solution dans le quadrant correspondant de la matrice",
+      "Prioriser en premier les solutions a Gain fort / Effort faible (quick wins)",
+      "Planifier ensuite les Gain fort / Effort fort, et ecarter ou reporter les Gain faible / Effort fort"
+    ],
+    benefits: "Priorisation visuelle et rapide, sans calcul complexe, ideale pour lancer une dynamique avec des resultats visibles tot dans le chantier.",
+    memo: [
+      "2 axes : Gain (attendu) et Effort (necessaire)",
+      "Quadrant ideal : Gain fort / Effort faible = quick win",
+      "Eviter en priorite : Gain faible / Effort fort",
+      "Plus rapide a remplir qu'une matrice de decision ponderee",
+      "A utiliser juste apres un brainstorming de solutions"
+    ],
+    keywords: ['matrice gain effort', 'gain effort', 'quick win', 'victoire rapide', 'prioriser les actions', 'matrice impact effort', 'matrice 2x2', 'priorisation solutions', 'quelle action lancer en premier'],
+    template: {
+      file: 'templates/matrice-gain-effort-swm.pptx',
+      label: 'Trame Matrice Gain/Effort (support SWM)',
+      usage: [
+        "Remplir l'entete : Chantier, Date",
+        "Ecrire chaque solution candidate sur une etiquette ou un post-it",
+        "Positionner chaque etiquette dans la matrice selon son Gain (bas/haut) et son Effort (gauche/droite)",
+        "Repartir en groupe pour eviter qu'une seule personne tranche seule",
+        "Lancer en priorite les solutions du quadrant Gain fort / Effort faible"
+      ],
+      header: [
+        { id: 'chantier', label: 'Chantier', auto: 'titre' },
+        { id: 'date', label: 'Date', auto: 'date_debut' }
+      ],
+      fields: [
+        {
+          id: 'solutions', type: 'repeatable', label: 'Solutions a positionner',
+          columns: [
+            { id: 'solution', label: 'Solution', type: 'text' },
+            { id: 'gain', label: 'Gain', type: 'select', options: ['Faible', 'Fort'] },
+            { id: 'effort', label: 'Effort', type: 'select', options: ['Faible', 'Fort'] }
+          ]
+        }
+      ]
+    }
+  },
+  {
     id: 'adkar',
     name: 'ADKAR',
     icon: '🧭',
@@ -741,7 +869,35 @@ const TOOLS = [
       "A faire en groupe pour aligner les points de vue",
       "Etape prealable classique a un VSM ou un DMAIC"
     ],
-    keywords: ['sipoc', 'cartographie processus macro', 'perimetre du processus', 'fournisseurs entrees sorties clients', 'cadrer un processus']
+    keywords: ['sipoc', 'cartographie processus macro', 'perimetre du processus', 'fournisseurs entrees sorties clients', 'cadrer un processus'],
+    template: {
+      file: 'templates/sipoc-swm.pptx',
+      label: 'Trame SIPOC (support SWM)',
+      usage: [
+        "Remplir l'entete : Processus analyse, Responsable, Date, Revision",
+        "Completer les 5 colonnes dans l'ordre : Fournisseurs, Entrees, Processus, Sorties, Clients",
+        "S'aider des questions guides indiquees sous chaque colonne",
+        "Renseigner aussi la ligne Voix du Client et les indicateurs (Exigences, Pilotage, Resultats) en bas de trame",
+        "Faire remplir en groupe pour aligner tout le monde sur le meme perimetre avant d'aller plus loin (VSM, DMAIC)"
+      ],
+      header: [
+        { id: 'processus', label: 'Processus analyse', auto: 'titre' },
+        { id: 'responsable', label: 'Responsable', auto: 'pilote' },
+        { id: 'date', label: 'Date', auto: 'date_debut' },
+        { id: 'revision', label: 'Revision', auto: null }
+      ],
+      fields: [
+        { id: 'suppliers', label: 'Suppliers (fournisseurs)', type: 'textarea' },
+        { id: 'inputs', label: 'Inputs (entrees)', type: 'textarea' },
+        { id: 'process', label: 'Process (etapes macro)', type: 'textarea' },
+        { id: 'outputs', label: 'Outputs (sorties)', type: 'textarea' },
+        { id: 'customers', label: 'Customers (clients)', type: 'textarea' },
+        { id: 'voix_client', label: 'Voix du client', type: 'textarea' },
+        { id: 'ind_exigences', label: 'Indicateur Exigences', type: 'text' },
+        { id: 'ind_pilotage', label: 'Indicateur Pilotage', type: 'text' },
+        { id: 'ind_resultats', label: 'Indicateur Resultats', type: 'text' }
+      ]
+    }
   },
   {
     id: 'raci',
@@ -856,7 +1012,36 @@ const TOOLS = [
       "Chaque Muda oriente vers un outil : stock -> Kanban, attente -> SMED/TPM, defaut -> Poka-Yoke",
       "Outil d'observation, pas de resolution en soi"
     ],
-    keywords: ['7 gaspillages', 'muda', 'gaspillage', 'surproduction', 'sur-stockage', 'mouvements inutiles', 'traitement inutile', 'sur qualite', 'types de gaspillage', 'chasse au gaspillage']
+    keywords: ['7 gaspillages', 'muda', 'gaspillage', 'surproduction', 'sur-stockage', 'mouvements inutiles', 'traitement inutile', 'sur qualite', 'types de gaspillage', 'chasse au gaspillage'],
+    template: {
+      file: 'templates/chasse-aux-mudas-swm.pptx',
+      label: 'Trame Chasse aux Mudas (support SWM)',
+      usage: [
+        "Remplir l'entete : Date, Secteur/Zone, Equipe, Animateur",
+        "Note : la trame SWM utilise la variante a 8 Mudas (ajoute la Non-utilisation des competences aux 7 classiques) — voir la legende sur la trame",
+        "A chaque gaspillage repere sur le terrain, poser une pastille numerotee sur le plan de la zone",
+        "Reporter ce numero dans le tableau : type de Muda, zone precise, description du probleme, impact (1 a 5), reference photo",
+        "Prendre une photo si utile et noter sa reference dans le tableau",
+        "Une fois le releve termine, prioriser par impact et relier chaque gaspillage a l'outil Kaizen adapte"
+      ],
+      header: [
+        { id: 'date', label: 'Date', auto: 'date_debut' },
+        { id: 'secteur', label: 'Secteur / Zone', auto: 'perimetre' },
+        { id: 'equipe', label: 'Equipe', auto: 'equipe' },
+        { id: 'animateur', label: 'Animateur', auto: 'pilote' }
+      ],
+      fields: [
+        {
+          id: 'gaspillages', type: 'repeatable', label: 'Gaspillages releves',
+          columns: [
+            { id: 'type', label: 'Type de Muda', type: 'select', options: ['Surproduction', 'Attentes', 'Transports', 'Sur-stocks', 'Deplacements', 'Sur-traitements', 'Defauts', 'Non-utilisation des competences'] },
+            { id: 'zone', label: 'Zone / Localisation', type: 'text' },
+            { id: 'probleme', label: 'Problematique observee', type: 'text' },
+            { id: 'impact', label: 'Impact (1-5)', type: 'select', options: ['1', '2', '3', '4', '5'] }
+          ]
+        }
+      ]
+    }
   },
   {
     id: 'hoshin-kanri',
