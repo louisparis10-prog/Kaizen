@@ -882,7 +882,7 @@
             : 'Remplis les rubriques ci-dessous pour obtenir le support pre-rempli, pret a imprimer.'}</p>
           <form id="template-form"></form>
           <div class="modal-actions">
-            ${t.remplissable ? '<button class="btn orange" type="button" id="btn-generate-trame">Remplir la trame SWM (PowerPoint)</button>' : ''}
+            ${t.remplissable ? '<button class="btn orange" type="button" id="btn-generate-trame">Remplir la trame SWM</button>' : ''}
             <button class="btn ${t.remplissable ? 'secondary' : 'orange'}" type="button" id="btn-generate-template">Version imprimable (PDF)</button>
           </div>
         </div>
@@ -972,11 +972,12 @@
         }
         const nonPlaces = res.headers.get('X-Champs-Non-Places');
         const lignesIgnorees = res.headers.get('X-Lignes-Ignorees');
+        const ext = res.headers.get('X-Extension-Trame') || 'pptx';
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${tool.id}-rempli.pptx`;
+        a.download = `${tool.id}-rempli.${ext}`;
         // Le lien doit etre dans la page et l'adresse temporaire liberee apres coup :
         // sinon certains navigateurs (mobiles notamment) annulent le telechargement.
         a.style.display = 'none';
@@ -1004,7 +1005,7 @@
         toast("Impossible de remplir la trame SWM.", 'error');
       } finally {
         btnTrame.disabled = false;
-        btnTrame.textContent = 'Remplir la trame SWM (PowerPoint)';
+        btnTrame.textContent = 'Remplir la trame SWM';
       }
     });
 

@@ -189,11 +189,16 @@ app.post('/api/tools/:toolId/trame', wrap(async (req, res) => {
     return res.status(404).json({ error: 'Aucune trame SWM remplissable pour cet outil' });
   }
   const { header, fields } = req.body || {};
-  const { buffer, nonPlaces, lignesIgnorees, causesEnTrop } = await trameSwm.remplir(toolId, header || {}, fields || {});
-  const nomFichier = `${toolId}-rempli.pptx`;
-  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
+  const { buffer, nonPlaces, lignesIgnorees, causesEnTrop, extension } =
+    await trameSwm.remplir(toolId, header || {}, fields || {});
+  const ext = extension || 'pptx';
+  const nomFichier = `${toolId}-rempli.${ext}`;
+  res.setHeader('Content-Type', ext === 'pdf'
+    ? 'application/pdf'
+    : 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
   res.setHeader('Content-Disposition', `attachment; filename="${nomFichier}"`);
   // Signale au navigateur ce qui n'a pas pu etre reporte dans la trame.
+  res.setHeader('X-Extension-Trame', ext);
   if (nonPlaces.length) res.setHeader('X-Champs-Non-Places', nonPlaces.join(','));
   if (lignesIgnorees) res.setHeader('X-Lignes-Ignorees', String(lignesIgnorees));
   if (causesEnTrop && causesEnTrop.length) res.setHeader('X-Causes-En-Trop', causesEnTrop.join(','));
