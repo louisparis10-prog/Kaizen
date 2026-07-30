@@ -967,6 +967,8 @@
           toast(err.error || "Impossible de remplir la trame SWM.", 'error');
           return;
         }
+        const nonPlaces = res.headers.get('X-Champs-Non-Places');
+        const lignesIgnorees = res.headers.get('X-Lignes-Ignorees');
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -976,6 +978,17 @@
         URL.revokeObjectURL(url);
         root.innerHTML = '';
         toast('Trame SWM remplie et telechargee.');
+        // On previent si une saisie n'a pas pu etre reportee dans la trame.
+        if (nonPlaces) {
+          const noms = nonPlaces.split(',').map(id => {
+            const champ = (t.fields || []).find(f => f.id === id);
+            return champ ? champ.label : id;
+          });
+          toast(`A reporter a la main sur la trame : ${noms.join(', ')}.`, 'error');
+        }
+        if (lignesIgnorees) {
+          toast(`La trame ne comporte pas assez de lignes : ${lignesIgnorees} ligne(s) non reportee(s).`, 'error');
+        }
       } catch (err) {
         toast("Impossible de remplir la trame SWM.", 'error');
       } finally {

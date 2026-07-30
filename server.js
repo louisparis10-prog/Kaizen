@@ -189,10 +189,13 @@ app.post('/api/tools/:toolId/trame', wrap(async (req, res) => {
     return res.status(404).json({ error: 'Aucune trame SWM remplissable pour cet outil' });
   }
   const { header, fields } = req.body || {};
-  const buffer = await trameSwm.remplir(toolId, header || {}, fields || {});
+  const { buffer, nonPlaces, lignesIgnorees } = await trameSwm.remplir(toolId, header || {}, fields || {});
   const nomFichier = `${toolId}-rempli.pptx`;
   res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
   res.setHeader('Content-Disposition', `attachment; filename="${nomFichier}"`);
+  // Signale au navigateur ce qui n'a pas pu etre reporte dans la trame.
+  if (nonPlaces.length) res.setHeader('X-Champs-Non-Places', nonPlaces.join(','));
+  if (lignesIgnorees) res.setHeader('X-Lignes-Ignorees', String(lignesIgnorees));
   res.send(buffer);
 }));
 
