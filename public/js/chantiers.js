@@ -989,6 +989,10 @@
         if (lignesIgnorees) {
           toast(`La trame ne comporte pas assez de lignes : ${lignesIgnorees} ligne(s) non reportee(s).`, 'error');
         }
+        const causesEnTrop = res.headers.get('X-Causes-En-Trop');
+        if (causesEnTrop) {
+          toast(`Trop de causes pour la trame : ${causesEnTrop.replace(/pourquoi/g, 'Pourquoi ')}.`, 'error');
+        }
       } catch (err) {
         toast("Impossible de remplir la trame SWM.", 'error');
       } finally {

@@ -172,11 +172,13 @@ const TOOLS = [
       ],
       fields: [
         { id: 'probleme', label: 'Probleme de depart', type: 'textarea', auto: 'probleme' },
-        { id: 'pourquoi1', label: 'Pourquoi 1', type: 'text' },
-        { id: 'pourquoi2', label: 'Pourquoi 2', type: 'text' },
-        { id: 'pourquoi3', label: 'Pourquoi 3', type: 'text' },
-        { id: 'pourquoi4', label: 'Pourquoi 4', type: 'text' },
-        { id: 'pourquoi5', label: 'Pourquoi 5 (cause racine)', type: 'text' }
+        // Un niveau de "Pourquoi" peut avoir plusieurs causes : une par ligne,
+        // comme les plusieurs cases prevues dans chaque colonne de la trame SWM.
+        { id: 'pourquoi1', label: 'Pourquoi 1 (une cause par ligne)', type: 'textarea' },
+        { id: 'pourquoi2', label: 'Pourquoi 2 (une cause par ligne)', type: 'textarea' },
+        { id: 'pourquoi3', label: 'Pourquoi 3 (une cause par ligne)', type: 'textarea' },
+        { id: 'pourquoi4', label: 'Pourquoi 4 (une cause par ligne)', type: 'textarea' },
+        { id: 'pourquoi5', label: 'Pourquoi 5 - cause racine (une cause par ligne)', type: 'textarea' }
       ]
     }
   },
