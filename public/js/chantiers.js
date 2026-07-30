@@ -947,60 +947,11 @@
       });
 
       root.innerHTML = '';
-      generateTemplateDocument(tool, headerValues, fieldValues);
+      // Mise en page identique a la trame SWM (public/js/supports.js).
+      window.KaizenSupports.generer(tool, headerValues, fieldValues);
     });
 
     root.appendChild(backdrop);
-  }
-
-  function generateTemplateDocument(tool, headerValues, fieldValues) {
-    const t = tool.template;
-    const headerHtml = (t.header || []).map(h => `
-      <p><strong>${esc(h.label)} :</strong> ${esc(headerValues[h.id] || '-')}</p>
-    `).join('');
-
-    const fieldsHtml = (t.fields || []).map(f => {
-      if (f.type === 'repeatable') {
-        const rows = fieldValues[f.id] || [];
-        const rowsHtml = rows.map(r => `<tr>${f.columns.map(col => `<td>${esc(r[col.id] || '-')}</td>`).join('')}</tr>`).join('');
-        return `
-          <h2>${esc(f.label)}</h2>
-          <table>
-            <thead><tr>${f.columns.map(col => `<th>${esc(col.label)}</th>`).join('')}</tr></thead>
-            <tbody>${rowsHtml || `<tr><td colspan="${f.columns.length}">Aucune ligne renseignee</td></tr>`}</tbody>
-          </table>
-        `;
-      }
-      return `
-        <h2>${esc(f.label)}</h2>
-        <p style="white-space:pre-wrap">${esc(fieldValues[f.id] || '-')}</p>
-      `;
-    }).join('');
-
-    const w = window.open('', '_blank');
-    w.document.write(`
-      <html><head><title>${esc(tool.name)} - rempli</title>
-      <style>
-        body{font-family:Arial,sans-serif;padding:24px;color:#202a33;}
-        h1{color:#10243e;font-size:1.3rem;border-bottom:3px solid #e8722c;padding-bottom:8px;}
-        h2{color:#0f8b8d;font-size:1rem;margin-top:20px;}
-        table{width:100%;border-collapse:collapse;margin-top:6px;}
-        th,td{border:1px solid #e1e6ea;padding:6px 8px;font-size:0.85rem;text-align:left;}
-        .barre-print{margin-bottom:16px;}
-        .btn-print{background:#e8722c;color:#fff;border:none;padding:9px 18px;border-radius:6px;font-size:0.9rem;cursor:pointer;}
-        @media print{.no-print{display:none;}}
-      </style></head>
-      <body>
-        <div class="barre-print no-print"><button class="btn-print" onclick="window.print()">Imprimer / Enregistrer en PDF</button></div>
-        <h1>${tool.icon} ${esc(tool.name)}</h1>
-        ${headerHtml}
-        ${fieldsHtml}
-        <script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>
-      </body></html>
-    `);
-    // Impression declenchee dans l'onglet du document (pas depuis l'app), meme
-    // logique que l'A3 : window.print() depuis le parent figerait l'app.
-    w.document.close();
   }
 
   // ---------- Fiche A3 ----------
