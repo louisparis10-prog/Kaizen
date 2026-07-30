@@ -66,11 +66,15 @@ const SCHEMA = `
     id              SERIAL PRIMARY KEY,
     chantier_id     INTEGER NOT NULL REFERENCES chantiers(id),
     action_id       INTEGER,
+    outil_id        TEXT,
     filename        TEXT,
     mime_type       TEXT,
     data            TEXT NOT NULL,
     created_at      TIMESTAMPTZ DEFAULT NOW()
   );
+
+  -- Ajout retroactif pour les bases creees avant les photos par outil.
+  ALTER TABLE photos ADD COLUMN IF NOT EXISTS outil_id TEXT;
 `;
 
 async function initDb() {
@@ -152,11 +156,16 @@ async function getChantierFull(id) {
   chantier.indicateurs = (await pool.query('SELECT * FROM indicateurs WHERE chantier_id = $1 ORDER BY id ASC', [id])).rows;
 
   const photos = (await pool.query(
-    'SELECT id, action_id, filename, mime_type, data, created_at FROM photos WHERE chantier_id = $1 ORDER BY id ASC', [id]
+    'SELECT id, action_id, outil_id, filename, mime_type, data, created_at FROM photos WHERE chantier_id = $1 ORDER BY id ASC', [id]
   )).rows;
-  chantier.photos = photos.filter(p => p.action_id == null);
+  // Une photo appartient soit a une action, soit a un outil, soit au chantier lui-meme.
+  chantier.photos = photos.filter(p => p.action_id == null && !p.outil_id);
   chantier.actions.forEach(a => {
     a.photos = photos.filter(p => p.action_id === a.id);
+  });
+  chantier.photos_outils = {};
+  photos.filter(p => p.action_id == null && p.outil_id).forEach(p => {
+    (chantier.photos_outils[p.outil_id] = chantier.photos_outils[p.outil_id] || []).push(p);
   });
 
   return chantier;
@@ -167,13 +176,52 @@ app.get('/api/tools', (req, res) => res.json(TOOLS));
 app.get('/api/phases', (req, res) => res.json(PHASES));
 
 // ---------- Chat expert ----------
+// Construit un instantane des chantiers de l'application, transmis au chat expert
+// pour qu'il puisse repondre sur ce qui a deja ete fait (retour d'experience interne)
+// et pas seulement sur la theorie Lean.
+async function buildChantiersContext() {
+  const { rows } = await pool.query(
+    'SELECT id, titre, probleme, perimetre, pilote, objectif, outils, statut, date_debut, date_fin FROM chantiers ORDER BY id DESC'
+  );
+  if (!rows.length) return null;
+
+  const ids = rows.map(r => r.id);
+  const actions = (await pool.query(
+    'SELECT chantier_id, description, responsable, echeance, statut FROM actions WHERE chantier_id = ANY($1) ORDER BY id ASC', [ids]
+  )).rows;
+  const indicateurs = (await pool.query(
+    'SELECT chantier_id, nom, unite, valeur_avant, valeur_apres FROM indicateurs WHERE chantier_id = ANY($1) ORDER BY id ASC', [ids]
+  )).rows;
+
+  return rows.map(r => ({
+    id: r.id,
+    titre: r.titre,
+    probleme: r.probleme || '',
+    perimetre: r.perimetre || '',
+    pilote: r.pilote || '',
+    objectif: r.objectif || '',
+    statut: r.statut,
+    periode: [r.date_debut, r.date_fin].filter(Boolean).join(' -> '),
+    outils: (JSON.parse(r.outils || '[]')).map(id => TOOLS_BY_ID[id]?.name).filter(Boolean),
+    actions: actions.filter(a => a.chantier_id === r.id)
+      .map(a => ({ description: a.description, responsable: a.responsable || '', echeance: a.echeance || '', statut: a.statut })),
+    indicateurs: indicateurs.filter(i => i.chantier_id === r.id)
+      .map(i => ({ nom: i.nom, unite: i.unite || '', avant: i.valeur_avant, apres: i.valeur_apres }))
+  }));
+}
+
 app.post('/api/chat', async (req, res) => {
   const { message, mode } = req.body;
   if (!message || typeof message !== 'string') {
     return res.status(400).json({ error: 'message requis' });
   }
   try {
-    const result = await leanExpert.reply(message, mode === 'ai' ? 'ai' : 'local');
+    // Le contexte est facultatif : si la base est indisponible, le chat repond quand meme.
+    const chantiers = await buildChantiersContext().catch(err => {
+      console.error('Contexte chantiers indisponible pour le chat :', err.message);
+      return null;
+    });
+    const result = await leanExpert.reply(message, mode === 'ai' ? 'ai' : 'local', chantiers);
     res.json(result);
   } catch (err) {
     console.error(err);
@@ -394,15 +442,17 @@ app.delete('/api/chantiers/:id/indicateurs/:indicId', wrap(async (req, res) => {
   res.json(await getChantierFull(id));
 }));
 
-// ---------- Photos (fiche chantier ou action specifique) ----------
+// ---------- Photos (fiche chantier, action specifique ou outil du chantier) ----------
 app.post('/api/chantiers/:id/photos', wrap(async (req, res) => {
   const id = asId(req.params.id);
   if (id === null || !(await chantierExists(id))) return res.status(404).json({ error: 'Chantier non trouve' });
-  const { filename, mime_type, data, action_id } = req.body;
+  const { filename, mime_type, data, action_id, outil_id } = req.body;
   if (!data) return res.status(400).json({ error: 'data (base64) requise' });
+  // On n'accepte qu'un identifiant d'outil connu du catalogue.
+  const outilId = outil_id && TOOLS_BY_ID[outil_id] ? outil_id : null;
   await pool.query(
-    `INSERT INTO photos (chantier_id, action_id, filename, mime_type, data) VALUES ($1, $2, $3, $4, $5)`,
-    [id, asId(action_id), filename || '', mime_type || '', data]
+    `INSERT INTO photos (chantier_id, action_id, outil_id, filename, mime_type, data) VALUES ($1, $2, $3, $4, $5, $6)`,
+    [id, asId(action_id), outilId, filename || '', mime_type || '', data]
   );
   res.json(await getChantierFull(id));
 }));

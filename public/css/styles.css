@@ -207,6 +207,18 @@ textarea { width: 100%; resize: vertical; }
   padding: 2px 8px; border-radius: 999px; margin-left: 6px; vertical-align: middle;
 }
 
+.section-hint { font-size: 0.85rem; color: var(--text-muted); margin: 0 0 12px; }
+
+.outil-bloc {
+  border: 1px solid var(--border, #e1e6ea); border-radius: 8px; padding: 12px 14px; margin-bottom: 10px;
+}
+.outil-bloc-header {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+}
+.outil-bloc-nom { font-weight: 600; color: var(--navy); }
+.outil-bloc .photo-grid:empty { display: none; }
+.outil-bloc .photo-grid { margin-top: 10px; }
+
 .template-form-modal { max-width: 760px; }
 .form-section { margin-top: 16px; }
 .form-section h4 { margin: 0 0 10px; color: var(--navy); font-size: 0.95rem; }

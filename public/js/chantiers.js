@@ -455,13 +455,13 @@
     return ((avant - apres) / avant) * 100;
   }
 
-  async function uploadPhotoFile(file, chantierId, actionId, onDone) {
+  async function uploadPhotoFile(file, chantierId, actionId, onDone, outilId) {
     if (!file) return;
     try {
       const { base64, mime, name } = await readPhoto(file, 1600, 0.8);
       const res = await fetch(`/api/chantiers/${chantierId}/photos`, {
         method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ filename: name, mime_type: mime, data: base64, action_id: actionId })
+        body: JSON.stringify({ filename: name, mime_type: mime, data: base64, action_id: actionId, outil_id: outilId || null })
       });
       if (!res.ok) { toast("Echec de l'ajout de la photo.", 'error'); return; }
       onDone(await res.json());
@@ -470,7 +470,7 @@
     }
   }
 
-  function pickAndUploadPhoto(chantierId, actionId, onDone) {
+  function pickAndUploadPhoto(chantierId, actionId, onDone, outilId) {
     const root = document.getElementById('modal-root');
     root.innerHTML = '';
     const backdrop = el(`
@@ -495,7 +495,7 @@
       if (capture) input.capture = capture;
       input.addEventListener('change', () => {
         root.innerHTML = '';
-        uploadPhotoFile(input.files[0], chantierId, actionId, onDone);
+        uploadPhotoFile(input.files[0], chantierId, actionId, onDone, outilId);
       });
       return input;
     }
@@ -534,9 +534,7 @@
       const t = tools.find(tt => tt.id === id);
       return t ? `<span class="tool-tag">${t.icon} ${esc(t.name)}</span>` : '';
     }).join('');
-    const outilsAvecSupport = (c.outils || [])
-      .map(id => tools.find(tt => tt.id === id))
-      .filter(t => t && t.template && t.template.fields && t.template.fields.length);
+    const outilsDuChantier = (c.outils || []).map(id => tools.find(tt => tt.id === id)).filter(Boolean);
 
     wrap.innerHTML = '';
     wrap.appendChild(el(`
@@ -573,10 +571,12 @@
           <div class="photo-grid" id="chantier-photos"></div>
         </div>
 
-        ${outilsAvecSupport.length ? `
+        ${outilsDuChantier.length ? `
         <div class="section-card">
-          <h3>Supports a remplir</h3>
-          <div class="modal-actions no-print" id="templates-fill-list" style="flex-wrap:wrap"></div>
+          <h3>Outils du chantier</h3>
+          <p class="section-hint no-print">Optionnel : pour chaque outil, tu peux ajouter des photos et remplir le support.
+          Cela ne remplace pas le plan d'action ci-dessous, qui reste la reference du chantier.</p>
+          <div id="outils-blocks"></div>
         </div>` : ''}
 
         <div class="section-card">
@@ -629,14 +629,7 @@
       pickAndUploadPhoto(c.id, null, updated => renderDetail(updated));
     });
     renderPhotoGrid(document.getElementById('chantier-photos'), c.photos || [], c.id);
-    if (outilsAvecSupport.length) {
-      const listWrap = document.getElementById('templates-fill-list');
-      outilsAvecSupport.forEach(t => {
-        const btn = el(`<button class="btn secondary" type="button">${t.icon} Remplir : ${esc(t.name)}</button>`);
-        btn.addEventListener('click', () => openTemplateForm(t, c));
-        listWrap.appendChild(btn);
-      });
-    }
+    if (outilsDuChantier.length) renderOutilsBlocks(c, outilsDuChantier);
     renderActionsTable(c);
     renderIndicsTable(c);
   }
@@ -776,6 +769,40 @@
     });
   }
 
+  // ---------- Bloc par outil : photos dediees + support a remplir ----------
+  function renderOutilsBlocks(c, outilsDuChantier) {
+    const wrap = document.getElementById('outils-blocks');
+    if (!wrap) return;
+    wrap.innerHTML = '';
+    const photosParOutil = c.photos_outils || {};
+
+    outilsDuChantier.forEach(t => {
+      const photos = photosParOutil[t.id] || [];
+      const remplissable = t.template && t.template.fields && t.template.fields.length;
+      const bloc = el(`
+        <div class="outil-bloc">
+          <div class="outil-bloc-header">
+            <span class="outil-bloc-nom">${t.icon} ${esc(t.name)}</span>
+            <span class="no-print">
+              ${remplissable ? '<button type="button" class="btn secondary small btn-remplir">Remplir le support</button>' : ''}
+              ${t.template ? `<a class="btn secondary small" href="/${esc(t.template.file)}" download>Telecharger la trame</a>` : ''}
+              <button type="button" class="btn secondary small btn-photo-outil">+ Photo</button>
+            </span>
+          </div>
+          <div class="photo-grid photo-grid-small" data-photos-outil="${esc(t.id)}"></div>
+        </div>
+      `);
+      if (remplissable) {
+        bloc.querySelector('.btn-remplir').addEventListener('click', () => openTemplateForm(t, c));
+      }
+      bloc.querySelector('.btn-photo-outil').addEventListener('click', () => {
+        pickAndUploadPhoto(c.id, null, updated => renderDetail(updated), t.id);
+      });
+      renderPhotoGrid(bloc.querySelector('[data-photos-outil]'), photos, c.id);
+      wrap.appendChild(bloc);
+    });
+  }
+
   // ---------- Supports a remplir (formulaire -> document pre-rempli) ----------
   function resolveAutoValue(auto, c) {
     if (!auto) return '';
@@ -831,11 +858,14 @@
   }
 
   function collectRepeatableRows(box, field) {
+    // Une ligne ne compte que si une colonne libre (texte) est renseignee : les listes
+    // deroulantes ont toujours une valeur par defaut, elles ne prouvent pas une saisie.
+    const colsLibres = field.columns.filter(col => col.type !== 'select').map(col => col.id);
     return Array.from(box.querySelectorAll('tbody tr')).map(row => {
       const obj = {};
       row.querySelectorAll('[data-col]').forEach(input => { obj[input.dataset.col] = input.value.trim(); });
       return obj;
-    }).filter(obj => Object.values(obj).some(v => v));
+    }).filter(obj => colsLibres.some(id => obj[id]));
   }
 
   function openTemplateForm(tool, c) {
@@ -984,6 +1014,10 @@
 
     const toutesLesPhotos = [
       ...(c.photos || []).map(p => ({ ...p, legende: 'Photo chantier' })),
+      ...Object.entries(c.photos_outils || {}).flatMap(([outilId, photos]) => {
+        const nom = tools.find(t => t.id === outilId)?.name || outilId;
+        return photos.map(p => ({ ...p, legende: nom }));
+      }),
       ...(c.actions || []).flatMap(a => (a.photos || []).map(p => ({ ...p, legende: a.description })))
     ];
     const photosHtml = toutesLesPhotos.map(p => `
