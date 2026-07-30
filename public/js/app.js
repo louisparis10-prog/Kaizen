@@ -48,6 +48,7 @@
           <div class="tool-card" id="tool-${tool.id}">
             <div class="icon">${tool.icon}</div>
             <span class="category">${phaseLabel(tool.phase)}</span>
+            ${tool.template ? '<span class="template-badge" title="Support telechargeable disponible">📎 Support</span>' : ''}
             <h3>${tool.name}</h3>
             <p>${tool.summary}</p>
           </div>
@@ -81,6 +82,15 @@
           <div class="memo-box">
             <ul>${tool.memo.map(x => `<li>${x}</li>`).join('')}</ul>
           </div>
+
+          ${tool.template ? `
+            <h4>Support pret a l'emploi</h4>
+            <div class="template-box">
+              <a class="btn orange" href="/${tool.template.file}" download>Telecharger : ${tool.template.label}</a>
+              <p style="margin:10px 0 6px;font-weight:600;color:var(--navy)">Comment l'utiliser :</p>
+              <ol>${tool.template.usage.map(x => `<li>${x}</li>`).join('')}</ol>
+            </div>
+          ` : ''}
 
           <div class="modal-actions">
             <button class="btn orange" id="btn-use-in-chantier">Utiliser dans un chantier</button>
