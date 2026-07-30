@@ -45,8 +45,8 @@
     .colonne-pourquoi { display: flex; flex-direction: column; }
     .fleche-num { background: #10243e; color: #fff; font-weight: 700; text-align: center;
       padding: 6px 0; border-radius: 3px 3px 0 0; font-size: 0.85rem; }
-    .colonne-pourquoi .case { border: 1px solid #b9c4cd; border-top: none; padding: 10px;
-      font-size: 0.82rem; flex: 1; min-height: 120px; }
+    .colonne-pourquoi .case { border: 1px solid #b9c4cd; padding: 8px 10px;
+      font-size: 0.82rem; min-height: 72px; margin-top: -1px; }
     .encadre-racine { border: 2px solid #e8722c !important; }
     .note-bas { font-size: 0.78rem; color: #5a6b78; margin-top: 10px; font-style: italic; }
 
@@ -123,12 +123,20 @@
   // ----- Mises en page specifiques a chaque trame -----
   const LAYOUTS = {
     '5-pourquoi': (f) => {
-      const cases = [1, 2, 3, 4, 5].map(n => `
+      // Un niveau peut avoir plusieurs causes : une ligne saisie = une case,
+      // comme les cases empilees de chaque colonne de la trame SWM.
+      const cases = [1, 2, 3, 4, 5].map(n => {
+        const causes = String(f['pourquoi' + n] || '').split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+        const boites = causes.length
+          ? causes.map(c => `<div class="case${n === 5 ? ' encadre-racine' : ''}">${esc(c)}</div>`).join('')
+          : `<div class="case${n === 5 ? ' encadre-racine' : ''}"><span class="vide"></span></div>`;
+        return `
         <div class="colonne-pourquoi">
           <div class="fleche-num">${n}</div>
-          <div class="case${n === 5 ? ' encadre-racine' : ''}">${val(f['pourquoi' + n])}</div>
+          ${boites}
         </div>
-      `).join('');
+      `;
+      }).join('');
       return `
         <h2 class="section">Probleme de depart</h2>
         <table><tr><td>${val(f.probleme)}</td></tr></table>
