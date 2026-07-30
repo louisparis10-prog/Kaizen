@@ -277,6 +277,7 @@
   }
 
   let statutFilter = 'tous';
+  let searchQuery = '';
 
   function renderStatutFilters() {
     const wrap = document.getElementById('statut-filters');
@@ -298,9 +299,14 @@
     renderStatutFilters();
     const wrap = document.getElementById('chantiers-list');
     wrap.innerHTML = '';
-    const filtered = statutFilter === 'tous' ? chantiers : chantiers.filter(c => c.statut === statutFilter);
+    let filtered = statutFilter === 'tous' ? chantiers : chantiers.filter(c => c.statut === statutFilter);
+    const q = searchQuery.trim().toLowerCase();
+    if (q) {
+      filtered = filtered.filter(c => [c.titre, c.probleme, c.perimetre, c.pilote, ...(c.equipe || [])]
+        .filter(Boolean).some(v => String(v).toLowerCase().includes(q)));
+    }
     if (filtered.length === 0) {
-      wrap.appendChild(el(`<p style="color:#5a6b78">Aucun chantier ici pour le moment.</p>`));
+      wrap.appendChild(el(`<p style="color:#5a6b78">${q ? 'Aucun chantier ne correspond a cette recherche.' : 'Aucun chantier ici pour le moment.'}</p>`));
       return;
     }
     filtered.forEach(c => {
@@ -528,6 +534,9 @@
       const t = tools.find(tt => tt.id === id);
       return t ? `<span class="tool-tag">${t.icon} ${esc(t.name)}</span>` : '';
     }).join('');
+    const outilsAvecSupport = (c.outils || [])
+      .map(id => tools.find(tt => tt.id === id))
+      .filter(t => t && t.template && t.template.fields && t.template.fields.length);
 
     wrap.innerHTML = '';
     wrap.appendChild(el(`
@@ -563,6 +572,12 @@
           </h3>
           <div class="photo-grid" id="chantier-photos"></div>
         </div>
+
+        ${outilsAvecSupport.length ? `
+        <div class="section-card">
+          <h3>Supports a remplir</h3>
+          <div class="modal-actions no-print" id="templates-fill-list" style="flex-wrap:wrap"></div>
+        </div>` : ''}
 
         <div class="section-card">
           <h3>Plan d'action</h3>
@@ -614,6 +629,14 @@
       pickAndUploadPhoto(c.id, null, updated => renderDetail(updated));
     });
     renderPhotoGrid(document.getElementById('chantier-photos'), c.photos || [], c.id);
+    if (outilsAvecSupport.length) {
+      const listWrap = document.getElementById('templates-fill-list');
+      outilsAvecSupport.forEach(t => {
+        const btn = el(`<button class="btn secondary" type="button">${t.icon} Remplir : ${esc(t.name)}</button>`);
+        btn.addEventListener('click', () => openTemplateForm(t, c));
+        listWrap.appendChild(btn);
+      });
+    }
     renderActionsTable(c);
     renderIndicsTable(c);
   }
@@ -753,6 +776,203 @@
     });
   }
 
+  // ---------- Supports a remplir (formulaire -> document pre-rempli) ----------
+  function resolveAutoValue(auto, c) {
+    if (!auto) return '';
+    if (auto === 'equipe') return (c.equipe || []).join(', ');
+    return c[auto] != null ? String(c[auto]) : '';
+  }
+
+  function buildRepeatableTable(field, existingRows) {
+    const box = el(`
+      <div class="repeatable-field" data-repeatable="${field.id}">
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead><tr>${field.columns.map(col => `<th>${esc(col.label)}</th>`).join('')}<th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <button type="button" class="btn secondary small btn-add-repeatable-row">+ Ligne</button>
+      </div>
+    `);
+    const tbody = box.querySelector('tbody');
+
+    function addRow(values) {
+      const row = el(`<tr>${field.columns.map(col => '<td></td>').join('')}<td></td></tr>`);
+      const cells = row.querySelectorAll('td');
+      field.columns.forEach((col, i) => {
+        let input;
+        if (col.type === 'select') {
+          input = document.createElement('select');
+          (col.options || []).forEach(opt => {
+            const o = document.createElement('option');
+            o.value = opt; o.textContent = opt;
+            input.appendChild(o);
+          });
+        } else {
+          input = document.createElement('input');
+          input.type = 'text';
+        }
+        input.dataset.col = col.id;
+        if (values && values[col.id] != null) input.value = values[col.id];
+        cells[i].appendChild(input);
+      });
+      const delBtn = el(`<button type="button" class="btn danger small">&times;</button>`);
+      delBtn.addEventListener('click', () => row.remove());
+      cells[cells.length - 1].appendChild(delBtn);
+      tbody.appendChild(row);
+    }
+
+    if (existingRows && existingRows.length) existingRows.forEach(r => addRow(r));
+    else addRow(null);
+
+    box.querySelector('.btn-add-repeatable-row').addEventListener('click', () => addRow(null));
+    return box;
+  }
+
+  function collectRepeatableRows(box, field) {
+    return Array.from(box.querySelectorAll('tbody tr')).map(row => {
+      const obj = {};
+      row.querySelectorAll('[data-col]').forEach(input => { obj[input.dataset.col] = input.value.trim(); });
+      return obj;
+    }).filter(obj => Object.values(obj).some(v => v));
+  }
+
+  function openTemplateForm(tool, c) {
+    const t = tool.template;
+    const root = document.getElementById('modal-root');
+    root.innerHTML = '';
+    const backdrop = el(`
+      <div class="modal-backdrop">
+        <div class="modal template-form-modal">
+          <button class="modal-close">&times;</button>
+          <h2>${tool.icon} ${esc(tool.name)}</h2>
+          <p>Remplis les rubriques ci-dessous pour generer une version pre-remplie du support, prete a imprimer.</p>
+          <form id="template-form"></form>
+          <div class="modal-actions">
+            <button class="btn orange" type="button" id="btn-generate-template">Generer le document</button>
+          </div>
+        </div>
+      </div>
+    `);
+    backdrop.addEventListener('click', e => { if (e.target === backdrop) root.innerHTML = ''; });
+    backdrop.querySelector('.modal-close').addEventListener('click', () => { root.innerHTML = ''; });
+
+    const form = backdrop.querySelector('#template-form');
+    const repeatableBoxes = {};
+
+    if (t.header && t.header.length) {
+      const section = el(`<div class="form-section"><h4>En-tete</h4></div>`);
+      t.header.forEach(h => {
+        const value = resolveAutoValue(h.auto, c);
+        const field = el(`
+          <label class="form-field">
+            <span>${esc(h.label)}</span>
+            <input type="text" data-header="${h.id}">
+          </label>
+        `);
+        field.querySelector('input').value = value;
+        section.appendChild(field);
+      });
+      form.appendChild(section);
+    }
+
+    (t.fields || []).forEach(f => {
+      if (f.type === 'repeatable') {
+        const section = el(`<div class="form-section"><h4>${esc(f.label)}</h4></div>`);
+        const box = buildRepeatableTable(f, null);
+        repeatableBoxes[f.id] = box;
+        section.appendChild(box);
+        form.appendChild(section);
+        return;
+      }
+      const value = resolveAutoValue(f.auto, c);
+      const section = el(`<div class="form-section"></div>`);
+      let inputHtml;
+      if (f.type === 'select') {
+        inputHtml = `<select data-field="${f.id}">${(f.options || []).map(o => `<option value="${esc(o)}">${esc(o)}</option>`).join('')}</select>`;
+      } else if (f.type === 'textarea') {
+        inputHtml = `<textarea data-field="${f.id}" rows="3"></textarea>`;
+      } else {
+        inputHtml = `<input type="text" data-field="${f.id}">`;
+      }
+      const label = el(`<label class="form-field"><span>${esc(f.label)}</span>${inputHtml}</label>`);
+      const input = label.querySelector('[data-field]');
+      if (f.type !== 'select') input.value = value;
+      section.appendChild(label);
+      form.appendChild(section);
+    });
+
+    backdrop.querySelector('#btn-generate-template').addEventListener('click', () => {
+      const headerValues = {};
+      (t.header || []).forEach(h => { headerValues[h.id] = form.querySelector(`[data-header="${h.id}"]`).value.trim(); });
+
+      const fieldValues = {};
+      (t.fields || []).forEach(f => {
+        if (f.type === 'repeatable') {
+          fieldValues[f.id] = collectRepeatableRows(repeatableBoxes[f.id], f);
+        } else {
+          fieldValues[f.id] = form.querySelector(`[data-field="${f.id}"]`).value.trim();
+        }
+      });
+
+      root.innerHTML = '';
+      generateTemplateDocument(tool, headerValues, fieldValues);
+    });
+
+    root.appendChild(backdrop);
+  }
+
+  function generateTemplateDocument(tool, headerValues, fieldValues) {
+    const t = tool.template;
+    const headerHtml = (t.header || []).map(h => `
+      <p><strong>${esc(h.label)} :</strong> ${esc(headerValues[h.id] || '-')}</p>
+    `).join('');
+
+    const fieldsHtml = (t.fields || []).map(f => {
+      if (f.type === 'repeatable') {
+        const rows = fieldValues[f.id] || [];
+        const rowsHtml = rows.map(r => `<tr>${f.columns.map(col => `<td>${esc(r[col.id] || '-')}</td>`).join('')}</tr>`).join('');
+        return `
+          <h2>${esc(f.label)}</h2>
+          <table>
+            <thead><tr>${f.columns.map(col => `<th>${esc(col.label)}</th>`).join('')}</tr></thead>
+            <tbody>${rowsHtml || `<tr><td colspan="${f.columns.length}">Aucune ligne renseignee</td></tr>`}</tbody>
+          </table>
+        `;
+      }
+      return `
+        <h2>${esc(f.label)}</h2>
+        <p style="white-space:pre-wrap">${esc(fieldValues[f.id] || '-')}</p>
+      `;
+    }).join('');
+
+    const w = window.open('', '_blank');
+    w.document.write(`
+      <html><head><title>${esc(tool.name)} - rempli</title>
+      <style>
+        body{font-family:Arial,sans-serif;padding:24px;color:#202a33;}
+        h1{color:#10243e;font-size:1.3rem;border-bottom:3px solid #e8722c;padding-bottom:8px;}
+        h2{color:#0f8b8d;font-size:1rem;margin-top:20px;}
+        table{width:100%;border-collapse:collapse;margin-top:6px;}
+        th,td{border:1px solid #e1e6ea;padding:6px 8px;font-size:0.85rem;text-align:left;}
+        .barre-print{margin-bottom:16px;}
+        .btn-print{background:#e8722c;color:#fff;border:none;padding:9px 18px;border-radius:6px;font-size:0.9rem;cursor:pointer;}
+        @media print{.no-print{display:none;}}
+      </style></head>
+      <body>
+        <div class="barre-print no-print"><button class="btn-print" onclick="window.print()">Imprimer / Enregistrer en PDF</button></div>
+        <h1>${tool.icon} ${esc(tool.name)}</h1>
+        ${headerHtml}
+        ${fieldsHtml}
+        <script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>
+      </body></html>
+    `);
+    // Impression declenchee dans l'onglet du document (pas depuis l'app), meme
+    // logique que l'A3 : window.print() depuis le parent figerait l'app.
+    w.document.close();
+  }
+
   // ---------- Fiche A3 ----------
   function openA3(c) {
     const outilsNames = (c.outils || []).map(id => tools.find(t => t.id === id)?.name).filter(Boolean).map(esc).join(', ');
@@ -830,6 +1050,7 @@
     await loadChantiers();
 
     document.getElementById('btn-new-chantier').addEventListener('click', () => startNewChantierFlow([]));
+    document.getElementById('chantiers-search').addEventListener('input', e => { searchQuery = e.target.value; renderList(); });
     document.getElementById('btn-cancel-chantier').addEventListener('click', () => { show('view-list'); });
     document.getElementById('btn-save-chantier').addEventListener('click', saveChantier);
     document.getElementById('btn-ask-expert-form').addEventListener('click', () => {

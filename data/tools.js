@@ -111,6 +111,19 @@ const TOOLS = [
         "Ecrire le probleme (l'effet) dans le cadre a droite",
         "En groupe, noter les causes possibles sur chaque branche au feutre",
         "Encadrer ou surligner la ou les causes retenues comme prioritaires avant de passer au plan d'action"
+      ],
+      header: [
+        { id: 'chantier', label: 'Chantier', auto: 'titre' },
+        { id: 'date', label: 'Date', auto: 'date_debut' }
+      ],
+      fields: [
+        { id: 'probleme', label: 'Probleme (effet)', type: 'textarea', auto: 'probleme' },
+        { id: 'main_oeuvre', label: "Main d'oeuvre", type: 'textarea' },
+        { id: 'materiel', label: 'Materiel', type: 'textarea' },
+        { id: 'machine', label: 'Machine', type: 'textarea' },
+        { id: 'milieu', label: 'Milieu', type: 'textarea' },
+        { id: 'methode', label: 'Methode', type: 'textarea' },
+        { id: 'mesure', label: 'Mesure', type: 'textarea' }
       ]
     }
   },
@@ -151,6 +164,19 @@ const TOOLS = [
         "Repondre \"Pourquoi ?\" et noter la reponse dans la case suivante, en descendant la chaine (jusqu'a 5 cases)",
         "Relier les cases entre elles pour bien visualiser l'enchainement logique",
         "Encadrer la case correspondant a la cause racine retenue"
+      ],
+      header: [
+        { id: 'animateur', label: 'Animateur', auto: 'pilote' },
+        { id: 'secteur', label: 'Secteur', auto: 'perimetre' },
+        { id: 'date', label: 'Date', auto: 'date_debut' }
+      ],
+      fields: [
+        { id: 'probleme', label: 'Probleme de depart', type: 'textarea', auto: 'probleme' },
+        { id: 'pourquoi1', label: 'Pourquoi 1', type: 'text' },
+        { id: 'pourquoi2', label: 'Pourquoi 2', type: 'text' },
+        { id: 'pourquoi3', label: 'Pourquoi 3', type: 'text' },
+        { id: 'pourquoi4', label: 'Pourquoi 4', type: 'text' },
+        { id: 'pourquoi5', label: 'Pourquoi 5 (cause racine)', type: 'text' }
       ]
     }
   },
@@ -221,6 +247,20 @@ const TOOLS = [
         "Commencer par \"Quoi\" (le probleme), les 6 autres questions viennent completer le cadrage",
         "Joindre une photo du terrain si utile (emplacement prevu sur la trame)",
         "Utiliser ce cadrage comme base avant de lancer un Ishikawa ou des 5 Pourquoi"
+      ],
+      header: [
+        { id: 'animateur', label: 'Animateur', auto: 'pilote' },
+        { id: 'secteur', label: 'Secteur', auto: 'perimetre' },
+        { id: 'date', label: 'Date', auto: 'date_debut' }
+      ],
+      fields: [
+        { id: 'quoi', label: 'Quoi', type: 'textarea' },
+        { id: 'qui', label: 'Qui', type: 'textarea' },
+        { id: 'ou', label: 'Ou', type: 'textarea' },
+        { id: 'quand', label: 'Quand', type: 'textarea' },
+        { id: 'comment', label: 'Comment', type: 'textarea' },
+        { id: 'combien', label: 'Combien', type: 'textarea' },
+        { id: 'pourquoi', label: 'Pourquoi', type: 'textarea' }
       ]
     }
   },
@@ -726,6 +766,20 @@ const TOOLS = [
         "Positionner chaque etiquette dans la matrice selon son Gain (bas/haut) et son Effort (gauche/droite)",
         "Repartir en groupe pour eviter qu'une seule personne tranche seule",
         "Lancer en priorite les solutions du quadrant Gain fort / Effort faible"
+      ],
+      header: [
+        { id: 'chantier', label: 'Chantier', auto: 'titre' },
+        { id: 'date', label: 'Date', auto: 'date_debut' }
+      ],
+      fields: [
+        {
+          id: 'solutions', type: 'repeatable', label: 'Solutions a positionner',
+          columns: [
+            { id: 'solution', label: 'Solution', type: 'text' },
+            { id: 'gain', label: 'Gain', type: 'select', options: ['Faible', 'Fort'] },
+            { id: 'effort', label: 'Effort', type: 'select', options: ['Faible', 'Fort'] }
+          ]
+        }
       ]
     }
   },
@@ -825,6 +879,23 @@ const TOOLS = [
         "S'aider des questions guides indiquees sous chaque colonne",
         "Renseigner aussi la ligne Voix du Client et les indicateurs (Exigences, Pilotage, Resultats) en bas de trame",
         "Faire remplir en groupe pour aligner tout le monde sur le meme perimetre avant d'aller plus loin (VSM, DMAIC)"
+      ],
+      header: [
+        { id: 'processus', label: 'Processus analyse', auto: 'titre' },
+        { id: 'responsable', label: 'Responsable', auto: 'pilote' },
+        { id: 'date', label: 'Date', auto: 'date_debut' },
+        { id: 'revision', label: 'Revision', auto: null }
+      ],
+      fields: [
+        { id: 'suppliers', label: 'Suppliers (fournisseurs)', type: 'textarea' },
+        { id: 'inputs', label: 'Inputs (entrees)', type: 'textarea' },
+        { id: 'process', label: 'Process (etapes macro)', type: 'textarea' },
+        { id: 'outputs', label: 'Outputs (sorties)', type: 'textarea' },
+        { id: 'customers', label: 'Customers (clients)', type: 'textarea' },
+        { id: 'voix_client', label: 'Voix du client', type: 'textarea' },
+        { id: 'ind_exigences', label: 'Indicateur Exigences', type: 'text' },
+        { id: 'ind_pilotage', label: 'Indicateur Pilotage', type: 'text' },
+        { id: 'ind_resultats', label: 'Indicateur Resultats', type: 'text' }
       ]
     }
   },
@@ -952,6 +1023,23 @@ const TOOLS = [
         "Reporter ce numero dans le tableau : type de Muda, zone precise, description du probleme, impact (1 a 5), reference photo",
         "Prendre une photo si utile et noter sa reference dans le tableau",
         "Une fois le releve termine, prioriser par impact et relier chaque gaspillage a l'outil Kaizen adapte"
+      ],
+      header: [
+        { id: 'date', label: 'Date', auto: 'date_debut' },
+        { id: 'secteur', label: 'Secteur / Zone', auto: 'perimetre' },
+        { id: 'equipe', label: 'Equipe', auto: 'equipe' },
+        { id: 'animateur', label: 'Animateur', auto: 'pilote' }
+      ],
+      fields: [
+        {
+          id: 'gaspillages', type: 'repeatable', label: 'Gaspillages releves',
+          columns: [
+            { id: 'type', label: 'Type de Muda', type: 'select', options: ['Surproduction', 'Attentes', 'Transports', 'Sur-stocks', 'Deplacements', 'Sur-traitements', 'Defauts', 'Non-utilisation des competences'] },
+            { id: 'zone', label: 'Zone / Localisation', type: 'text' },
+            { id: 'probleme', label: 'Problematique observee', type: 'text' },
+            { id: 'impact', label: 'Impact (1-5)', type: 'select', options: ['1', '2', '3', '4', '5'] }
+          ]
+        }
       ]
     }
   },

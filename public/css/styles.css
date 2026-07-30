@@ -207,6 +207,19 @@ textarea { width: 100%; resize: vertical; }
   padding: 2px 8px; border-radius: 999px; margin-left: 6px; vertical-align: middle;
 }
 
+.template-form-modal { max-width: 760px; }
+.form-section { margin-top: 16px; }
+.form-section h4 { margin: 0 0 10px; color: var(--navy); font-size: 0.95rem; }
+.form-field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+.form-field span { font-size: 0.85rem; font-weight: 600; color: var(--navy); }
+.form-field input[type="text"], .form-field textarea, .form-field select {
+  border: 1px solid var(--border, #d8dee3); border-radius: 6px; padding: 8px 10px; font: inherit; width: 100%;
+}
+.repeatable-field table input[type="text"], .repeatable-field table select {
+  border: 1px solid var(--border, #d8dee3); border-radius: 6px; padding: 6px 8px; font: inherit; width: 100%;
+}
+.repeatable-field .btn-add-repeatable-row { margin-top: 8px; }
+
 /* Chantiers */
 .chantier-card {
   background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow);
