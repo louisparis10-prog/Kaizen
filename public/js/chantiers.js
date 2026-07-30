@@ -951,9 +951,12 @@
       return { headerValues, fieldValues };
     }
 
-    // Remplit le vrai fichier PowerPoint SWM et le telecharge.
+    // Remplit le vrai fichier PowerPoint SWM et le telecharge. Ce bouton n'existe
+    // que pour les outils dont la trame est remplissable (l'Ishikawa est fourni en
+    // PDF, la Matrice Gain/Effort n'a pas de case) : sans ce test, la modale entiere
+    // ne s'affichait plus pour ces outils.
     const btnTrame = backdrop.querySelector('#btn-generate-trame');
-    btnTrame.addEventListener('click', async () => {
+    if (btnTrame) btnTrame.addEventListener('click', async () => {
       const { headerValues, fieldValues } = collecterValeurs();
       btnTrame.disabled = true;
       btnTrame.textContent = 'Remplissage en cours...';
@@ -974,8 +977,12 @@
         const a = document.createElement('a');
         a.href = url;
         a.download = `${tool.id}-rempli.pptx`;
+        // Le lien doit etre dans la page et l'adresse temporaire liberee apres coup :
+        // sinon certains navigateurs (mobiles notamment) annulent le telechargement.
+        a.style.display = 'none';
+        document.body.appendChild(a);
         a.click();
-        URL.revokeObjectURL(url);
+        setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 30000);
         root.innerHTML = '';
         toast('Trame SWM remplie et telechargee.');
         // On previent si une saisie n'a pas pu etre reportee dans la trame.
