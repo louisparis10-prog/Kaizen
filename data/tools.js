@@ -778,8 +778,8 @@ const TOOLS = [
           id: 'solutions', type: 'repeatable', label: 'Solutions a positionner',
           columns: [
             { id: 'solution', label: 'Solution', type: 'text' },
-            { id: 'gain', label: 'Gain', type: 'select', options: ['Faible', 'Fort'] },
-            { id: 'effort', label: 'Effort', type: 'select', options: ['Faible', 'Fort'] }
+            { id: 'gain', label: 'Gain', type: 'select', options: ['Faible', 'Eleve'] },
+            { id: 'effort', label: 'Effort', type: 'select', options: ['Faible', 'Eleve'] }
           ]
         }
       ]
