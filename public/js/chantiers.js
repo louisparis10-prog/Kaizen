@@ -769,6 +769,28 @@
     });
   }
 
+  function formatDate(iso) {
+    if (!iso) return '?';
+    const d = new Date(iso);
+    return isNaN(d) ? String(iso).slice(0, 10) : d.toLocaleDateString('fr-FR');
+  }
+
+  // Apercu de ce qui a ete saisi, pour retrouver d'un coup d'oeil le contenu du support.
+  function resumeSupport(tool, support) {
+    const champs = support.fields || {};
+    return (tool.template.fields || []).map(f => {
+      const v = champs[f.id];
+      if (f.type === 'repeatable') {
+        const n = Array.isArray(v) ? v.length : 0;
+        return n ? `<div><strong>${esc(f.label)} :</strong> ${n} ligne(s)</div>` : '';
+      }
+      const texte = String(v || '').trim();
+      if (!texte) return '';
+      const court = texte.replace(/\s*\n\s*/g, ' / ');
+      return `<div><strong>${esc(f.label)} :</strong> ${esc(court.length > 110 ? court.slice(0, 110) + '...' : court)}</div>`;
+    }).join('') || '<div>Aucune rubrique renseignee.</div>';
+  }
+
   // ---------- Bloc par outil : photos dediees + support a remplir ----------
   function renderOutilsBlocks(c, outilsDuChantier) {
     const wrap = document.getElementById('outils-blocks');
@@ -779,19 +801,33 @@
     outilsDuChantier.forEach(t => {
       const photos = photosParOutil[t.id] || [];
       const remplissable = t.template && t.template.fields && t.template.fields.length;
+      const support = (c.supports || {})[t.id];
       const bloc = el(`
         <div class="outil-bloc">
           <div class="outil-bloc-header">
             <span class="outil-bloc-nom">${t.icon} ${esc(t.name)}</span>
             <span class="no-print">
-              ${remplissable ? '<button type="button" class="btn secondary small btn-remplir">Remplir le support</button>' : ''}
+              ${remplissable ? `<button type="button" class="btn secondary small btn-remplir">${support ? 'Revoir le support' : 'Remplir le support'}</button>` : ''}
               ${t.template ? `<a class="btn secondary small" href="/${esc(t.template.file)}" download>Telecharger la trame</a>` : ''}
               <button type="button" class="btn secondary small btn-photo-outil">+ Photo</button>
             </span>
           </div>
+          ${support ? `
+            <div class="outil-support">
+              <span class="outil-support-etat">Support rempli le ${esc(formatDate(support.updated_at))}</span>
+              <button type="button" class="btn danger small no-print btn-suppr-support">Effacer</button>
+              <div class="outil-support-resume">${resumeSupport(t, support)}</div>
+            </div>` : ''}
           <div class="photo-grid photo-grid-small" data-photos-outil="${esc(t.id)}"></div>
         </div>
       `);
+      if (support) {
+        bloc.querySelector('.btn-suppr-support').addEventListener('click', async () => {
+          if (!confirm(`Effacer le support rempli pour ${t.name} ?`)) return;
+          const res = await fetch(`/api/chantiers/${c.id}/supports/${t.id}`, { method: 'DELETE' });
+          renderDetail(await res.json());
+        });
+      }
       if (remplissable) {
         bloc.querySelector('.btn-remplir').addEventListener('click', () => openTemplateForm(t, c));
       }
@@ -870,6 +906,8 @@
 
   function openTemplateForm(tool, c) {
     const t = tool.template;
+    // Support deja rempli sur ce chantier : on repart de ce qui a ete saisi.
+    const enregistre = (c.supports || {})[tool.id] || null;
     const root = document.getElementById('modal-root');
     root.innerHTML = '';
     const backdrop = el(`
@@ -879,7 +917,8 @@
           <h2>${tool.icon} ${esc(tool.name)}</h2>
           <p>${t.remplissable
             ? 'Remplis les rubriques ci-dessous : tes reponses seront ecrites directement dans la trame SWM.'
-            : 'Remplis les rubriques ci-dessous pour obtenir le support pre-rempli, pret a imprimer.'}</p>
+            : 'Remplis les rubriques ci-dessous pour obtenir le support pre-rempli, pret a imprimer.'}
+            Elles sont enregistrees sur le chantier a chaque generation.</p>
           <form id="template-form"></form>
           <div class="modal-actions">
             ${t.remplissable ? '<button class="btn orange" type="button" id="btn-generate-trame">Remplir la trame SWM</button>' : ''}
@@ -897,7 +936,9 @@
     if (t.header && t.header.length) {
       const section = el(`<div class="form-section"><h4>En-tete</h4></div>`);
       t.header.forEach(h => {
-        const value = resolveAutoValue(h.auto, c);
+        // Ce qui a deja ete saisi prime sur la valeur reprise du chantier.
+        const sauvegarde = enregistre && enregistre.header ? enregistre.header[h.id] : undefined;
+        const value = sauvegarde !== undefined && sauvegarde !== '' ? sauvegarde : resolveAutoValue(h.auto, c);
         const field = el(`
           <label class="form-field">
             <span>${esc(h.label)}</span>
@@ -910,16 +951,19 @@
       form.appendChild(section);
     }
 
+    const champsEnregistres = (enregistre && enregistre.fields) || {};
+
     (t.fields || []).forEach(f => {
       if (f.type === 'repeatable') {
         const section = el(`<div class="form-section"><h4>${esc(f.label)}</h4></div>`);
-        const box = buildRepeatableTable(f, null);
+        const box = buildRepeatableTable(f, champsEnregistres[f.id] || null);
         repeatableBoxes[f.id] = box;
         section.appendChild(box);
         form.appendChild(section);
         return;
       }
-      const value = resolveAutoValue(f.auto, c);
+      const sauvegarde = champsEnregistres[f.id];
+      const value = sauvegarde !== undefined && sauvegarde !== '' ? sauvegarde : resolveAutoValue(f.auto, c);
       const section = el(`<div class="form-section"></div>`);
       let inputHtml;
       if (f.type === 'select') {
@@ -932,6 +976,7 @@
       const label = el(`<label class="form-field"><span>${esc(f.label)}</span>${inputHtml}</label>`);
       const input = label.querySelector('[data-field]');
       if (f.type !== 'select') input.value = value;
+      else if (sauvegarde) input.value = sauvegarde;
       section.appendChild(label);
       form.appendChild(section);
     });
@@ -951,6 +996,20 @@
       return { headerValues, fieldValues };
     }
 
+    // Conserve la saisie sur le chantier : elle est rechargee a la prochaine
+    // ouverture et reste consultable dans le bloc de l'outil.
+    async function enregistrerSupport(headerValues, fieldValues) {
+      try {
+        const res = await fetch(`/api/chantiers/${c.id}/supports/${tool.id}`, {
+          method: 'PUT', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ header: headerValues, fields: fieldValues })
+        });
+        if (res.ok) return res.json();
+      } catch (err) { /* la generation du document reste prioritaire */ }
+      toast("Le support n'a pas pu etre enregistre sur le chantier.", 'error');
+      return null;
+    }
+
     // Remplit le vrai fichier PowerPoint SWM et le telecharge. Ce bouton n'existe
     // que pour les outils dont la trame est remplissable (l'Ishikawa est fourni en
     // PDF, la Matrice Gain/Effort n'a pas de case) : sans ce test, la modale entiere
@@ -958,6 +1017,7 @@
     const btnTrame = backdrop.querySelector('#btn-generate-trame');
     if (btnTrame) btnTrame.addEventListener('click', async () => {
       const { headerValues, fieldValues } = collecterValeurs();
+      const chantierMaj = await enregistrerSupport(headerValues, fieldValues);
       btnTrame.disabled = true;
       btnTrame.textContent = 'Remplissage en cours...';
       try {
@@ -985,7 +1045,8 @@
         a.click();
         setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 30000);
         root.innerHTML = '';
-        toast('Trame SWM remplie et telechargee.');
+        toast('Trame SWM remplie, telechargee et enregistree sur le chantier.');
+        if (chantierMaj) renderDetail(chantierMaj);
         // On previent si une saisie n'a pas pu etre reportee dans la trame.
         if (nonPlaces) {
           const noms = nonPlaces.split(',').map(id => {
@@ -1012,8 +1073,10 @@
     backdrop.querySelector('#btn-generate-template').addEventListener('click', () => {
       const { headerValues, fieldValues } = collecterValeurs();
       root.innerHTML = '';
-      // Mise en page identique a la trame SWM (public/js/supports.js).
+      // Mise en page identique a la trame SWM (public/js/supports.js). L'ouverture
+      // de l'onglet doit rester dans le geste de clic : on enregistre ensuite.
       window.KaizenSupports.generer(tool, headerValues, fieldValues);
+      enregistrerSupport(headerValues, fieldValues).then(maj => { if (maj) renderDetail(maj); });
     });
 
     root.appendChild(backdrop);
