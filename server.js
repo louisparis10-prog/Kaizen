@@ -76,6 +76,20 @@ const SCHEMA = `
 
   -- Ajout retroactif pour les bases creees avant les photos par outil.
   ALTER TABLE photos ADD COLUMN IF NOT EXISTS outil_id TEXT;
+
+  -- Supports SWM remplis : une ligne par couple (chantier, outil). On conserve les
+  -- reponses saisies pour retrouver ce qui a ete fait et regenerer la trame.
+  CREATE TABLE IF NOT EXISTS supports (
+    id              SERIAL PRIMARY KEY,
+    chantier_id     INTEGER NOT NULL REFERENCES chantiers(id),
+    outil_id        TEXT NOT NULL,
+    donnees         TEXT NOT NULL,
+    created_at      TIMESTAMPTZ DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ DEFAULT NOW()
+  );
+
+  CREATE UNIQUE INDEX IF NOT EXISTS supports_chantier_outil
+    ON supports (chantier_id, outil_id);
 `;
 
 async function initDb() {
@@ -169,6 +183,18 @@ async function getChantierFull(id) {
     (chantier.photos_outils[p.outil_id] = chantier.photos_outils[p.outil_id] || []).push(p);
   });
 
+  // Supports SWM remplis, indexes par outil.
+  chantier.supports = {};
+  (await pool.query(
+    'SELECT outil_id, donnees, updated_at FROM supports WHERE chantier_id = $1', [id]
+  )).rows.forEach(s => {
+    try {
+      chantier.supports[s.outil_id] = { ...JSON.parse(s.donnees), updated_at: s.updated_at };
+    } catch (err) {
+      console.error(`Support illisible (chantier ${id}, outil ${s.outil_id}) :`, err.message);
+    }
+  });
+
   return chantier;
 }
 
@@ -222,6 +248,9 @@ async function buildChantiersContext() {
   const indicateurs = (await pool.query(
     'SELECT chantier_id, nom, unite, valeur_avant, valeur_apres FROM indicateurs WHERE chantier_id = ANY($1) ORDER BY id ASC', [ids]
   )).rows;
+  const supports = (await pool.query(
+    'SELECT chantier_id, outil_id, donnees FROM supports WHERE chantier_id = ANY($1)', [ids]
+  )).rows;
 
   return rows.map(r => ({
     id: r.id,
@@ -236,7 +265,13 @@ async function buildChantiersContext() {
     actions: actions.filter(a => a.chantier_id === r.id)
       .map(a => ({ description: a.description, responsable: a.responsable || '', echeance: a.echeance || '', statut: a.statut })),
     indicateurs: indicateurs.filter(i => i.chantier_id === r.id)
-      .map(i => ({ nom: i.nom, unite: i.unite || '', avant: i.valeur_avant, apres: i.valeur_apres }))
+      .map(i => ({ nom: i.nom, unite: i.unite || '', avant: i.valeur_avant, apres: i.valeur_apres })),
+    // Supports SWM remplis : le contenu de l'analyse, pas seulement son intitule.
+    supports: supports.filter(s => s.chantier_id === r.id).map(s => {
+      let champs = {};
+      try { champs = (JSON.parse(s.donnees) || {}).fields || {}; } catch (err) { /* ignore */ }
+      return { outil: TOOLS_BY_ID[s.outil_id]?.name || s.outil_id, champs };
+    })
   }));
 }
 
@@ -401,10 +436,11 @@ app.delete('/api/chantiers/:id', wrap(async (req, res) => {
   const id = asId(req.params.id);
   if (id === null) return res.status(404).json({ error: 'Non trouve' });
   await withTx(async (client) => {
-    // Ordre impose par les cles etrangeres : photos/actions/indicateurs avant le chantier.
+    // Ordre impose par les cles etrangeres : les lignes liees avant le chantier.
     await client.query('DELETE FROM photos WHERE chantier_id = $1', [id]);
     await client.query('DELETE FROM actions WHERE chantier_id = $1', [id]);
     await client.query('DELETE FROM indicateurs WHERE chantier_id = $1', [id]);
+    await client.query('DELETE FROM supports WHERE chantier_id = $1', [id]);
     await client.query('DELETE FROM chantiers WHERE id = $1', [id]);
   });
   res.json({ success: true });
@@ -469,6 +505,32 @@ app.delete('/api/chantiers/:id/indicateurs/:indicId', wrap(async (req, res) => {
   const id = asId(req.params.id), indicId = asId(req.params.indicId);
   if (id === null || indicId === null) return res.status(404).json({ error: 'Non trouve' });
   await pool.query('DELETE FROM indicateurs WHERE id = $1 AND chantier_id = $2', [indicId, id]);
+  res.json(await getChantierFull(id));
+}));
+
+// ---------- Supports SWM remplis ----------
+// Enregistre (ou met a jour) les reponses saisies pour un outil du chantier, afin
+// de retrouver ce qui a ete fait et de pouvoir regenerer la trame a l'identique.
+app.put('/api/chantiers/:id/supports/:outilId', wrap(async (req, res) => {
+  const id = asId(req.params.id);
+  const { outilId } = req.params;
+  if (id === null || !(await chantierExists(id))) return res.status(404).json({ error: 'Chantier non trouve' });
+  if (!TOOLS_BY_ID[outilId]) return res.status(404).json({ error: 'Outil inconnu' });
+
+  const { header, fields } = req.body || {};
+  const donnees = JSON.stringify({ header: header || {}, fields: fields || {} });
+  await pool.query(`
+    INSERT INTO supports (chantier_id, outil_id, donnees) VALUES ($1, $2, $3)
+    ON CONFLICT (chantier_id, outil_id)
+    DO UPDATE SET donnees = EXCLUDED.donnees, updated_at = NOW()
+  `, [id, outilId, donnees]);
+  res.json(await getChantierFull(id));
+}));
+
+app.delete('/api/chantiers/:id/supports/:outilId', wrap(async (req, res) => {
+  const id = asId(req.params.id);
+  if (id === null) return res.status(404).json({ error: 'Non trouve' });
+  await pool.query('DELETE FROM supports WHERE chantier_id = $1 AND outil_id = $2', [id, req.params.outilId]);
   res.json(await getChantierFull(id));
 }));
 
