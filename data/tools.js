@@ -102,7 +102,7 @@ const TOOLS = [
     ],
     keywords: ['ishikawa', 'arete de poisson', 'diagramme causes', 'cause effet', '5m', 'cause racine', 'pourquoi le probleme arrive', 'panne recurrente', 'defaut qualite recurrent', 'diagramme causal', 'recherche de causes', 'brainstorming des causes', 'analyse multicritere probleme', 'main d\'oeuvre methode materiel matiere milieu', 'cause profonde', 'cause multiple', 'trouver l\'origine du probleme', 'analyse de defaillance', 'facteurs explicatifs probleme'],
     template: {
-      file: 'templates/ishikawa-swm.pdf',
+      file: 'templates/ishikawa-swm.pptx',
       label: 'Trame Ishikawa (support SWM)',
       usage: [
         "Imprimer ou projeter la trame : elle a deja les 6 branches tracees et le cadre \"Probleme\" a droite",
