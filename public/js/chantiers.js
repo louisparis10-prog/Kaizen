@@ -775,20 +775,57 @@
     return isNaN(d) ? String(iso).slice(0, 10) : d.toLocaleDateString('fr-FR');
   }
 
-  // Apercu de ce qui a ete saisi, pour retrouver d'un coup d'oeil le contenu du support.
-  function resumeSupport(tool, support) {
-    const champs = support.fields || {};
-    return (tool.template.fields || []).map(f => {
-      const v = champs[f.id];
-      if (f.type === 'repeatable') {
-        const n = Array.isArray(v) ? v.length : 0;
-        return n ? `<div><strong>${esc(f.label)} :</strong> ${n} ligne(s)</div>` : '';
+  // Genere la trame SWM remplie et la telecharge. Utilisee aussi bien depuis le
+  // formulaire que depuis le bouton "Ouvrir le support rempli" du bloc de l'outil.
+  async function telechargerTrameRemplie(tool, headerValues, fieldValues, bouton) {
+    const libelle = bouton ? bouton.textContent : null;
+    if (bouton) { bouton.disabled = true; bouton.textContent = 'Ouverture...'; }
+    try {
+      const res = await fetch(`/api/tools/${tool.id}/trame`, {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ header: headerValues, fields: fieldValues })
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        toast(err.error || "Impossible de remplir la trame SWM.", 'error');
+        return;
       }
-      const texte = String(v || '').trim();
-      if (!texte) return '';
-      const court = texte.replace(/\s*\n\s*/g, ' / ');
-      return `<div><strong>${esc(f.label)} :</strong> ${esc(court.length > 110 ? court.slice(0, 110) + '...' : court)}</div>`;
-    }).join('') || '<div>Aucune rubrique renseignee.</div>';
+      const ext = res.headers.get('X-Extension-Trame') || 'pptx';
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${tool.id}-rempli.${ext}`;
+      // Le lien doit etre dans la page et l'adresse temporaire liberee apres coup :
+      // sinon certains navigateurs (mobiles notamment) annulent le telechargement.
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 30000);
+      toast('Trame SWM remplie et telechargee.');
+
+      // On previent si une saisie n'a pas pu etre reportee dans la trame.
+      const nonPlaces = res.headers.get('X-Champs-Non-Places');
+      if (nonPlaces) {
+        const noms = nonPlaces.split(',').map(id => {
+          const champ = (tool.template.fields || []).find(f => f.id === id);
+          return champ ? champ.label : id;
+        });
+        toast(`A reporter a la main sur la trame : ${noms.join(', ')}.`, 'error');
+      }
+      const lignesIgnorees = res.headers.get('X-Lignes-Ignorees');
+      if (lignesIgnorees) {
+        toast(`La trame ne comporte pas assez de lignes : ${lignesIgnorees} ligne(s) non reportee(s).`, 'error');
+      }
+      const causesEnTrop = res.headers.get('X-Causes-En-Trop');
+      if (causesEnTrop) {
+        toast(`Trop de causes pour la trame : ${causesEnTrop.replace(/pourquoi/g, 'Pourquoi ')}.`, 'error');
+      }
+    } catch (err) {
+      toast("Impossible de remplir la trame SWM.", 'error');
+    } finally {
+      if (bouton) { bouton.disabled = false; bouton.textContent = libelle; }
+    }
   }
 
   // ---------- Bloc par outil : photos dediees + support a remplir ----------
@@ -813,15 +850,20 @@
             </span>
           </div>
           ${support ? `
-            <div class="outil-support">
-              <span class="outil-support-etat">Support rempli le ${esc(formatDate(support.updated_at))}</span>
-              <button type="button" class="btn danger small no-print btn-suppr-support">Effacer</button>
-              <div class="outil-support-resume">${resumeSupport(t, support)}</div>
+            <div class="outil-support no-print">
+              <span class="outil-support-etat">Rempli le ${esc(formatDate(support.updated_at))}</span>
+              <button type="button" class="btn orange small btn-ouvrir-support">Ouvrir le support rempli</button>
+              <button type="button" class="btn danger small btn-suppr-support">Effacer</button>
             </div>` : ''}
           <div class="photo-grid photo-grid-small" data-photos-outil="${esc(t.id)}"></div>
         </div>
       `);
       if (support) {
+        // Regenere la trame a partir de ce qui avait ete saisi, et la telecharge.
+        const btnOuvrir = bloc.querySelector('.btn-ouvrir-support');
+        btnOuvrir.addEventListener('click', () => {
+          telechargerTrameRemplie(t, support.header || {}, support.fields || {}, btnOuvrir);
+        });
         bloc.querySelector('.btn-suppr-support').addEventListener('click', async () => {
           if (!confirm(`Effacer le support rempli pour ${t.name} ?`)) return;
           const res = await fetch(`/api/chantiers/${c.id}/supports/${t.id}`, { method: 'DELETE' });
@@ -1018,56 +1060,9 @@
     if (btnTrame) btnTrame.addEventListener('click', async () => {
       const { headerValues, fieldValues } = collecterValeurs();
       const chantierMaj = await enregistrerSupport(headerValues, fieldValues);
-      btnTrame.disabled = true;
-      btnTrame.textContent = 'Remplissage en cours...';
-      try {
-        const res = await fetch(`/api/tools/${tool.id}/trame`, {
-          method: 'POST', headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ header: headerValues, fields: fieldValues })
-        });
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          toast(err.error || "Impossible de remplir la trame SWM.", 'error');
-          return;
-        }
-        const nonPlaces = res.headers.get('X-Champs-Non-Places');
-        const lignesIgnorees = res.headers.get('X-Lignes-Ignorees');
-        const ext = res.headers.get('X-Extension-Trame') || 'pptx';
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${tool.id}-rempli.${ext}`;
-        // Le lien doit etre dans la page et l'adresse temporaire liberee apres coup :
-        // sinon certains navigateurs (mobiles notamment) annulent le telechargement.
-        a.style.display = 'none';
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 30000);
-        root.innerHTML = '';
-        toast('Trame SWM remplie, telechargee et enregistree sur le chantier.');
-        if (chantierMaj) renderDetail(chantierMaj);
-        // On previent si une saisie n'a pas pu etre reportee dans la trame.
-        if (nonPlaces) {
-          const noms = nonPlaces.split(',').map(id => {
-            const champ = (t.fields || []).find(f => f.id === id);
-            return champ ? champ.label : id;
-          });
-          toast(`A reporter a la main sur la trame : ${noms.join(', ')}.`, 'error');
-        }
-        if (lignesIgnorees) {
-          toast(`La trame ne comporte pas assez de lignes : ${lignesIgnorees} ligne(s) non reportee(s).`, 'error');
-        }
-        const causesEnTrop = res.headers.get('X-Causes-En-Trop');
-        if (causesEnTrop) {
-          toast(`Trop de causes pour la trame : ${causesEnTrop.replace(/pourquoi/g, 'Pourquoi ')}.`, 'error');
-        }
-      } catch (err) {
-        toast("Impossible de remplir la trame SWM.", 'error');
-      } finally {
-        btnTrame.disabled = false;
-        btnTrame.textContent = 'Remplir la trame SWM';
-      }
+      root.innerHTML = '';
+      await telechargerTrameRemplie(tool, headerValues, fieldValues);
+      if (chantierMaj) renderDetail(chantierMaj);
     });
 
     backdrop.querySelector('#btn-generate-template').addEventListener('click', () => {
