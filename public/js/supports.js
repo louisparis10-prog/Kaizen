@@ -203,16 +203,17 @@
         return `<div class="quadrant${gagnant ? ' gagnant' : ''}">
           <h4>${titre}</h4>${etiquettes || '<div class="cellule-vide">-</div>'}</div>`;
       }
+      // Memes intitules de quadrants que la trame SWM.
       return `
         <div class="matrice">
-          <div class="axe-y">GAIN ATTENDU &rarr;</div>
-          ${quadrant('Fort', 'Faible', 'Gain fort / Effort faible : a lancer en premier', true)}
-          ${quadrant('Fort', 'Fort', 'Gain fort / Effort fort : a planifier')}
-          ${quadrant('Faible', 'Faible', 'Gain faible / Effort faible : si temps disponible')}
-          ${quadrant('Faible', 'Fort', 'Gain faible / Effort fort : a ecarter')}
-          <div class="axe-x">EFFORT NECESSAIRE &rarr;</div>
+          <div class="axe-y">GAIN &rarr;</div>
+          ${quadrant('Eleve', 'Faible', 'Gains Rapides', true)}
+          ${quadrant('Eleve', 'Eleve', 'Projets Importants')}
+          ${quadrant('Faible', 'Faible', 'Gains Faibles')}
+          ${quadrant('Faible', 'Eleve', 'Projets a Eviter')}
+          <div class="axe-x">EFFORT &rarr;</div>
         </div>
-        <p class="note-bas">Lancer en priorite le quadrant encadre en orange (les "quick wins").</p>
+        <p class="note-bas">Lancer en priorite les "Gains Rapides" (quadrant encadre en orange).</p>
       `;
     },
 
