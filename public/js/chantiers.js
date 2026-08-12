@@ -49,6 +49,17 @@
     setTimeout(() => { t.classList.add('toast-hide'); setTimeout(() => t.remove(), 300); }, 3500);
   }
 
+  async function fetchJson(url, options) {
+    const res = await fetch(url, options);
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const err = new Error(data.error || `Erreur serveur (${res.status})`);
+      err.status = res.status;
+      throw err;
+    }
+    return data;
+  }
+
   // Redimensionne et recompresse une image cote client avant l'envoi.
   // Evite les echecs sur les grosses photos (limite serveur) et allege fortement
   // le stockage et tous les chargements ulterieurs. Les fichiers non-image passent tels quels.
@@ -209,9 +220,16 @@
   const GAIN_MOYEN_CIBLE = 15;
 
   async function loadDashboard() {
-    const res = await fetch('/api/dashboard');
-    const d = await res.json();
-    renderDashboard(d);
+    const wrap = document.getElementById('dashboard');
+    try {
+      const d = await fetchJson('/api/dashboard');
+      renderDashboard(d);
+    } catch (err) {
+      wrap.innerHTML = '';
+      const message = el('<div class="section-card dashboard-error"></div>');
+      message.textContent = `Tableau de bord indisponible : ${err.message}`;
+      wrap.appendChild(message);
+    }
   }
 
   function renderDashboard(d) {
@@ -270,10 +288,21 @@
 
   // ---------- Liste ----------
   async function loadChantiers() {
-    const res = await fetch('/api/chantiers');
-    chantiers = await res.json();
-    renderList();
-    loadDashboard();
+    try {
+      const data = await fetchJson('/api/chantiers');
+      if (!Array.isArray(data)) throw new Error('Reponse invalide du serveur');
+      chantiers = data;
+      renderList();
+    } catch (err) {
+      chantiers = [];
+      renderStatutFilters();
+      const wrap = document.getElementById('chantiers-list');
+      wrap.innerHTML = '';
+      const message = el('<div class="section-card chantier-load-error"></div>');
+      message.textContent = `Chantiers indisponibles : ${err.message}`;
+      wrap.appendChild(message);
+    }
+    await loadDashboard();
   }
 
   let statutFilter = 'tous';

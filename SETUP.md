@@ -28,6 +28,10 @@ npm start
 ```
 Ouvre http://localhost:3001
 
+Sans `DATABASE_URL`, l'application utilise automatiquement une base temporaire
+en memoire pour le developpement local. Les chantiers crees dans ce mode sont
+effaces au redemarrage. Pour conserver les donnees, configure une URL PostgreSQL.
+
 Pour activer le chat IA en local, il faut la variable d'environnement avec ta cle Anthropic :
 ```
 ANTHROPIC_API_KEY=sk-ant-... npm start

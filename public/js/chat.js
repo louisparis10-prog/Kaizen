@@ -82,10 +82,25 @@
     scrollToBottom();
   }
 
+  // Le moteur local et les fournisseurs IA peuvent utiliser **texte** pour la
+  // mise en valeur. On ne passe jamais leur reponse a innerHTML : les noeuds sont
+  // construits explicitement pour conserver la protection contre les injections.
+  function appendFormattedText(container, text) {
+    String(text || '').split(/(\*\*[^*]+\*\*)/g).filter(Boolean).forEach(part => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        const strong = document.createElement('strong');
+        strong.textContent = part.slice(2, -2);
+        container.appendChild(strong);
+      } else {
+        container.appendChild(document.createTextNode(part));
+      }
+    });
+  }
+
   function addBotMessage(text, tools) {
     const box = document.getElementById('kaizen-chat-messages');
     const wrap = el(`<div class="chat-msg bot"></div>`);
-    wrap.textContent = text;
+    appendFormattedText(wrap, text);
     if (tools && tools.length) {
       const toolsWrap = el(`<div class="chat-tools"></div>`);
       tools.forEach(id => {

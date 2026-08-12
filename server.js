@@ -1,6 +1,6 @@
 const express = require('express');
 const path = require('path');
-const { Pool } = require('pg');
+const { Pool: PgPool } = require('pg');
 const { TOOLS, TOOLS_BY_ID, PHASES, PHASES_BY_ID } = require('./data/tools.js');
 const leanExpert = require('./lib/leanExpert.js');
 const trameSwm = require('./lib/trameSwm.js');
@@ -8,21 +8,31 @@ const trameSwm = require('./lib/trameSwm.js');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Base de donnees PostgreSQL persistante (ex: Neon). La chaine de connexion vient
-// de la variable d'environnement DATABASE_URL (jamais en dur dans le code).
-// Contrairement au SQLite du disque ephemere, les donnees survivent aux redemarrages.
-if (!process.env.DATABASE_URL) {
-  console.error('\n  ATTENTION : variable DATABASE_URL manquante.');
-  console.error('  Ajoute la chaine de connexion PostgreSQL (Neon) dans les variables');
-  console.error('  d\'environnement du service. L\'application demarre mais l\'API restera');
-  console.error('  en erreur tant que la base n\'est pas configuree.\n');
+// En production, la base PostgreSQL persistante vient de DATABASE_URL. Pour le
+// developpement local, une base PostgreSQL compatible en memoire permet de tester
+// toute l'application sans installer ni configurer un serveur externe.
+const useMemoryDatabase = !process.env.DATABASE_URL && process.env.NODE_ENV !== 'production';
+const databaseMode = process.env.DATABASE_URL ? 'postgresql' : (useMemoryDatabase ? 'memory' : 'unconfigured');
+let pool;
+if (databaseMode === 'postgresql') {
+  pool = new PgPool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
+    max: 5
+  });
+} else if (databaseMode === 'memory') {
+  const { newDb } = require('pg-mem');
+  const memoryDb = newDb({ autoCreateForeignKeyIndices: true });
+  const { Pool: MemoryPool } = memoryDb.adapters.createPg();
+  pool = new MemoryPool();
+  console.warn('\n  DATABASE_URL absente : base locale temporaire activee.');
+  console.warn('  Les donnees seront effacees au redemarrage du serveur.\n');
+} else {
+  // En production, ne jamais masquer une configuration manquante avec une base
+  // ephemere : le healthcheck doit echouer jusqu'a ce que DATABASE_URL soit fournie.
+  pool = new PgPool({ max: 5 });
+  console.error('\n  DATABASE_URL est obligatoire en production.\n');
 }
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
-  max: 5
-});
 
 // Schema idempotent (cree les tables si elles n'existent pas). En PostgreSQL :
 // SERIAL = auto-increment, TIMESTAMPTZ = date/heure, DOUBLE PRECISION = REAL.
@@ -100,11 +110,36 @@ async function initDb() {
 app.use(express.json({ limit: '15mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
+function errorMessage(err) {
+  if (!err) return 'Erreur interne du serveur';
+  if (typeof err.message === 'string' && err.message.trim()) return err.message.trim();
+  if (err.code) return `Erreur de base de donnees (${err.code})`;
+  if (Array.isArray(err.errors)) {
+    const nested = err.errors.map(e => e && e.message).find(Boolean);
+    if (nested) return nested;
+  }
+  return 'Erreur interne du serveur';
+}
+
 // Enveloppe un handler async : capture les erreurs pour repondre 500 proprement
 // (Express ne capture pas seul les rejets de promesses).
 const wrap = fn => (req, res) => fn(req, res).catch(err => {
   console.error(err);
-  if (!res.headersSent) res.status(500).json({ error: err.message });
+  if (!res.headersSent) res.status(500).json({
+    error: errorMessage(err),
+    code: err && err.code ? err.code : 'INTERNAL_ERROR'
+  });
+});
+
+// Le controle de sante verifie aussi la base : un serveur web qui affiche la
+// page d'accueil mais ne peut plus lire les chantiers n'est pas considere sain.
+app.get('/health', async (req, res) => {
+  try {
+    await pool.query('SELECT 1 AS ok');
+    res.json({ status: 'ok', database: databaseMode });
+  } catch (err) {
+    res.status(503).json({ status: 'error', database: 'unavailable', error: errorMessage(err) });
+  }
 });
 
 // Convertit un parametre d'URL en identifiant entier, ou null si invalide.
@@ -558,7 +593,7 @@ app.delete('/api/chantiers/:id/photos/:photoId', wrap(async (req, res) => {
 
 // Demarre le serveur apres l'initialisation de la base.
 initDb()
-  .catch(err => console.error('  Echec init base (l\'API restera en erreur tant que DATABASE_URL n\'est pas valide) :', err.message))
+  .catch(err => console.error('  Echec init base :', errorMessage(err)))
   .finally(() => {
     app.listen(PORT, () => console.log(`\n  Kaizen app demarree -> http://localhost:${PORT}\n`));
   });
