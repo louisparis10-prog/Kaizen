@@ -1,5 +1,9 @@
 node_modules/
 debug*.log
+**/bin/
+**/obj/
+.azure/
+dotnet/*.log
 kaizen.db
 kaizen.db-shm
 kaizen.db-wal

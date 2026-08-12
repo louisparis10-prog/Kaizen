@@ -1,0 +1,71 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pr:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  buildConfiguration: Release
+  azureServiceConnection: azconnection
+  AZURE_ENV_NAME: dev
+  AZURE_LOCATION: francecentral
+  SQL_ADMIN_LOGIN: kaizenadmin
+
+steps:
+  - task: UseDotNet@2
+    displayName: Installer .NET 8
+    inputs:
+      packageType: sdk
+      version: 8.x
+
+  - script: dotnet restore dotnet/KaizenApp.csproj --configfile dotnet/NuGet.Config
+    displayName: Restaurer les dependances
+
+  - script: dotnet build dotnet/KaizenApp.csproj --configuration $(buildConfiguration) --no-restore
+    displayName: Compiler
+
+  - script: dotnet publish dotnet/KaizenApp.csproj --configuration $(buildConfiguration) --no-build --output $(Build.ArtifactStagingDirectory)/web
+    displayName: Publier le package App Service
+
+  - task: ArchiveFiles@2
+    displayName: Creer le package ZIP
+    inputs:
+      rootFolderOrFile: $(Build.ArtifactStagingDirectory)/web
+      includeRootFolder: false
+      archiveType: zip
+      archiveFile: $(Build.ArtifactStagingDirectory)/kaizen-app.zip
+      replaceExistingArchive: true
+
+  - publish: $(Build.ArtifactStagingDirectory)/kaizen-app.zip
+    displayName: Publier l artefact
+    artifact: kaizen-app
+
+  - task: setup-azd@1
+    displayName: Installer Azure Developer CLI
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'), ne(variables['Build.Reason'], 'PullRequest'))
+
+  - pwsh: azd config set auth.useAzCliAuth true
+    displayName: Configurer l authentification azd
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'), ne(variables['Build.Reason'], 'PullRequest'))
+
+  - task: AzureCLI@2
+    displayName: Provisionner Azure et deployer l application
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'), ne(variables['Build.Reason'], 'PullRequest'))
+    inputs:
+      azureSubscription: $(azureServiceConnection)
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: azd up --no-prompt
+    env:
+      AZURE_SUBSCRIPTION_ID: $(AZURE_SUBSCRIPTION_ID)
+      AZURE_ENV_NAME: $(AZURE_ENV_NAME)
+      AZURE_LOCATION: $(AZURE_LOCATION)
+      SQL_ADMIN_LOGIN: $(SQL_ADMIN_LOGIN)
+      SQL_ADMIN_PASSWORD: $(SQL_ADMIN_PASSWORD)
