@@ -1,0 +1,10 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "interventions-sg",
+      "url": "http://localhost:3411",
+      "port": 3411
+    }
+  ]
+}

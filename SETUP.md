@@ -1,51 +1,56 @@
 # Reprendre le projet sur un autre ordinateur
 
 Tout le code est sauvegarde sur GitHub : https://github.com/louisparis10-prog/Kaizen
-C'est ca, ta copie complete — pas besoin de transferer des fichiers a la main.
 
-## 1. Installer les outils de base (si pas deja fait)
-- .NET SDK 8 (https://dotnet.microsoft.com/download/dotnet/8.0)
-- Git (deja installe sur Mac en general)
+## Architecture
+
+Node.js + Express + SQL Server (driver `mssql`), servi derriere IIS/ARR.
+**Memes technologies et meme organisation que Flash Industriel.**
+
+| Branche | Role | Base | Hebergement |
+|---|---|---|---|
+| `main` | Version validee, livree a l'IT | SQL Server | IIS interne |
+| `render-sandbox` | Bac a sable des nouvelles fonctionnalites | PostgreSQL | Render |
+
+Comme sur Flash Industriel, le sens de circulation est a sens unique :
+une fonctionnalite nait d'une branche issue de `main`, elle est fusionnee
+dans `render-sandbox` pour etre validee en ligne, puis dans `main`.
+
+Les deux branches ne different que par le serveur et sa base :
+`server-sqlserver.js` d'un cote, `server.js` (PostgreSQL) de l'autre.
+Tout le reste — `public/`, `data/`, `lib/` — est commun.
+
+## 1. Installer les outils
+
+- Node.js 18 ou superieur (https://nodejs.org)
+- Git
 
 ## 2. Recuperer le code
-```
-git clone git@github.com:louisparis10-prog/Kaizen.git
+
+```bash
+git clone https://github.com/louisparis10-prog/Kaizen.git
 cd Kaizen
-dotnet restore dotnet/KaizenApp.csproj --configfile dotnet/NuGet.Config
+npm install
 ```
 
-Si `git clone` demande une authentification et refuse (`Permission denied` ou `Repository not found`) :
-c'est qu'il faut ajouter une cle SSH de CE nouveau PC a ton compte GitHub (meme procedure que la premiere fois) :
-```
-ssh-keygen -t ed25519 -C "ton-email" -f ~/.ssh/id_ed25519 -N ""
-cat ~/.ssh/id_ed25519.pub
-```
-Copie la cle affichee sur https://github.com/settings/ssh/new, puis relance `git clone`.
+## 3. Configurer
 
-## 3. Lancer l'appli en local
+```bash
+copy .env.example .env
 ```
-dotnet run --project dotnet/KaizenApp.csproj
+
+Renseigner `DB_SERVER`, `DB_NAME`, `DB_USER` et `DB_PASSWORD`.
+Le serveur relit ce fichier a chaque demarrage.
+
+## 4. Lancer
+
+```bash
+npm start          # ou npm run dev pour le rechargement automatique
 ```
-Ouvre l adresse affichee par .NET dans le terminal.
 
-Configure `ConnectionStrings__SqlServer` pour utiliser SQL Server en local. Le backend
-.NET n utilise pas `DATABASE_URL` ni PostgreSQL. Le schema est cree automatiquement
-au premier demarrage.
+Les tables sont creees automatiquement au premier demarrage : aucun script
+SQL a passer a la main.
 
-Pour activer le chat IA en local, il faut la variable d'environnement avec ta cle Anthropic :
-```
-$env:ANTHROPIC_API_KEY="sk-ant-..."
-dotnet run --project dotnet/KaizenApp.csproj
-```
-(La cle n'est jamais dans le code : elle est configuree localement ou dans App Service.)
+## Mise en service sur le serveur
 
-## 4. Deployer les modifications sur Azure
-La procedure complete Azure App Service + Azure SQL se trouve dans `AZURE_DEPLOYMENT.md`.
-L infrastructure est decrite dans `infra/` et se deploie avec `azd up`.
-
-## Liens utiles
-- Repo GitHub : https://github.com/louisparis10-prog/Kaizen
-- Documentation Azure : `AZURE_DEPLOYMENT.md`
-
-## A savoir
-- Les donnees sont conservees dans Azure SQL et ne dependent pas du disque de l App Service.
+Voir `LANCEMENT.md` — c'est le document a transmettre a l'IT.

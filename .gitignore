@@ -8,3 +8,6 @@ kaizen.db
 kaizen.db-shm
 kaizen.db-wal
 kaizen.db.lock/
+
+# Le fichier de configuration contient le mot de passe SQL : jamais dans le depot.
+.env

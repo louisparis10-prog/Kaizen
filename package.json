@@ -1,20 +1,22 @@
 {
-  "name": "kaizen-app",
+  "name": "kaizen-toolbox",
   "version": "1.0.0",
-  "description": "Boite a outils Kaizen / Lean : bibliotheque d'outils, gestion de chantiers d'amelioration continue, chatbox expert ceinture noire",
-  "main": "server.js",
+  "description": "Boite a outils Kaizen / Lean : bibliotheque d'outils, gestion de chantiers d'amelioration continue, remplissage des trames SWM, chatbox expert ceinture noire",
+  "main": "server-sqlserver.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node --watch server.js"
+    "start": "node server-sqlserver.js",
+    "dev": "node --watch server-sqlserver.js"
   },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
   "engines": {
     "node": ">=18.0.0"
   },
   "dependencies": {
-    "express": "^4.18.2",
+    "express": "^5.2.1",
     "jszip": "^3.10.1",
-    "pdf-lib": "^1.17.1",
-    "pg": "^8.13.1",
-    "pg-mem": "^3.0.5"
+    "mssql": "^11.0.1"
   }
 }
