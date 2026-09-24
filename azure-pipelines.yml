@@ -1,71 +1,64 @@
-trigger:
-  branches:
-    include:
-      - main
-
-pr:
-  branches:
-    include:
-      - main
+# Construit le paquet de deploiement de Kaizen Toolbox et le publie comme
+# artefact. Meme principe que le pipeline de Flash Industriel.
+#
+# Declenchement manuel : on ne veut pas qu'un simple push reconstruise un
+# paquet destine a la production.
+trigger: none
+pr: none
 
 pool:
-  vmImage: ubuntu-latest
-
-variables:
-  buildConfiguration: Release
-  azureServiceConnection: azconnection
-  AZURE_ENV_NAME: dev
-  AZURE_LOCATION: francecentral
-  SQL_ADMIN_LOGIN: kaizenadmin
+  vmImage: 'windows-latest'
 
 steps:
-  - task: UseDotNet@2
-    displayName: Installer .NET 8
-    inputs:
-      packageType: sdk
-      version: 8.x
 
-  - script: dotnet restore dotnet/KaizenApp.csproj --configfile dotnet/NuGet.Config
-    displayName: Restaurer les dependances
+- task: NodeTool@0
+  inputs:
+    versionSpec: '20.x'
+  displayName: 'Installer Node.js'
 
-  - script: dotnet build dotnet/KaizenApp.csproj --configuration $(buildConfiguration) --no-restore
-    displayName: Compiler
+- script: |
+    npm ci --omit=dev
+  displayName: 'Installer les dependances'
 
-  - script: dotnet publish dotnet/KaizenApp.csproj --configuration $(buildConfiguration) --no-build --output $(Build.ArtifactStagingDirectory)/web
-    displayName: Publier le package App Service
+# Creation du package de deploiement
+- powershell: |
+    $publishFolder = "$(Build.ArtifactStagingDirectory)\publish"
 
-  - task: ArchiveFiles@2
-    displayName: Creer le package ZIP
-    inputs:
-      rootFolderOrFile: $(Build.ArtifactStagingDirectory)/web
-      includeRootFolder: false
-      archiveType: zip
-      archiveFile: $(Build.ArtifactStagingDirectory)/kaizen-app.zip
-      replaceExistingArchive: true
+    New-Item -ItemType Directory -Force -Path $publishFolder
 
-  - publish: $(Build.ArtifactStagingDirectory)/kaizen-app.zip
-    displayName: Publier l artefact
-    artifact: kaizen-app
+    Copy-Item "package.json" $publishFolder
+    Copy-Item "package-lock.json" $publishFolder -ErrorAction SilentlyContinue
+    Copy-Item "web.config" $publishFolder -ErrorAction SilentlyContinue
+    Copy-Item ".env.example" $publishFolder -ErrorAction SilentlyContinue
+    Copy-Item "LANCEMENT.md" $publishFolder -ErrorAction SilentlyContinue
 
-  - task: setup-azd@1
-    displayName: Installer Azure Developer CLI
-    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'), ne(variables['Build.Reason'], 'PullRequest'))
+    # Fichiers sans lesquels l'application ne demarre pas : -ErrorAction Stop
+    # volontairement, mieux vaut un build en echec qu'un deploiement
+    # silencieusement incomplet.
+    Copy-Item "server-sqlserver.js" $publishFolder -ErrorAction Stop
+    Copy-Item -Recurse "data" $publishFolder -ErrorAction Stop
+    Copy-Item -Recurse "lib"  $publishFolder -ErrorAction Stop
 
-  - pwsh: azd config set auth.useAzCliAuth true
-    displayName: Configurer l authentification azd
-    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'), ne(variables['Build.Reason'], 'PullRequest'))
+    # public/ porte les pages, le style et les six trames SWM remplissables.
+    Copy-Item -Recurse "public" $publishFolder -ErrorAction Stop
 
-  - task: AzureCLI@2
-    displayName: Provisionner Azure et deployer l application
-    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'), ne(variables['Build.Reason'], 'PullRequest'))
-    inputs:
-      azureSubscription: $(azureServiceConnection)
-      scriptType: bash
-      scriptLocation: inlineScript
-      inlineScript: azd up --no-prompt
-    env:
-      AZURE_SUBSCRIPTION_ID: $(AZURE_SUBSCRIPTION_ID)
-      AZURE_ENV_NAME: $(AZURE_ENV_NAME)
-      AZURE_LOCATION: $(AZURE_LOCATION)
-      SQL_ADMIN_LOGIN: $(SQL_ADMIN_LOGIN)
-      SQL_ADMIN_PASSWORD: $(SQL_ADMIN_PASSWORD)
+    # Copie des dependances npm
+    Copy-Item -Recurse "node_modules" $publishFolder
+
+  displayName: "Preparer le package"
+
+- task: ArchiveFiles@2
+  displayName: 'Creer le ZIP'
+  inputs:
+    rootFolderOrFile: '$(Build.ArtifactStagingDirectory)\publish'
+    includeRootFolder: false
+    archiveType: 'zip'
+    archiveFile: '$(Build.ArtifactStagingDirectory)\kaizen-toolbox_ReleaseTest.zip'
+    replaceExistingArchive: true
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publier le ZIP'
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)\kaizen-toolbox_ReleaseTest.zip'
+    ArtifactName: 'KaizenToolbox_ReleaseTEST_artifact'
+    publishLocation: 'Container'
