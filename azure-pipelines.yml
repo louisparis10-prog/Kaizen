@@ -1,8 +1,8 @@
 # Construit le paquet de deploiement de Kaizen Toolbox et le publie comme
-# artefact. Meme principe que le pipeline de Flash Industriel.
+# artefact. Calque sur le pipeline de Flash Industriel.
 #
 # Declenchement manuel : on ne veut pas qu'un simple push reconstruise un
-# paquet destine a la production.
+# paquet destine au serveur.
 trigger: none
 pr: none
 
@@ -13,12 +13,33 @@ steps:
 
 - task: NodeTool@0
   inputs:
-    versionSpec: '20.x'
+    versionSpec: '24.x'
   displayName: 'Installer Node.js'
 
 - script: |
-    npm ci --omit=dev
-  displayName: 'Installer les dependances'
+    npm ci
+  displayName: 'Installer les dépendances'
+
+# Kaizen Toolbox n'a pas encore de suite de tests. En attendant, on refuse au
+# moins de livrer un fichier qui ne compile pas : une accolade manquante
+# passait jusqu'ici sans un mot et ne se voyait qu'une fois en ligne.
+- powershell: |
+    $fichiers = @(
+      "server-sqlserver.js",
+      "lib\leanExpert.js",
+      "lib\trameSwm.js",
+      "data\tools.js"
+    )
+    foreach ($f in $fichiers) {
+      node --check $f
+      if ($LASTEXITCODE -ne 0) { throw "$f ne compile pas" }
+    }
+    Write-Host "Les $($fichiers.Count) fichiers JavaScript sont valides."
+  displayName: 'Vérifier les fichiers JavaScript'
+
+- script: |
+    npm audit --omit=dev --audit-level=moderate
+  displayName: 'Contrôler les dépendances vulnérables'
 
 # Creation du package de deploiement
 - powershell: |
@@ -26,29 +47,48 @@ steps:
 
     New-Item -ItemType Directory -Force -Path $publishFolder
 
-    Copy-Item "package.json" $publishFolder
-    Copy-Item "package-lock.json" $publishFolder -ErrorAction SilentlyContinue
-    Copy-Item "web.config" $publishFolder -ErrorAction SilentlyContinue
-    Copy-Item ".env.example" $publishFolder -ErrorAction SilentlyContinue
-    Copy-Item "LANCEMENT.md" $publishFolder -ErrorAction SilentlyContinue
-
-    # Fichiers sans lesquels l'application ne demarre pas : -ErrorAction Stop
-    # volontairement, mieux vaut un build en echec qu'un deploiement
-    # silencieusement incomplet.
+    # Tout ce qui est indispensable est copie avec -ErrorAction Stop : mieux
+    # vaut un build en echec qu'un paquet silencieusement incomplet.
+    Copy-Item "package.json"        $publishFolder -ErrorAction Stop
+    Copy-Item "package-lock.json"   $publishFolder -ErrorAction Stop
+    Copy-Item ".env.example"        $publishFolder -ErrorAction Stop
     Copy-Item "server-sqlserver.js" $publishFolder -ErrorAction Stop
-    Copy-Item -Recurse "data" $publishFolder -ErrorAction Stop
-    Copy-Item -Recurse "lib"  $publishFolder -ErrorAction Stop
 
-    # public/ porte les pages, le style et les six trames SWM remplissables.
+    # lib/  : le chat expert Lean et le remplissage des trames SWM.
+    # data/ : la bibliotheque d'outils, statique et versionnee — aucune
+    #         donnee saisie ne vit la, tout passe par SQL Server.
+    # public/ : les pages, le style et les trames remplissables.
+    Copy-Item -Recurse "lib"    $publishFolder -ErrorAction Stop
+    Copy-Item -Recurse "data"   $publishFolder -ErrorAction Stop
     Copy-Item -Recurse "public" $publishFolder -ErrorAction Stop
 
-    # Copie des dependances npm
-    Copy-Item -Recurse "node_modules" $publishFolder
+    Copy-Item -Recurse "node_modules" $publishFolder -ErrorAction Stop
 
-  displayName: "Preparer le package"
+    # web.config porte la configuration iisnode. S'il vit sur le serveur et
+    # non dans le depot, on ne le remplace pas — mais on le signale.
+    if (Test-Path "web.config") {
+      Copy-Item "web.config" $publishFolder -ErrorAction Stop
+    } else {
+      Write-Host "##[warning]web.config absent du depot : celui du serveur sera conserve."
+    }
+
+    # Le contenu de public/ est relu sur le disque a chaque requete, mais
+    # server-sqlserver.js et lib/ ne sont charges qu'au demarrage du
+    # processus. Deployer sans relancer l'application donne donc une interface
+    # a jour devant un serveur ancien — la combinaison la plus penible a
+    # diagnostiquer.
+    Write-Host "##[warning]Apres deploiement, RELANCER l'application (recyclage du pool IIS,"
+    Write-Host "##[warning]ou modification de web.config) : sans cela, seules les pages changent."
+
+    # Rappel de configuration : le fichier .env du serveur porte les acces SQL
+    # et, si la chatbox est activee, la cle de l'API d'IA. Il n'est jamais
+    # versionne et le deploiement ne le remplace pas.
+    Write-Host "##[warning]Verifier que le fichier .env existe sur le serveur (acces SQL)."
+
+  displayName: "Préparer le package"
 
 - task: ArchiveFiles@2
-  displayName: 'Creer le ZIP'
+  displayName: 'Créer le ZIP'
   inputs:
     rootFolderOrFile: '$(Build.ArtifactStagingDirectory)\publish'
     includeRootFolder: false
