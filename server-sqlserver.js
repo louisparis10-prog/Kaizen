@@ -182,21 +182,65 @@ async function initDB() {
     );
   `);
 
-  await p.request().query(`
-    IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'supports_chantier_outil')
-      CREATE UNIQUE INDEX supports_chantier_outil ON supports (chantier_id, outil_id);
-  `);
+  // Avant de creer les index, on verifie que les tables sont bien les notres.
+  // Si la base contient deja des tables portant ces noms mais avec une autre
+  // structure (base partagee avec une autre application), mieux vaut le dire
+  // clairement que de laisser remonter un message SQL incomprehensible.
+  await verifierStructure(p);
 
-  await p.request().query(`
-    IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'idx_actions_chantier')
-      CREATE INDEX idx_actions_chantier ON actions(chantier_id);
-  `);
-  await p.request().query(`
-    IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'idx_photos_chantier')
-      CREATE INDEX idx_photos_chantier ON photos(chantier_id);
-  `);
+  // CREATE INDEX est passe par sp_executesql : SQL Server valide les noms de
+  // colonnes a la compilation du lot, meme quand la condition du IF est fausse.
+  // Sans cette indirection, un index deja present sur une table d'une autre
+  // application ferait echouer le demarrage.
+  // La recherche dans sys.indexes est limitee a la table visee : un nom d'index
+  // n'est unique que par objet, pas pour toute la base.
+  async function creerIndex(nom, table, colonnes, unique) {
+    await p.request().query(`
+      IF OBJECT_ID('${table}', 'U') IS NOT NULL
+         AND NOT EXISTS (SELECT 1 FROM sys.indexes
+                         WHERE name = '${nom}' AND object_id = OBJECT_ID('${table}'))
+        EXEC sp_executesql N'CREATE ${unique ? 'UNIQUE ' : ''}INDEX ${nom} ON ${table} (${colonnes})';
+    `);
+  }
+
+  await creerIndex('supports_chantier_outil', 'supports', 'chantier_id, outil_id', true);
+  await creerIndex('idx_actions_chantier', 'actions', 'chantier_id', false);
+  await creerIndex('idx_photos_chantier', 'photos', 'chantier_id', false);
 
   console.log('Base de donnees SQL Server initialisee ✅');
+}
+
+// Colonnes indispensables au fonctionnement de l'application.
+const STRUCTURE_ATTENDUE = {
+  chantiers:   ['id', 'titre', 'probleme', 'perimetre', 'pilote', 'equipe', 'objectif',
+                'outils', 'date_debut', 'date_fin', 'statut', 'eligible_kaizen',
+                'quiz_reponses', 'created_at'],
+  actions:     ['id', 'chantier_id', 'description', 'responsable', 'echeance', 'statut'],
+  indicateurs: ['id', 'chantier_id', 'nom', 'unite', 'valeur_avant', 'valeur_apres'],
+  photos:      ['id', 'chantier_id', 'action_id', 'outil_id', 'filename', 'mime_type', 'data'],
+  supports:    ['id', 'chantier_id', 'outil_id', 'donnees', 'updated_at']
+};
+
+async function verifierStructure(p) {
+  const problemes = [];
+  for (const [table, colonnes] of Object.entries(STRUCTURE_ATTENDUE)) {
+    const r = await p.request().input('t', sql.NVarChar(128), table).query(`
+      SELECT c.name FROM sys.columns c
+      WHERE c.object_id = OBJECT_ID(@t)
+    `);
+    if (!r.recordset.length) continue;   // table absente : elle vient d'etre creee
+    const presentes = new Set(r.recordset.map(x => x.name.toLowerCase()));
+    const manquantes = colonnes.filter(c => !presentes.has(c.toLowerCase()));
+    if (manquantes.length) problemes.push(`  - ${table} : colonne(s) manquante(s) ${manquantes.join(', ')}`);
+  }
+  if (problemes.length) {
+    throw new Error(
+      "La base contient deja des tables portant les noms de l'application, mais avec une\n" +
+      "structure differente. Elle est probablement partagee avec une autre application.\n" +
+      problemes.join('\n') +
+      "\nUtiliser une base dediee et vide, ou renommer les tables existantes."
+    );
+  }
 }
 
 app.use(express.json({ limit: '15mb' }));
