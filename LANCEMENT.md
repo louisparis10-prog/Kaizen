@@ -48,6 +48,28 @@ npm start
 automatiquement au premier demarrage, et la creation est idempotente : sur une
 base qui contient deja des donnees, rien n'est supprime ni ecrase.
 
+### Si la base est partagee avec une autre application
+
+L'application cree cinq tables : `chantiers`, `actions`, `indicateurs`,
+`photos` et `supports`. Ces noms sont courants — `actions` en particulier — et
+peuvent deja exister pour une autre application. Dans ce cas le demarrage
+s'arrete avec un message nommant la table et les colonnes en cause.
+
+Deux solutions :
+
+1. **Une base dediee et vide** — le plus simple.
+2. **Un schema dedie** : renseigner `DB_SCHEMA=kaizen` dans le `.env`. Les
+   tables deviennent `kaizen.chantiers`, `kaizen.actions`, etc., sans aucune
+   collision possible. Le schema est cree au demarrage si le compte en a le
+   droit ; sinon, le faire creer une fois :
+
+```sql
+CREATE SCHEMA kaizen;
+GRANT CONTROL ON SCHEMA::kaizen TO kaizen_user;
+```
+
+L'application ne touche jamais aux tables situees hors de son schema.
+
 ## Verifier que tout fonctionne
 
 Le journal de demarrage indique quel fichier de configuration a ete lu, vers

@@ -90,6 +90,28 @@ const dbConfig = {
   }
 };
 
+// ── Schema SQL ──────────────────────────────────────────────
+// Par defaut l'application travaille dans le schema « dbo ». Sur une base
+// partagee avec d'autres applications, un nom de table aussi courant que
+// « actions » entre en collision : DB_SCHEMA permet alors de loger les tables
+// dans un schema dedie, sans rien changer d'autre.
+//
+// Le nom est interpole dans les requetes et ne peut donc pas etre un
+// parametre : on le restreint ici a ce qu'un identifiant SQL accepte.
+const SCHEMA = (process.env.DB_SCHEMA || 'dbo').trim();
+if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(SCHEMA)) {
+  console.error(`DB_SCHEMA invalide : « ${SCHEMA} ». Lettres, chiffres et tirets bas uniquement.`);
+  process.exit(1);
+}
+
+// Noms qualifies, utilises partout dans les requetes.
+const T = Object.fromEntries(
+  ['chantiers', 'actions', 'indicateurs', 'photos', 'supports']
+    .map(n => [n, `[${SCHEMA}].[${n}]`])
+);
+// Forme « schema.table » attendue par OBJECT_ID et COL_LENGTH.
+const ref = (table) => `${SCHEMA}.${table}`;
+
 let pool;
 
 async function getPool() {
@@ -102,9 +124,18 @@ async function getPool() {
 async function initDB() {
   const p = await getPool();
 
+  // Le schema dedie est cree s'il manque. CREATE SCHEMA doit etre seul dans
+  // son lot, d'ou le passage par sp_executesql.
+  if (SCHEMA !== 'dbo') {
+    await p.request().query(`
+      IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = '${SCHEMA}')
+        EXEC sp_executesql N'CREATE SCHEMA [${SCHEMA}]';
+    `);
+  }
+
   await p.request().query(`
-    IF OBJECT_ID('chantiers', 'U') IS NULL
-    CREATE TABLE chantiers (
+    IF OBJECT_ID('${ref('chantiers')}', 'U') IS NULL
+    CREATE TABLE ${T.chantiers} (
       id               INT IDENTITY(1,1) PRIMARY KEY,
       titre            NVARCHAR(500)  NOT NULL,
       probleme         NVARCHAR(MAX)  NULL,
@@ -123,8 +154,8 @@ async function initDB() {
   `);
 
   await p.request().query(`
-    IF OBJECT_ID('actions', 'U') IS NULL
-    CREATE TABLE actions (
+    IF OBJECT_ID('${ref('actions')}', 'U') IS NULL
+    CREATE TABLE ${T.actions} (
       id           INT IDENTITY(1,1) PRIMARY KEY,
       chantier_id  INT            NOT NULL,
       description  NVARCHAR(MAX)  NOT NULL,
@@ -136,8 +167,8 @@ async function initDB() {
   `);
 
   await p.request().query(`
-    IF OBJECT_ID('indicateurs', 'U') IS NULL
-    CREATE TABLE indicateurs (
+    IF OBJECT_ID('${ref('indicateurs')}', 'U') IS NULL
+    CREATE TABLE ${T.indicateurs} (
       id            INT IDENTITY(1,1) PRIMARY KEY,
       chantier_id   INT            NOT NULL,
       nom           NVARCHAR(300)  NOT NULL,
@@ -148,8 +179,8 @@ async function initDB() {
   `);
 
   await p.request().query(`
-    IF OBJECT_ID('photos', 'U') IS NULL
-    CREATE TABLE photos (
+    IF OBJECT_ID('${ref('photos')}', 'U') IS NULL
+    CREATE TABLE ${T.photos} (
       id           INT IDENTITY(1,1) PRIMARY KEY,
       chantier_id  INT            NOT NULL,
       action_id    INT            NULL,
@@ -164,15 +195,15 @@ async function initDB() {
   // Une base creee avant les photos par outil n'a pas cette colonne :
   // la creation de table ne touche pas a l'existant, il faut l'ajouter.
   await p.request().query(`
-    IF COL_LENGTH('photos', 'outil_id') IS NULL
-      ALTER TABLE photos ADD outil_id NVARCHAR(80) NULL;
+    IF COL_LENGTH('${ref('photos')}', 'outil_id') IS NULL
+      ALTER TABLE ${T.photos} ADD outil_id NVARCHAR(80) NULL;
   `);
 
   // Supports SWM remplis : une ligne par couple (chantier, outil). On conserve
   // les reponses pour retrouver ce qui a ete fait et regenerer la trame.
   await p.request().query(`
-    IF OBJECT_ID('supports', 'U') IS NULL
-    CREATE TABLE supports (
+    IF OBJECT_ID('${ref('supports')}', 'U') IS NULL
+    CREATE TABLE ${T.supports} (
       id           INT IDENTITY(1,1) PRIMARY KEY,
       chantier_id  INT            NOT NULL,
       outil_id     NVARCHAR(80)   NOT NULL,
@@ -203,9 +234,9 @@ async function initDB() {
     `);
   }
 
-  await creerIndex('supports_chantier_outil', 'supports', 'chantier_id, outil_id', true);
-  await creerIndex('idx_actions_chantier', 'actions', 'chantier_id', false);
-  await creerIndex('idx_photos_chantier', 'photos', 'chantier_id', false);
+  await creerIndex('supports_chantier_outil', ref('supports'), 'chantier_id, outil_id', true);
+  await creerIndex('idx_actions_chantier', ref('actions'), 'chantier_id', false);
+  await creerIndex('idx_photos_chantier', ref('photos'), 'chantier_id', false);
 
   console.log('Base de donnees SQL Server initialisee ✅');
 }
@@ -224,21 +255,23 @@ const STRUCTURE_ATTENDUE = {
 async function verifierStructure(p) {
   const problemes = [];
   for (const [table, colonnes] of Object.entries(STRUCTURE_ATTENDUE)) {
-    const r = await p.request().input('t', sql.NVarChar(128), table).query(`
+    const r = await p.request().input('t', sql.NVarChar(260), ref(table)).query(`
       SELECT c.name FROM sys.columns c
       WHERE c.object_id = OBJECT_ID(@t)
     `);
     if (!r.recordset.length) continue;   // table absente : elle vient d'etre creee
     const presentes = new Set(r.recordset.map(x => x.name.toLowerCase()));
     const manquantes = colonnes.filter(c => !presentes.has(c.toLowerCase()));
-    if (manquantes.length) problemes.push(`  - ${table} : colonne(s) manquante(s) ${manquantes.join(', ')}`);
+    if (manquantes.length) problemes.push(`  - ${ref(table)} : colonne(s) manquante(s) ${manquantes.join(', ')}`);
   }
   if (problemes.length) {
     throw new Error(
-      "La base contient deja des tables portant les noms de l'application, mais avec une\n" +
-      "structure differente. Elle est probablement partagee avec une autre application.\n" +
+      `Le schema « ${SCHEMA} » contient deja des tables portant les noms de l'application,\n` +
+      "mais avec une structure differente. La base est probablement partagee avec une\n" +
+      "autre application.\n" +
       problemes.join('\n') +
-      "\nUtiliser une base dediee et vide, ou renommer les tables existantes."
+      "\nDeux solutions : utiliser une base dediee et vide, ou renseigner DB_SCHEMA dans\n" +
+      "le fichier .env pour loger les tables dans un schema reserve a cette application."
     );
   }
 }
@@ -285,7 +318,7 @@ function missingRequiredPhases(outilIds) {
 async function chantierExists(id) {
   const p = await getPool();
   const r = await p.request().input('id', sql.Int, id)
-    .query('SELECT 1 AS present FROM chantiers WHERE id = @id');
+    .query(`SELECT 1 AS present FROM ${T.chantiers} WHERE id = @id`);
   return r.recordset.length > 0;
 }
 
@@ -307,7 +340,7 @@ async function withTx(fn) {
 async function getChantierFull(id) {
   const p = await getPool();
   const r = await p.request().input('id', sql.Int, id)
-    .query('SELECT * FROM chantiers WHERE id = @id');
+    .query(`SELECT * FROM ${T.chantiers} WHERE id = @id`);
   const chantier = r.recordset[0];
   if (!chantier) return null;
   chantier.equipe = JSON.parse(chantier.equipe || '[]');
@@ -317,12 +350,12 @@ async function getChantierFull(id) {
   // Ordonne par id (l'ordre d'insertion) : GETDATE() est constant dans une
   // transaction, donc created_at ne distingue pas des lignes creees ensemble.
   chantier.actions = (await p.request().input('id', sql.Int, id)
-    .query('SELECT * FROM actions WHERE chantier_id = @id ORDER BY id ASC')).recordset;
+    .query(`SELECT * FROM ${T.actions} WHERE chantier_id = @id ORDER BY id ASC`)).recordset;
   chantier.indicateurs = (await p.request().input('id', sql.Int, id)
-    .query('SELECT * FROM indicateurs WHERE chantier_id = @id ORDER BY id ASC')).recordset;
+    .query(`SELECT * FROM ${T.indicateurs} WHERE chantier_id = @id ORDER BY id ASC`)).recordset;
 
   const photos = (await p.request().input('id', sql.Int, id).query(
-    'SELECT id, action_id, outil_id, filename, mime_type, data, created_at FROM photos WHERE chantier_id = @id ORDER BY id ASC'
+    `SELECT id, action_id, outil_id, filename, mime_type, data, created_at FROM ${T.photos} WHERE chantier_id = @id ORDER BY id ASC`
   )).recordset;
   // Une photo appartient soit a une action, soit a un outil, soit au chantier lui-meme.
   chantier.photos = photos.filter(ph => ph.action_id == null && !ph.outil_id);
@@ -337,7 +370,7 @@ async function getChantierFull(id) {
   // Supports SWM remplis, indexes par outil.
   chantier.supports = {};
   (await p.request().input('id', sql.Int, id)
-    .query('SELECT outil_id, donnees, updated_at FROM supports WHERE chantier_id = @id')
+    .query(`SELECT outil_id, donnees, updated_at FROM ${T.supports} WHERE chantier_id = @id`)
   ).recordset.forEach(s => {
     try {
       chantier.supports[s.outil_id] = { ...JSON.parse(s.donnees), updated_at: s.updated_at };
@@ -399,20 +432,20 @@ app.post('/api/tools/:toolId/trame', wrap(async (req, res) => {
 async function buildChantiersContext() {
   const p = await getPool();
   const chantiers = (await p.request().query(
-    'SELECT id, titre, probleme, perimetre, pilote, objectif, outils, statut, date_debut, date_fin FROM chantiers ORDER BY id DESC'
+    `SELECT id, titre, probleme, perimetre, pilote, objectif, outils, statut, date_debut, date_fin FROM ${T.chantiers} ORDER BY id DESC`
   )).recordset;
   if (!chantiers.length) return null;
 
   // On charge les lignes liees en une fois : filtrer par liste d'identifiants
   // demanderait autant de parametres que de chantiers, sans rien y gagner.
   const actions = (await p.request().query(
-    'SELECT chantier_id, description, responsable, echeance, statut FROM actions ORDER BY id ASC'
+    `SELECT chantier_id, description, responsable, echeance, statut FROM ${T.actions} ORDER BY id ASC`
   )).recordset;
   const indicateurs = (await p.request().query(
-    'SELECT chantier_id, nom, unite, valeur_avant, valeur_apres FROM indicateurs ORDER BY id ASC'
+    `SELECT chantier_id, nom, unite, valeur_avant, valeur_apres FROM ${T.indicateurs} ORDER BY id ASC`
   )).recordset;
   const supports = (await p.request().query(
-    'SELECT chantier_id, outil_id, donnees FROM supports'
+    `SELECT chantier_id, outil_id, donnees FROM ${T.supports}`
   )).recordset;
 
   return chantiers.map(r => ({
@@ -465,7 +498,7 @@ app.get('/api/chat/status', (req, res) => {
 app.get('/api/chantiers', wrap(async (req, res) => {
   const p = await getPool();
   const rows = (await p.request()
-    .query('SELECT * FROM chantiers ORDER BY created_at DESC, id DESC')).recordset;
+    .query(`SELECT * FROM ${T.chantiers} ORDER BY created_at DESC, id DESC`)).recordset;
   rows.forEach(r => {
     r.equipe = JSON.parse(r.equipe || '[]');
     r.outils = JSON.parse(r.outils || '[]');
@@ -515,7 +548,7 @@ app.post('/api/chantiers', wrap(async (req, res) => {
       .input('eligible', sql.Int, eligible_kaizen === undefined || eligible_kaizen === null ? null : (eligible_kaizen ? 1 : 0))
       .input('quiz', sql.NVarChar(sql.MAX), quiz_reponses ? JSON.stringify(quiz_reponses) : null)
       .query(`
-        INSERT INTO chantiers (titre, probleme, perimetre, pilote, equipe, objectif, outils, date_debut, date_fin, statut, eligible_kaizen, quiz_reponses)
+        INSERT INTO ${T.chantiers} (titre, probleme, perimetre, pilote, equipe, objectif, outils, date_debut, date_fin, statut, eligible_kaizen, quiz_reponses)
         OUTPUT INSERTED.id
         VALUES (@titre, @probleme, @perimetre, @pilote, @equipe, @objectif, @outils, @date_debut, @date_fin, @statut, @eligible, @quiz)
       `);
@@ -528,7 +561,7 @@ app.post('/api/chantiers', wrap(async (req, res) => {
       await new sql.Request(tx)
         .input('cid', sql.Int, newId)
         .input('desc', sql.NVarChar(sql.MAX), `Realiser : ${tool.name}`)
-        .query(`INSERT INTO actions (chantier_id, description, responsable, echeance, statut)
+        .query(`INSERT INTO ${T.actions} (chantier_id, description, responsable, echeance, statut)
                 VALUES (@cid, @desc, '', '', 'a_faire')`);
     }
     return newId;
@@ -546,7 +579,7 @@ app.put('/api/chantiers/:id', wrap(async (req, res) => {
   } = req.body;
   const p = await getPool();
   const existing = (await p.request().input('id', sql.Int, id)
-    .query('SELECT eligible_kaizen, quiz_reponses FROM chantiers WHERE id = @id')).recordset[0];
+    .query(`SELECT eligible_kaizen, quiz_reponses FROM ${T.chantiers} WHERE id = @id`)).recordset[0];
   if (!existing) return res.status(404).json({ error: 'Non trouve' });
   if (equipe !== undefined && !Array.isArray(equipe)) return res.status(400).json({ error: 'equipe doit etre une liste' });
   if (outils !== undefined && !Array.isArray(outils)) return res.status(400).json({ error: 'outils doit etre une liste' });
@@ -571,7 +604,7 @@ app.put('/api/chantiers/:id', wrap(async (req, res) => {
     .input('quiz', sql.NVarChar(sql.MAX), nextQuiz)
     .input('id', sql.Int, id)
     .query(`
-      UPDATE chantiers SET titre = @titre, probleme = @probleme, perimetre = @perimetre,
+      UPDATE ${T.chantiers} SET titre = @titre, probleme = @probleme, perimetre = @perimetre,
         pilote = @pilote, equipe = @equipe, objectif = @objectif, outils = @outils,
         date_debut = @date_debut, date_fin = @date_fin, statut = @statut,
         eligible_kaizen = @eligible, quiz_reponses = @quiz
@@ -586,27 +619,27 @@ app.get('/api/dashboard', wrap(async (req, res) => {
   const p = await getPool();
 
   const parChantierStatut = (await p.request()
-    .query('SELECT statut, COUNT(*) AS n FROM chantiers GROUP BY statut')).recordset;
+    .query(`SELECT statut, COUNT(*) AS n FROM ${T.chantiers} GROUP BY statut`)).recordset;
 
   const actionsEnRetard = (await p.request().input('today', sql.NVarChar(10), today).query(`
     SELECT a.id, a.description, a.responsable, a.echeance, a.chantier_id, c.titre AS chantier_titre
-    FROM actions a
-    JOIN chantiers c ON c.id = a.chantier_id
+    FROM ${T.actions} a
+    JOIN ${T.chantiers} c ON c.id = a.chantier_id
     WHERE a.statut <> 'fait' AND a.echeance <> '' AND a.echeance < @today
     ORDER BY a.echeance ASC
   `)).recordset;
 
   const indicateurs = (await p.request().query(`
-    SELECT valeur_avant, valeur_apres FROM indicateurs
+    SELECT valeur_avant, valeur_apres FROM ${T.indicateurs}
     WHERE valeur_avant IS NOT NULL AND valeur_apres IS NOT NULL AND valeur_avant <> 0
   `)).recordset;
 
   const gains = indicateurs.map(i => ((i.valeur_avant - i.valeur_apres) / i.valeur_avant) * 100);
   const gainMoyen = gains.length ? gains.reduce((a, b) => a + b, 0) / gains.length : null;
 
-  const totalActions = (await p.request().query('SELECT COUNT(*) AS n FROM actions')).recordset[0].n;
+  const totalActions = (await p.request().query(`SELECT COUNT(*) AS n FROM ${T.actions}`)).recordset[0].n;
   const actionsFaites = (await p.request()
-    .query("SELECT COUNT(*) AS n FROM actions WHERE statut = 'fait'")).recordset[0].n;
+    .query(`SELECT COUNT(*) AS n FROM ${T.actions} WHERE statut = 'fait'`)).recordset[0].n;
 
   res.json({
     chantiersParStatut: Object.fromEntries(parChantierStatut.map(r => [r.statut, r.n])),
@@ -626,10 +659,10 @@ app.delete('/api/chantiers/:id', wrap(async (req, res) => {
     // Ordre impose par les dependances : les lignes liees avant le chantier.
     for (const table of ['photos', 'actions', 'indicateurs', 'supports']) {
       await new sql.Request(tx).input('id', sql.Int, id)
-        .query(`DELETE FROM ${table} WHERE chantier_id = @id`);
+        .query(`DELETE FROM ${T[table]} WHERE chantier_id = @id`);
     }
     await new sql.Request(tx).input('id', sql.Int, id)
-      .query('DELETE FROM chantiers WHERE id = @id');
+      .query(`DELETE FROM ${T.chantiers} WHERE id = @id`);
   });
   res.json({ success: true });
 }));
@@ -647,7 +680,7 @@ app.post('/api/chantiers/:id/actions', wrap(async (req, res) => {
     .input('resp', sql.NVarChar(200), responsable || '')
     .input('ech', sql.NVarChar(10), echeance || '')
     .input('statut', sql.NVarChar(20), statut || 'a_faire')
-    .query(`INSERT INTO actions (chantier_id, description, responsable, echeance, statut)
+    .query(`INSERT INTO ${T.actions} (chantier_id, description, responsable, echeance, statut)
             VALUES (@cid, @desc, @resp, @ech, @statut)`);
   res.json(await getChantierFull(id));
 }));
@@ -664,7 +697,7 @@ app.put('/api/chantiers/:id/actions/:actionId', wrap(async (req, res) => {
     .input('statut', sql.NVarChar(20), statut || 'a_faire')
     .input('aid', sql.Int, actionId)
     .input('cid', sql.Int, id)
-    .query(`UPDATE actions SET description = @desc, responsable = @resp, echeance = @ech,
+    .query(`UPDATE ${T.actions} SET description = @desc, responsable = @resp, echeance = @ech,
             statut = @statut WHERE id = @aid AND chantier_id = @cid`);
   res.json(await getChantierFull(id));
 }));
@@ -674,7 +707,7 @@ app.delete('/api/chantiers/:id/actions/:actionId', wrap(async (req, res) => {
   if (id === null || actionId === null) return res.status(404).json({ error: 'Non trouve' });
   const p = await getPool();
   await p.request().input('aid', sql.Int, actionId).input('cid', sql.Int, id)
-    .query('DELETE FROM actions WHERE id = @aid AND chantier_id = @cid');
+    .query(`DELETE FROM ${T.actions} WHERE id = @aid AND chantier_id = @cid`);
   res.json(await getChantierFull(id));
 }));
 
@@ -691,7 +724,7 @@ app.post('/api/chantiers/:id/indicateurs', wrap(async (req, res) => {
     .input('unite', sql.NVarChar(50), unite || '')
     .input('avant', sql.Float, toNumberOrNull(valeur_avant))
     .input('apres', sql.Float, toNumberOrNull(valeur_apres))
-    .query(`INSERT INTO indicateurs (chantier_id, nom, unite, valeur_avant, valeur_apres)
+    .query(`INSERT INTO ${T.indicateurs} (chantier_id, nom, unite, valeur_avant, valeur_apres)
             VALUES (@cid, @nom, @unite, @avant, @apres)`);
   res.json(await getChantierFull(id));
 }));
@@ -708,7 +741,7 @@ app.put('/api/chantiers/:id/indicateurs/:indicId', wrap(async (req, res) => {
     .input('apres', sql.Float, toNumberOrNull(valeur_apres))
     .input('iid', sql.Int, indicId)
     .input('cid', sql.Int, id)
-    .query(`UPDATE indicateurs SET nom = @nom, unite = @unite, valeur_avant = @avant,
+    .query(`UPDATE ${T.indicateurs} SET nom = @nom, unite = @unite, valeur_avant = @avant,
             valeur_apres = @apres WHERE id = @iid AND chantier_id = @cid`);
   res.json(await getChantierFull(id));
 }));
@@ -718,7 +751,7 @@ app.delete('/api/chantiers/:id/indicateurs/:indicId', wrap(async (req, res) => {
   if (id === null || indicId === null) return res.status(404).json({ error: 'Non trouve' });
   const p = await getPool();
   await p.request().input('iid', sql.Int, indicId).input('cid', sql.Int, id)
-    .query('DELETE FROM indicateurs WHERE id = @iid AND chantier_id = @cid');
+    .query(`DELETE FROM ${T.indicateurs} WHERE id = @iid AND chantier_id = @cid`);
   res.json(await getChantierFull(id));
 }));
 
@@ -740,7 +773,7 @@ app.put('/api/chantiers/:id/supports/:outilId', wrap(async (req, res) => {
     .input('oid', sql.NVarChar(80), outilId)
     .input('donnees', sql.NVarChar(sql.MAX), donnees)
     .query(`
-      MERGE supports AS cible
+      MERGE ${T.supports} AS cible
       USING (SELECT @cid AS chantier_id, @oid AS outil_id) AS source
         ON cible.chantier_id = source.chantier_id AND cible.outil_id = source.outil_id
       WHEN MATCHED THEN
@@ -757,7 +790,7 @@ app.delete('/api/chantiers/:id/supports/:outilId', wrap(async (req, res) => {
   const p = await getPool();
   await p.request().input('cid', sql.Int, id)
     .input('oid', sql.NVarChar(80), req.params.outilId)
-    .query('DELETE FROM supports WHERE chantier_id = @cid AND outil_id = @oid');
+    .query(`DELETE FROM ${T.supports} WHERE chantier_id = @cid AND outil_id = @oid`);
   res.json(await getChantierFull(id));
 }));
 
@@ -777,7 +810,7 @@ app.post('/api/chantiers/:id/photos', wrap(async (req, res) => {
     .input('nom', sql.NVarChar(300), filename || '')
     .input('mime', sql.NVarChar(100), mime_type || '')
     .input('data', sql.NVarChar(sql.MAX), data)
-    .query(`INSERT INTO photos (chantier_id, action_id, outil_id, filename, mime_type, data)
+    .query(`INSERT INTO ${T.photos} (chantier_id, action_id, outil_id, filename, mime_type, data)
             VALUES (@cid, @aid, @oid, @nom, @mime, @data)`);
   res.json(await getChantierFull(id));
 }));
@@ -787,7 +820,7 @@ app.delete('/api/chantiers/:id/photos/:photoId', wrap(async (req, res) => {
   if (id === null || photoId === null) return res.status(404).json({ error: 'Non trouve' });
   const p = await getPool();
   await p.request().input('pid', sql.Int, photoId).input('cid', sql.Int, id)
-    .query('DELETE FROM photos WHERE id = @pid AND chantier_id = @cid');
+    .query(`DELETE FROM ${T.photos} WHERE id = @pid AND chantier_id = @cid`);
   res.json(await getChantierFull(id));
 }));
 
