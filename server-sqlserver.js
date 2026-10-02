@@ -104,13 +104,36 @@ if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(SCHEMA)) {
   process.exit(1);
 }
 
-// Noms qualifies, utilises partout dans les requetes.
+const TABLES = ['chantiers', 'actions', 'indicateurs', 'photos', 'supports'];
+const PREFIXE_TABLES = 'KT_';
+
+// Noms qualifies, utilises partout dans les requetes. Le prefixe distingue
+// immediatement les objets Kaizen Toolbox dans une base SQL partagee.
 const T = Object.fromEntries(
-  ['chantiers', 'actions', 'indicateurs', 'photos', 'supports']
-    .map(n => [n, `[${SCHEMA}].[${n}]`])
+  TABLES.map(n => [n, `[${SCHEMA}].[${PREFIXE_TABLES}${n}]`])
 );
 // Forme « schema.table » attendue par OBJECT_ID et COL_LENGTH.
-const ref = (table) => `${SCHEMA}.${table}`;
+const ref = (table) => `${SCHEMA}.${PREFIXE_TABLES}${table}`;
+const ancienRef = (table) => `${SCHEMA}.${table}`;
+
+// Colonnes indispensables au fonctionnement de l'application.
+const STRUCTURE_ATTENDUE = {
+  chantiers:   ['id', 'titre', 'probleme', 'perimetre', 'pilote', 'equipe', 'objectif',
+                'outils', 'date_debut', 'date_fin', 'statut', 'eligible_kaizen',
+                'quiz_reponses', 'created_at'],
+  actions:     ['id', 'chantier_id', 'description', 'responsable', 'echeance', 'statut'],
+  indicateurs: ['id', 'chantier_id', 'nom', 'unite', 'valeur_avant', 'valeur_apres'],
+  photos:      ['id', 'chantier_id', 'action_id', 'outil_id', 'filename', 'mime_type', 'data'],
+  supports:    ['id', 'chantier_id', 'outil_id', 'donnees', 'updated_at']
+};
+
+// La colonne outil_id des photos a ete ajoutee apres la premiere version.
+// Son absence n'empeche donc pas de reconnaitre et renommer une ancienne table :
+// la migration habituelle l'ajoutera juste apres.
+const STRUCTURE_MIGRATION = {
+  ...STRUCTURE_ATTENDUE,
+  photos: STRUCTURE_ATTENDUE.photos.filter(c => c !== 'outil_id')
+};
 
 let pool;
 
@@ -131,6 +154,37 @@ async function initDB() {
       IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = '${SCHEMA}')
         EXEC sp_executesql N'CREATE SCHEMA [${SCHEMA}]';
     `);
+  }
+
+  // Migration sans perte des installations deja en service. Une table non
+  // prefixee n'est renommee que si toutes les colonnes Kaizen attendues sont
+  // presentes ; une table homonyme appartenant a une autre application reste
+  // donc intacte.
+  for (const table of TABLES) {
+    const ancien = ancienRef(table);
+    const nouveau = ref(table);
+    const etat = await p.request()
+      .input('ancien', sql.NVarChar(260), ancien)
+      .input('nouveau', sql.NVarChar(260), nouveau)
+      .query(`SELECT OBJECT_ID(@ancien, 'U') AS ancien_id,
+                     OBJECT_ID(@nouveau, 'U') AS nouveau_id`);
+    if (!etat.recordset[0].ancien_id || etat.recordset[0].nouveau_id) continue;
+
+    const colonnes = await p.request().input('table', sql.NVarChar(260), ancien).query(`
+      SELECT c.name FROM sys.columns c WHERE c.object_id = OBJECT_ID(@table)
+    `);
+    const presentes = new Set(colonnes.recordset.map(x => x.name.toLowerCase()));
+    const correspond = STRUCTURE_MIGRATION[table]
+      .every(c => presentes.has(c.toLowerCase()));
+    if (!correspond) {
+      console.warn(`Table ${ancien} conservee : sa structure n'est pas celle de Kaizen Toolbox.`);
+      continue;
+    }
+
+    await p.request().query(
+      `EXEC sp_rename N'${ancien}', N'${PREFIXE_TABLES}${table}', N'OBJECT'`
+    );
+    console.log(`Table ${ancien} renommee en ${nouveau}.`);
   }
 
   await p.request().query(`
@@ -240,17 +294,6 @@ async function initDB() {
 
   console.log('Base de donnees SQL Server initialisee ✅');
 }
-
-// Colonnes indispensables au fonctionnement de l'application.
-const STRUCTURE_ATTENDUE = {
-  chantiers:   ['id', 'titre', 'probleme', 'perimetre', 'pilote', 'equipe', 'objectif',
-                'outils', 'date_debut', 'date_fin', 'statut', 'eligible_kaizen',
-                'quiz_reponses', 'created_at'],
-  actions:     ['id', 'chantier_id', 'description', 'responsable', 'echeance', 'statut'],
-  indicateurs: ['id', 'chantier_id', 'nom', 'unite', 'valeur_avant', 'valeur_apres'],
-  photos:      ['id', 'chantier_id', 'action_id', 'outil_id', 'filename', 'mime_type', 'data'],
-  supports:    ['id', 'chantier_id', 'outil_id', 'donnees', 'updated_at']
-};
 
 async function verifierStructure(p) {
   const problemes = [];

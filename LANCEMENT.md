@@ -50,16 +50,17 @@ base qui contient deja des donnees, rien n'est supprime ni ecrase.
 
 ### Si la base est partagee avec une autre application
 
-L'application cree cinq tables : `chantiers`, `actions`, `indicateurs`,
-`photos` et `supports`. Ces noms sont courants — `actions` en particulier — et
-peuvent deja exister pour une autre application. Dans ce cas le demarrage
-s'arrete avec un message nommant la table et les colonnes en cause.
+L'application cree cinq tables prefixees : `KT_chantiers`, `KT_actions`,
+`KT_indicateurs`, `KT_photos` et `KT_supports`. Au premier demarrage de cette
+version, les anciennes tables Kaizen non prefixees sont renommees automatiquement
+si leur structure correspond, sans perdre leurs donnees. Une table homonyme
+appartenant a une autre application n'est jamais renommee.
 
 Deux solutions :
 
 1. **Une base dediee et vide** — le plus simple.
 2. **Un schema dedie** : renseigner `DB_SCHEMA=kaizen` dans le `.env`. Les
-   tables deviennent `kaizen.chantiers`, `kaizen.actions`, etc., sans aucune
+   tables deviennent `kaizen.KT_chantiers`, `kaizen.KT_actions`, etc., sans aucune
    collision possible. Le schema est cree au demarrage si le compte en a le
    droit ; sinon, le faire creer une fois :
 
@@ -103,11 +104,11 @@ remplacer : la laisser commentee.
 
 | Table | Contenu |
 |---|---|
-| `chantiers` | La fiche de chaque chantier et son questionnaire d'eligibilite. |
-| `actions` | Le plan d'action, une ligne par tache. |
-| `indicateurs` | Les mesures avant / apres. |
-| `photos` | Les photos, rattachees au chantier, a une action ou a un outil. |
-| `supports` | Les supports SWM remplis, une ligne par couple chantier / outil. |
+| `KT_chantiers` | La fiche de chaque chantier et son questionnaire d'eligibilite. |
+| `KT_actions` | Le plan d'action, une ligne par tache. |
+| `KT_indicateurs` | Les mesures avant / apres. |
+| `KT_photos` | Les photos, rattachees au chantier, a une action ou a un outil. |
+| `KT_supports` | Les supports SWM remplis, une ligne par couple chantier / outil. |
 
 ## Points d'attention
 
