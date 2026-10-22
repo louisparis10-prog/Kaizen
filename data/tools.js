@@ -786,6 +786,59 @@ const TOOLS = [
     }
   },
   {
+    id: 'matrice-eisenhower',
+    name: "Matrice d'Eisenhower",
+    icon: '⏳',
+    category: 'Pilotage',
+    phase: 'solution',
+    summary: "Matrice 2x2 qui classe chaque tache selon son urgence et son importance, pour decider quoi faire tout de suite, quoi planifier, quoi deleguer et quoi abandonner.",
+    whenToUse: [
+      "Plan d'action trop charge : tout semble prioritaire",
+      "Equipe ou pilote deborde par les urgences au detriment de l'essentiel",
+      "Besoin de repartir les actions d'un chantier entre faire, planifier et deleguer"
+    ],
+    steps: [
+      "Lister toutes les taches ou actions en attente",
+      "Pour chaque tache, decider si elle est Urgente (delai proche, consequence immediate) ou non",
+      "Pour chaque tache, decider si elle est Importante (contribue a l'objectif du chantier) ou non",
+      "Placer chaque tache dans son quadrant : Faire, Planifier, Deleguer, Eliminer",
+      "Traiter le quadrant Faire sans attendre, dater le quadrant Planifier, attribuer le quadrant Deleguer, supprimer le quadrant Eliminer"
+    ],
+    benefits: "Clarifie les priorites en quelques minutes, protege le temps consacre aux taches importantes, evite de s'epuiser sur des urgences sans valeur.",
+    memo: [
+      "Urgent + Important = FAIRE maintenant",
+      "Important + Pas urgent = PLANIFIER (date dans l'agenda)",
+      "Urgent + Pas important = DELEGUER (a qui ? pour quand ?)",
+      "Ni urgent ni important = ELIMINER",
+      "Le quadrant Planifier est celui qui fait progresser durablement : le proteger"
+    ],
+    keywords: ['eisenhower', 'matrice eisenhower', 'urgent important', 'prioriser les taches', 'trop de taches', 'tout est urgent', 'gestion du temps', 'deleguer', 'quoi faire en premier', 'surcharge de travail', 'priorites du plan d\'action'],
+    template: {
+      file: 'templates/matrice-eisenhower-swm.pptx',
+      label: "Trame Matrice d'Eisenhower (support SWM)",
+      usage: [
+        "Lister les taches a classer, une par ligne",
+        "Pour chacune, choisir Urgent ou Pas urgent, puis Important ou Pas important",
+        "La trame place chaque tache sur une ligne du quadrant correspondant (4 lignes par quadrant)",
+        "Traiter Faire sans attendre, dater Planifier, attribuer Deleguer, supprimer Eliminer"
+      ],
+      header: [
+        { id: 'chantier', label: 'Chantier', auto: 'titre' },
+        { id: 'date', label: 'Date', auto: 'date_debut' }
+      ],
+      fields: [
+        {
+          id: 'taches', type: 'repeatable', label: 'Taches a classer',
+          columns: [
+            { id: 'tache', label: 'Tache', type: 'text' },
+            { id: 'urgence', label: 'Urgence', type: 'select', options: ['Urgent', 'Pas urgent'] },
+            { id: 'importance', label: 'Importance', type: 'select', options: ['Important', 'Pas important'] }
+          ]
+        }
+      ]
+    }
+  },
+  {
     id: 'adkar',
     name: 'ADKAR',
     icon: '🧭',

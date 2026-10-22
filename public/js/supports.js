@@ -85,6 +85,18 @@
     .etiquette { background: #fff; border: 1px solid #b9c4cd; border-radius: 3px;
       padding: 4px 7px; font-size: 0.78rem; margin-bottom: 5px; }
 
+    /* Matrice d'Eisenhower : axes Urgent / Important */
+    .eisenhower { display: grid; grid-template-columns: 34px 1fr 1fr; grid-template-rows: 30px 1fr 1fr;
+      gap: 6px; height: 400px; margin-top: 6px; }
+    .eisenhower .axe-haut { display: flex; align-items: center; justify-content: center; font-weight: 700;
+      background: #10243e; color: #fff; border-radius: 3px; font-size: 0.8rem; }
+    .eisenhower .axe-gauche { writing-mode: vertical-rl; transform: rotate(180deg); display: flex;
+      align-items: center; justify-content: center; font-weight: 700; background: #10243e; color: #fff;
+      border-radius: 3px; font-size: 0.8rem; }
+    .quadrant .consigne { font-size: 0.7rem; color: #5a6b78; margin: -2px 0 6px; font-style: italic; }
+    .quadrant .ligne-tache { border-bottom: 1px solid #b9c4cd; padding: 4px 2px; font-size: 0.8rem;
+      min-height: 24px; }
+
     /* Chasse aux Mudas : legende */
     .mudas-legende { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; }
     .muda { border: 1px solid #b9c4cd; border-radius: 3px; padding: 6px 8px; font-size: 0.72rem; }
@@ -214,6 +226,33 @@
           <div class="axe-x">EFFORT &rarr;</div>
         </div>
         <p class="note-bas">Lancer en priorite les "Gains Rapides" (quadrant encadre en orange).</p>
+      `;
+    },
+
+    'matrice-eisenhower': (f) => {
+      const taches = f.taches || [];
+      // Memes quadrants, intitules et consignes que la trame SWM ; 4 lignes par quadrant.
+      function quadrant(urgence, importance, titre, consigne, principal) {
+        const lignes = taches
+          .filter(t => (t.urgence || '') === urgence && (t.importance || '') === importance)
+          .map(t => String(t.tache || '').trim()).filter(Boolean);
+        const cases = lignes.concat(Array(Math.max(0, 4 - lignes.length)).fill(''))
+          .map(t => `<div class="ligne-tache">${esc(t)}</div>`).join('');
+        return `<div class="quadrant${principal ? ' gagnant' : ''}">
+          <h4>${titre}</h4><div class="consigne">${esc(consigne)}</div>${cases}</div>`;
+      }
+      return `
+        <div class="eisenhower">
+          <div></div>
+          <div class="axe-haut">URGENT</div>
+          <div class="axe-haut">PAS URGENT</div>
+          <div class="axe-gauche">IMPORTANT</div>
+          ${quadrant('Urgent', 'Important', 'Faire', 'Maintenant : taches importantes a traiter sans attendre.', true)}
+          ${quadrant('Pas urgent', 'Important', 'Planifier', "Plus tard : taches de fond a prevoir dans l'agenda.")}
+          <div class="axe-gauche">PAS IMPORTANT</div>
+          ${quadrant('Urgent', 'Pas important', 'Deleguer', "Confier : taches qu'une autre personne peut faire.")}
+          ${quadrant('Pas urgent', 'Pas important', 'Eliminer', 'Ne pas faire : taches sans urgence ni reelle valeur ajoutee.')}
+        </div>
       `;
     },
 

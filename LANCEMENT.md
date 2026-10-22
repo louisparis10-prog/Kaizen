@@ -10,7 +10,7 @@ Meme architecture et memes technologies que Flash Industriel.
 | `server-sqlserver.js` | Le serveur. C'est le point d'entree. |
 | `package.json`, `package-lock.json` | Dependances : `express`, `mssql`, `jszip`. |
 | `public/` | Les pages, le style, les scripts et les trames SWM. |
-| `data/tools.js` | Le catalogue des 43 outils Kaizen et des 5 phases. |
+| `data/tools.js` | Le catalogue des 44 outils Kaizen et des 5 phases. |
 | `lib/` | Le remplissage des trames SWM (`trameSwm.js`). |
 | `.env.example` | Modele de configuration a copier en `.env`. |
 
