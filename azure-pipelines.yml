@@ -26,7 +26,6 @@ steps:
 - powershell: |
     $fichiers = @(
       "server-sqlserver.js",
-      "lib\leanExpert.js",
       "lib\trameSwm.js",
       "data\tools.js"
     )
@@ -54,7 +53,7 @@ steps:
     Copy-Item ".env.example"        $publishFolder -ErrorAction Stop
     Copy-Item "server-sqlserver.js" $publishFolder -ErrorAction Stop
 
-    # lib/  : le chat expert Lean et le remplissage des trames SWM.
+    # lib/  : le remplissage des trames SWM.
     # data/ : la bibliotheque d'outils, statique et versionnee — aucune
     #         donnee saisie ne vit la, tout passe par SQL Server.
     # public/ : les pages, le style et les trames remplissables.
@@ -80,9 +79,8 @@ steps:
     Write-Host "##[warning]Apres deploiement, RELANCER l'application (recyclage du pool IIS,"
     Write-Host "##[warning]ou modification de web.config) : sans cela, seules les pages changent."
 
-    # Rappel de configuration : le fichier .env du serveur porte les acces SQL
-    # et, si la chatbox est activee, la cle de l'API d'IA. Il n'est jamais
-    # versionne et le deploiement ne le remplace pas.
+    # Rappel de configuration : le fichier .env du serveur porte les acces SQL.
+    # Il n'est jamais versionne et le deploiement ne le remplace pas.
     Write-Host "##[warning]Verifier que le fichier .env existe sur le serveur (acces SQL)."
 
   displayName: "Préparer le package"

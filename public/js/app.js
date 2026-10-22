@@ -93,9 +93,7 @@
           ` : ''}
 
           <div class="modal-actions">
-            <button class="btn orange" id="btn-use-in-chantier">Utiliser dans un chantier</button>
-            <button class="btn secondary" id="btn-ask-expert">Demander conseil a l'expert</button>
-            <button class="btn secondary" id="btn-print-memo">Imprimer le memo</button>
+            <button class="btn orange" id="btn-use-in-chantier">Utiliser dans un chantier</button>            <button class="btn secondary" id="btn-print-memo">Imprimer le memo</button>
           </div>
         </div>
       </div>
@@ -105,12 +103,6 @@
     backdrop.querySelector('.modal-close').addEventListener('click', () => { root.innerHTML = ''; });
     backdrop.querySelector('#btn-use-in-chantier').addEventListener('click', () => {
       window.location.href = `/chantiers.html?preselect=${tool.id}`;
-    });
-    backdrop.querySelector('#btn-ask-expert').addEventListener('click', () => {
-      root.innerHTML = '';
-      if (window.prefillKaizenChat) {
-        window.prefillKaizenChat(`Peux-tu m'expliquer un cas concret ou j'utiliserais l'outil ${tool.name} ?`);
-      }
     });
     backdrop.querySelector('#btn-print-memo').addEventListener('click', () => {
       const w = window.open('', '_blank');

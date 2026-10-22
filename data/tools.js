@@ -1,5 +1,5 @@
 // Bibliotheque des outils Lean / Kaizen.
-// keywords: sert au moteur de chat local pour orienter vers le bon outil.
+// keywords: mots-cles des situations ou l'outil s'applique.
 
 // Les 5 phases d'un chantier Kaizen. Identification / Analyse / Solution sont
 // obligatoires (au moins 1 outil de chacune) pour creer un chantier ; Plan

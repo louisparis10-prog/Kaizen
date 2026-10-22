@@ -1,7 +1,7 @@
 {
   "name": "kaizen-toolbox",
   "version": "1.0.0",
-  "description": "Boite a outils Kaizen / Lean : bibliotheque d'outils, gestion de chantiers d'amelioration continue, remplissage des trames SWM, chatbox expert ceinture noire",
+  "description": "Boite a outils Kaizen / Lean : bibliotheque d'outils, gestion de chantiers d'amelioration continue, remplissage des trames SWM",
   "main": "server-sqlserver.js",
   "scripts": {
     "start": "node server-sqlserver.js",

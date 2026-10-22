@@ -13,7 +13,6 @@ const fs = require('fs');
 const path = require('path');
 const sql = require('mssql');
 const { TOOLS, TOOLS_BY_ID, PHASES, PHASES_BY_ID } = require('./data/tools.js');
-const leanExpert = require('./lib/leanExpert.js');
 const trameSwm = require('./lib/trameSwm.js');
 
 // ── Lecture du fichier .env ─────────────────────────────────
@@ -467,75 +466,6 @@ app.post('/api/tools/:toolId/trame', wrap(async (req, res) => {
   if (causesEnTrop && causesEnTrop.length) res.setHeader('X-Causes-En-Trop', causesEnTrop.join(','));
   res.send(buffer);
 }));
-
-// ---------- Chat expert ----------
-// Construit un instantane des chantiers de l'application, transmis au chat expert
-// pour qu'il puisse repondre sur ce qui a deja ete fait (retour d'experience interne)
-// et pas seulement sur la theorie Lean.
-async function buildChantiersContext() {
-  const p = await getPool();
-  const chantiers = (await p.request().query(
-    `SELECT id, titre, probleme, perimetre, pilote, objectif, outils, statut, date_debut, date_fin FROM ${T.chantiers} ORDER BY id DESC`
-  )).recordset;
-  if (!chantiers.length) return null;
-
-  // On charge les lignes liees en une fois : filtrer par liste d'identifiants
-  // demanderait autant de parametres que de chantiers, sans rien y gagner.
-  const actions = (await p.request().query(
-    `SELECT chantier_id, description, responsable, echeance, statut FROM ${T.actions} ORDER BY id ASC`
-  )).recordset;
-  const indicateurs = (await p.request().query(
-    `SELECT chantier_id, nom, unite, valeur_avant, valeur_apres FROM ${T.indicateurs} ORDER BY id ASC`
-  )).recordset;
-  const supports = (await p.request().query(
-    `SELECT chantier_id, outil_id, donnees FROM ${T.supports}`
-  )).recordset;
-
-  return chantiers.map(r => ({
-    id: r.id,
-    titre: r.titre,
-    probleme: r.probleme || '',
-    perimetre: r.perimetre || '',
-    pilote: r.pilote || '',
-    objectif: r.objectif || '',
-    statut: r.statut,
-    periode: [r.date_debut, r.date_fin].filter(Boolean).join(' -> '),
-    outils: (JSON.parse(r.outils || '[]')).map(id => TOOLS_BY_ID[id]?.name).filter(Boolean),
-    actions: actions.filter(a => a.chantier_id === r.id)
-      .map(a => ({ description: a.description, responsable: a.responsable || '', echeance: a.echeance || '', statut: a.statut })),
-    indicateurs: indicateurs.filter(i => i.chantier_id === r.id)
-      .map(i => ({ nom: i.nom, unite: i.unite || '', avant: i.valeur_avant, apres: i.valeur_apres })),
-    // Supports SWM remplis : le contenu de l'analyse, pas seulement son intitule.
-    supports: supports.filter(s => s.chantier_id === r.id).map(s => {
-      let champs = {};
-      try { champs = (JSON.parse(s.donnees) || {}).fields || {}; } catch (err) { /* ignore */ }
-      return { outil: TOOLS_BY_ID[s.outil_id]?.name || s.outil_id, champs };
-    })
-  }));
-}
-
-app.post('/api/chat', async (req, res) => {
-  const { message, mode } = req.body;
-  if (!message || typeof message !== 'string') {
-    return res.status(400).json({ error: 'message requis' });
-  }
-  try {
-    // Le contexte est facultatif : si la base est indisponible, le chat repond quand meme.
-    const chantiers = await buildChantiersContext().catch(err => {
-      console.error('Contexte chantiers indisponible pour le chat :', err.message);
-      return null;
-    });
-    const result = await leanExpert.reply(message, mode === 'ai' ? 'ai' : 'local', chantiers);
-    res.json(result);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.get('/api/chat/status', (req, res) => {
-  res.json({ aiAvailable: Boolean(process.env.ANTHROPIC_API_KEY || process.env.OPENAI_API_KEY || process.env.GEMINI_API_KEY || process.env.GROQ_API_KEY) });
-});
 
 // ---------- Chantiers ----------
 app.get('/api/chantiers', wrap(async (req, res) => {

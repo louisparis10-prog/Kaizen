@@ -11,7 +11,7 @@ Meme architecture et memes technologies que Flash Industriel.
 | `package.json`, `package-lock.json` | Dependances : `express`, `mssql`, `jszip`. |
 | `public/` | Les pages, le style, les scripts et les trames SWM. |
 | `data/tools.js` | Le catalogue des 43 outils Kaizen et des 5 phases. |
-| `lib/` | Le chat expert (`leanExpert.js`) et le remplissage des trames (`trameSwm.js`). |
+| `lib/` | Le remplissage des trames SWM (`trameSwm.js`). |
 | `.env.example` | Modele de configuration a copier en `.env`. |
 
 ## Prerequis

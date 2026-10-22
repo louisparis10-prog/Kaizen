@@ -588,9 +588,7 @@
           <p><strong>Periode :</strong> ${esc(c.date_debut || '?')} &rarr; ${esc(c.date_fin || '?')}</p>
           <p><strong>Outils utilises :</strong> ${outilsBadges || 'Aucun'}</p>
           <div class="modal-actions no-print">
-            <button class="btn orange" id="btn-a3">Generer la fiche A3</button>
-            <button class="btn secondary" id="btn-ask-expert-detail">Demander conseil a l'expert</button>
-          </div>
+            <button class="btn orange" id="btn-a3">Generer la fiche A3</button>          </div>
         </div>
 
         <div class="section-card">
@@ -651,9 +649,6 @@
       renderDetail(updated);
     });
     document.getElementById('btn-a3').addEventListener('click', () => openA3(c));
-    document.getElementById('btn-ask-expert-detail').addEventListener('click', () => {
-      if (window.prefillKaizenChat) window.prefillKaizenChat(c.probleme || c.titre);
-    });
     document.getElementById('btn-add-photo-chantier').addEventListener('click', () => {
       pickAndUploadPhoto(c.id, null, updated => renderDetail(updated));
     });
@@ -1190,10 +1185,6 @@
     document.getElementById('chantiers-search').addEventListener('input', e => { searchQuery = e.target.value; renderList(); });
     document.getElementById('btn-cancel-chantier').addEventListener('click', () => { show('view-list'); });
     document.getElementById('btn-save-chantier').addEventListener('click', saveChantier);
-    document.getElementById('btn-ask-expert-form').addEventListener('click', () => {
-      const txt = document.getElementById('f-probleme').value || document.getElementById('f-titre').value;
-      if (window.prefillKaizenChat && txt) window.prefillKaizenChat(txt);
-    });
     document.getElementById('btn-quiz-continue').addEventListener('click', evaluateQuiz);
     document.getElementById('btn-quiz-cancel').addEventListener('click', () => {
       if (quizMode === 'start' && quizStartChantier) openDetail(quizStartChantier.id);
