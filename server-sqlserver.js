@@ -319,6 +319,13 @@ async function verifierStructure(p) {
 }
 
 app.use(express.json({ limit: '15mb' }));
+// Un corps JSON illisible ou trop lourd est une erreur du client : on repond
+// 400 / 413 sans remplir le journal du serveur d'une pile d'appels.
+app.use((err, req, res, next) => {
+  if (err.type === 'entity.parse.failed') return res.status(400).json({ error: 'Corps de requete JSON invalide' });
+  if (err.type === 'entity.too.large') return res.status(413).json({ error: 'Requete trop volumineuse (15 Mo maximum)' });
+  next(err);
+});
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Enveloppe un handler async : capture les erreurs pour repondre 500 proprement
