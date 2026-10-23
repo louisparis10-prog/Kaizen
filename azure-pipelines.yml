@@ -63,13 +63,10 @@ steps:
 
     Copy-Item -Recurse "node_modules" $publishFolder -ErrorAction Stop
 
-    # web.config porte la configuration iisnode. S'il vit sur le serveur et
-    # non dans le depot, on ne le remplace pas — mais on le signale.
-    if (Test-Path "web.config") {
-      Copy-Item "web.config" $publishFolder -ErrorAction Stop
-    } else {
-      Write-Host "##[warning]web.config absent du depot : celui du serveur sera conserve."
-    }
+    # web.config n'est PAS deploye : celui du serveur est gere par l'IT et
+    # adapte a son installation IIS. Le remplacer par celui du depot a mis le
+    # site en erreur 500 le 23/10/2026. Le web.config du depot reste un modele.
+    Write-Host "##[warning]web.config non deploye : celui du serveur (gere par l'IT) est conserve."
 
     # Le contenu de public/ est relu sur le disque a chaque requete, mais
     # server-sqlserver.js et lib/ ne sont charges qu'au demarrage du
