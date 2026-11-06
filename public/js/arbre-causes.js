@@ -117,10 +117,30 @@
     canvas.style.setProperty('--adc-zoom', Math.min(1, 1480 / (nbCol * COL)).toFixed(3));
     $('titre-nb').textContent = etat.nbPourquoi;
     $('opt-nb').value = String(etat.nbPourquoi);
-    $('colonnes').innerHTML = colonnes().map(([titre, sous], i) => `
-      <div class="adc-colonne${i === colDommage() ? ' dommage' : ''}" data-col="${i}">
-        <div class="adc-colonne-titre">${esc(titre)}${sous ? `<span>${esc(sous)}</span>` : '<span>&nbsp;</span>'}</div>
-      </div>`).join('');
+    const n = etat.nbPourquoi;
+    $('colonnes').innerHTML = colonnes().map(([titre, sous], i) => {
+      const dommage = i === colDommage();
+      // Fleches numerotees comme la trame 5 Pourquoi : du vert d'eau (1) au bleu nuit (n).
+      const num = n - i;
+      const fleche = dommage ? '' : `--fleche:${couleurFleche(n === 1 ? 0 : (num - 1) / (n - 1))}`;
+      return `
+      <div class="adc-colonne${dommage ? ' dommage' : ''}" data-col="${i}">
+        <div class="adc-colonne-titre">
+          <div class="adc-chevron" style="${fleche}" title="${esc(titre)}">${dommage ? 'Blessure / dommage' : num}</div>
+          <span class="adc-colonne-sous">${sous ? esc(sous) : '&nbsp;'}</span>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Degrade de la trame SWM : #8DB5B2, #62A7AC, #4993B4, #0062AC, #00487E.
+  const DEGRADE = [[0x8d, 0xb5, 0xb2], [0x62, 0xa7, 0xac], [0x49, 0x93, 0xb4], [0x00, 0x62, 0xac], [0x00, 0x48, 0x7e]];
+  function couleurFleche(t) {
+    const pos = Math.max(0, Math.min(1, t)) * (DEGRADE.length - 1);
+    const i = Math.min(DEGRADE.length - 2, Math.floor(pos));
+    const k = pos - i;
+    const c = DEGRADE[i].map((v, j) => Math.round(v + (DEGRADE[i + 1][j] - v) * k));
+    return '#' + c.map(v => v.toString(16).padStart(2, '0')).join('');
   }
 
   function htmlFait(f) {
