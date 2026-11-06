@@ -183,6 +183,39 @@ const TOOLS = [
     }
   },
   {
+    id: 'arbre-des-causes',
+    name: 'Arbre des causes INRS',
+    icon: '🌳',
+    category: 'Diagnostic',
+    phase: 'analyse',
+    // Outil interactif : la carte ouvre directement l'editeur au lieu de la fiche.
+    page: 'arbre-causes.html',
+    summary: "Methode INRS d'analyse d'un accident ou d'un dommage : on part de la blessure et on remonte les faits qui l'ont rendue possible, en les reliant comme une chaine de 6 Pourquoi.",
+    whenToUse: [
+      "Accident du travail, presqu'accident ou incident a analyser",
+      "Dommage materiel ou corporel dont il faut comprendre l'enchainement",
+      "Plusieurs faits se combinent : un 5 Pourquoi lineaire ne suffit pas"
+    ],
+    steps: [
+      "Recueillir les faits au plus tot, sur le lieu de l'evenement (victime, temoins, encadrement)",
+      "Placer la blessure ou le dommage dans la colonne de droite",
+      "Pour chaque fait, demander : qu'a-t-il fallu pour qu'il se produise ? A-t-il fallu autre chose ?",
+      "Relier les faits : enchainement, conjonction (ET) ou disjonction ; en pointille si un lien reste incertain",
+      "Distinguer les faits habituels (rectangles) des variations (ovales)",
+      "Associer une action de prevention aux faits sur lesquels agir, y compris les plus en amont"
+    ],
+    benefits: "Montre que l'accident a plusieurs causes, remonte jusqu'a l'organisation du travail et ouvre le champ des mesures de prevention, au-dela des EPI et des consignes.",
+    memo: [
+      "Partir du dommage, construire de droite a gauche",
+      "Des faits, pas d'interpretations ni de jugements",
+      "Pas de « fait negatif » (absence de...) : decrire ce qui s'est passe",
+      "Rectangle = fait habituel, ovale = variation",
+      "Supprimer un seul fait suffit a empecher l'accident",
+      "Rechercher les causes, pas des responsables"
+    ],
+    keywords: ['arbre des causes', 'inrs', 'accident du travail', 'at', 'presqu\'accident', 'blessure', 'dommage', 'securite', 'analyse accident', 'variation', 'fait habituel', 'cause racine', '6 pourquoi']
+  },
+  {
     id: 'pareto',
     name: 'Diagramme de Pareto',
     icon: '📊',

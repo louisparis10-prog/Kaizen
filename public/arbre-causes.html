@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arbre des causes INRS</title>
+<link rel="stylesheet" href="/css/styles.css">
+<link rel="stylesheet" href="/css/arbre-causes.css">
+</head>
+<body>
+<div class="topbar no-print">
+  <div class="brand"><span class="logo">改善</span> Kaizen Toolbox</div>
+  <nav>
+    <a href="/index.html">Outils</a>
+    <a href="/chantiers.html">Chantiers Kaizen</a>
+  </nav>
+</div>
+
+<main class="adc-main">
+  <div class="adc-retour no-print">
+    <a href="/index.html" id="lien-retour">&larr; Retour aux outils</a>
+    <span id="etat-sauvegarde" class="adc-etat"></span>
+  </div>
+
+  <!-- Entete reprise de la trame SWM 5 Pourquoi -->
+  <div class="adc-entete">
+    <div class="adc-titre">
+      <span class="adc-titre-num">6</span>
+      <span>Pourquoi<small>Arbre des causes INRS</small></span>
+    </div>
+    <div class="adc-infos">
+      <label>Animateur : <input type="text" data-header="animateur"></label>
+      <label>Secteur : <input type="text" data-header="secteur"></label>
+      <label>Date : <input type="text" data-header="date"></label>
+      <label class="adc-infos-large">Evenement : <input type="text" data-header="evenement" placeholder="Ex. : chute depuis le plateau du camion"></label>
+    </div>
+  </div>
+
+  <div class="adc-barre no-print">
+    <div class="adc-groupe">
+      <button class="btn small adc-btn-etat" id="btn-etat" title="Fait habituel (etat) : rectangle">+ Fait habituel</button>
+      <button class="btn small adc-btn-variation" id="btn-variation" title="Fait inhabituel (variation) : ovale">+ Variation</button>
+      <button class="btn small danger" id="btn-dommage" title="Blessure ou dommage : colonne de droite">+ Blessure / dommage</button>
+    </div>
+    <div class="adc-groupe">
+      <label class="adc-case"><input type="checkbox" id="opt-pointille"> Nouveau lien en pointille</label>
+      <label class="adc-case"><input type="checkbox" id="opt-aligner" checked> Aligner sur les colonnes</label>
+    </div>
+    <div class="adc-groupe">
+      <button class="btn small secondary" id="btn-annuler" title="Ctrl+Z">Annuler</button>
+      <button class="btn small secondary" id="btn-exporter">Exporter</button>
+      <button class="btn small secondary" id="btn-importer">Importer</button>
+      <button class="btn small secondary" id="btn-vider">Tout effacer</button>
+      <button class="btn small" id="btn-imprimer" title="Choisir « Enregistrer au format PDF » comme imprimante">Exporter en PDF</button>
+      <button class="btn small orange" id="btn-enregistrer">Enregistrer dans un chantier</button>
+    </div>
+  </div>
+
+  <div class="adc-zone">
+    <div class="adc-scroll" id="scroll">
+      <div class="adc-canvas" id="canvas">
+        <div class="adc-colonnes" id="colonnes"></div>
+        <svg class="adc-liens" id="liens" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="fleche" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="#171d8f"></path>
+            </marker>
+            <marker id="fleche-active" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="#e8722c"></path>
+            </marker>
+          </defs>
+          <g id="liens-g"></g>
+          <path id="lien-temp" class="adc-lien-temp" d=""></path>
+        </svg>
+        <div id="faits"></div>
+      </div>
+    </div>
+
+    <aside class="adc-panneau no-print" id="panneau"></aside>
+  </div>
+
+  <section class="adc-actions-bloc">
+    <h2 class="adc-section">Actions de prevention</h2>
+    <div id="tableau-actions"></div>
+  </section>
+
+  <p class="adc-note">Construire de droite a gauche : partir de la blessure, puis pour chaque fait se demander
+  « qu'a-t-il fallu pour qu'il se produise ? » et « a-t-il fallu autre chose ? ».
+  Rectangle = fait habituel, ovale = variation, lien en pointille = lien incertain.</p>
+</main>
+
+<input type="file" id="input-image" accept="image/*" multiple hidden>
+<input type="file" id="input-import" accept="application/json,.json" hidden>
+<div id="modal-root"></div>
+<div id="toast-root"></div>
+
+<script src="/js/arbre-causes.js"></script>
+</body>
+</html>

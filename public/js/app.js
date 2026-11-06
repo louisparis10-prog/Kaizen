@@ -49,6 +49,7 @@
             <div class="icon">${tool.icon}</div>
             <span class="category">${phaseLabel(tool.phase)}</span>
             ${tool.template ? '<span class="template-badge" title="Support telechargeable disponible">📎 Support</span>' : ''}
+            ${tool.page ? '<span class="template-badge" title="Editeur interactif">✏️ Editeur</span>' : ''}
             <h3>${tool.name}</h3>
             <p>${tool.summary}</p>
           </div>
@@ -93,7 +94,8 @@
           ` : ''}
 
           <div class="modal-actions">
-            <button class="btn orange" id="btn-use-in-chantier">Utiliser dans un chantier</button>            <button class="btn secondary" id="btn-print-memo">Imprimer le memo</button>
+            ${tool.page ? `<a class="btn orange" href="/${tool.page}">Creer un ${tool.name.replace(/ INRS$/, '').toLowerCase()}</a>` : ''}
+            <button class="btn ${tool.page ? 'secondary' : 'orange'}" id="btn-use-in-chantier">Utiliser dans un chantier</button>            <button class="btn secondary" id="btn-print-memo">Imprimer le memo</button>
           </div>
         </div>
       </div>

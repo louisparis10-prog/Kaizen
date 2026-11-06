@@ -869,11 +869,17 @@
             <span class="outil-bloc-nom">${t.icon} ${esc(t.name)}</span>
             <span class="no-print">
               ${remplissable ? `<button type="button" class="btn secondary small btn-remplir">${support ? 'Revoir le support' : 'Remplir le support'}</button>` : ''}
+              ${t.page ? `<a class="btn ${support ? 'orange' : 'secondary'} small" href="/${esc(t.page)}?chantier=${c.id}">${support ? "Ouvrir l'arbre" : "Construire l'arbre"}</a>` : ''}
               ${t.template ? `<a class="btn secondary small" href="/${esc(t.template.file)}" download>Telecharger la trame</a>` : ''}
               <button type="button" class="btn secondary small btn-photo-outil">+ Photo</button>
             </span>
           </div>
-          ${support ? `
+          ${support && t.page ? `
+            <div class="outil-support no-print">
+              <span class="outil-support-etat">Enregistre le ${esc(formatDate(support.updated_at))}</span>
+              <button type="button" class="btn danger small btn-suppr-support">Effacer</button>
+            </div>` : ''}
+          ${support && !t.page ? `
             <div class="outil-support no-print">
               <span class="outil-support-etat">Rempli le ${esc(formatDate(support.updated_at))}</span>
               <button type="button" class="btn orange small btn-ouvrir-support">Ouvrir le support rempli</button>
@@ -885,7 +891,7 @@
       if (support) {
         // Regenere la trame a partir de ce qui avait ete saisi, et la telecharge.
         const btnOuvrir = bloc.querySelector('.btn-ouvrir-support');
-        btnOuvrir.addEventListener('click', () => {
+        if (btnOuvrir) btnOuvrir.addEventListener('click', () => {
           telechargerTrameRemplie(t, support.header || {}, support.fields || {}, btnOuvrir);
         });
         bloc.querySelector('.btn-suppr-support').addEventListener('click', async () => {
