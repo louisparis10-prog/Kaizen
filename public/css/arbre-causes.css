@@ -284,7 +284,30 @@
   background: #eefaf6; border: 1px solid #9fd3c7; border-left: 4px solid #11624f; border-radius: 8px;
   padding: 8px 12px; margin-bottom: 10px; font-size: 0.86rem; color: #0d4a3c; }
 .mode-exemple .adc-alerte-exemple { display: flex; }
-.mode-exemple .adc-trame { position: relative; }
-.mode-exemple .adc-trame::after { content: 'EXEMPLE'; position: absolute; top: 8px; right: 50%; transform: translateX(50%);
-  background: #11624f; color: #fff; font-weight: 700; font-size: 0.7rem; letter-spacing: 1.5px; padding: 2px 10px; border-radius: 9px; }
-@media print { .mode-exemple .adc-trame::after { display: none; } }
+.mode-exemple .adc-titre small::after { content: 'EXEMPLE'; margin-left: 8px; background: #2fb38f; color: #fff; font-weight: 700;
+  font-size: 0.68rem; letter-spacing: 1.2px; padding: 1px 8px; border-radius: 8px; vertical-align: 1px; }
+@media print { .mode-exemple .adc-titre small::after { display: none; } }
+
+/* Reperes ET : conjonction (a gauche du fait) et disjonction (a droite du fait) */
+.adc-et { pointer-events: all; cursor: help; }
+.adc-et circle { fill: #fff; stroke: var(--swm-texte); stroke-width: 1.6; }
+.adc-et text { text-anchor: middle; font: 700 9px Arial, sans-serif; fill: var(--swm-texte); }
+.adc-et.disjonction circle { fill: #eef4ff; stroke: #0062ac; }
+.adc-et.disjonction text { fill: #0062ac; }
+.focus-racines .adc-et:not(.chemin) { opacity: 0.15; }
+.focus-racines .adc-et.chemin circle { stroke: #c98a00; }
+.adc-mini-schema { width: 30px; height: 20px; flex-shrink: 0; }
+.adc-mini-schema path { fill: none; stroke: var(--swm-texte); stroke-width: 1.4; }
+.adc-mini-schema circle { fill: #fff; stroke: var(--swm-texte); stroke-width: 1.2; }
+.adc-mini-schema text { text-anchor: middle; font: 700 5.5px Arial, sans-serif; fill: var(--swm-texte); }
+
+/* Panneau : lecture des liens logiques du fait */
+.adc-logique { border: 1px solid #e2e7f3; border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; background: #fbfcfe; }
+.adc-logique.conjonction { border-left: 3px solid var(--swm-texte); }
+.adc-logique.disjonction { border-left: 3px solid #0062ac; background: #f4f8ff; }
+.adc-logique-titre { font-weight: 700; font-size: 0.8rem; color: var(--swm-texte); display: flex; justify-content: space-between; }
+.adc-logique-titre span { background: #e9edf6; border-radius: 9px; padding: 0 7px; font-size: 0.72rem; }
+.adc-logique p { margin: 4px 0; font-size: 0.78rem; color: #4a5470; line-height: 1.4; }
+.adc-liens-liste { margin: 4px 0 0; padding-left: 16px; font-size: 0.78rem; }
+.adc-liens-liste li { cursor: pointer; color: var(--swm-texte); margin-bottom: 2px; }
+.adc-liens-liste li:hover { text-decoration: underline; }

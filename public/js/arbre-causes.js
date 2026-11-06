@@ -194,6 +194,7 @@
           ${f.type === 'dommage' ? '' : `<button data-outil="racine" title="Encadrer comme cause racine (touche R)">${racine ? '★ Retirer' : '☆ Racine'}</button>`}
           <button data-outil="etat" title="Ajouter une cause (fait habituel) a gauche">+ Pourquoi ?</button>
           <button data-outil="variation" title="Ajouter une variation a gauche">+ Variation</button>
+          ${f.type === 'dommage' ? '' : '<button data-outil="consequence" title="Ajouter une autre consequence a droite (disjonction)">Consequence +</button>'}
           <button data-outil="suppr" class="danger" title="Supprimer ce fait (Suppr)">✕</button>
         </div>
         <div class="adc-fait-texte${f.texte ? '' : ' vide'}">${f.texte ? esc(f.texte) : (f.type === 'dommage' ? 'Decrire la blessure ou le dommage' : 'Double-cliquer pour decrire le fait')}</div>
@@ -250,6 +251,34 @@
     return `M${sx},${sy} C${sx + dx},${sy} ${ex - dx},${ey} ${ex},${ey}`;
   }
 
+  // Reperes « ET » de la methode INRS : conjonction (plusieurs faits necessaires
+  // ensemble pour un fait) et disjonction (un fait qui en provoque plusieurs a lui seul).
+  function reperesET(chemin) {
+    const entrees = {}, sorties = {};
+    etat.liens.forEach(l => {
+      (entrees[l.vers] = entrees[l.vers] || []).push(l);
+      (sorties[l.de] = sorties[l.de] || []).push(l);
+    });
+    const repere = (x, y, genre, titre, surChemin) => `
+      <g class="adc-et ${genre}${surChemin ? ' chemin' : ''}" transform="translate(${x},${y})">
+        <title>${titre}</title><circle r="9.5"></circle><text y="3.2">ET</text>
+      </g>`;
+    let svg = '';
+    Object.entries(entrees).forEach(([id, liste]) => {
+      const b = boite(id);
+      if (!b || liste.length < 2) return;
+      svg += repere(b.x - 14, b.y + b.h / 2, 'conjonction',
+        `Conjonction : ces ${liste.length} faits ont ete necessaires ensemble`, chemin.faits.has(id));
+    });
+    Object.entries(sorties).forEach(([id, liste]) => {
+      const a = boite(id);
+      if (!a || liste.length < 2) return;
+      svg += repere(a.x + a.l + 14, a.y + a.h / 2, 'disjonction',
+        `Disjonction : ce fait a provoque a lui seul ces ${liste.length} faits`, chemin.faits.has(id));
+    });
+    return svg;
+  }
+
   function dessinerLiens() {
     const g = $('liens-g');
     const chemin = cheminRacines();
@@ -261,7 +290,7 @@
       return `<path class="adc-lien${l.pointille ? ' pointille' : ''}${actif ? ' actif' : ''}${chemin.liens.has(l.id) ? ' chemin' : ''}" d="${d}"
                 marker-end="url(#${actif ? 'fleche-active' : 'fleche'})"></path>
               <path class="adc-lien-hit" data-lien="${l.id}" d="${d}"></path>`;
-    }).join('');
+    }).join('') + reperesET(chemin);
     g.querySelectorAll('[data-lien]').forEach(p => {
       p.addEventListener('pointerdown', e => {
         e.stopPropagation();
@@ -303,6 +332,7 @@
         const outil = b.dataset.outil;
         if (outil === 'racine') basculerRacine(fait(id));
         else if (outil === 'suppr') supprimerSelection();
+        else if (outil === 'consequence') ajouterConsequence();
         else ajouterFait(outil);
       });
     });
@@ -456,6 +486,32 @@
     if (noeud) noeud.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   }
 
+  // Disjonction : le fait selectionne a provoque, a lui seul, un autre fait.
+  // La consequence se place une colonne plus a droite, reliee depuis lui.
+  function ajouterConsequence() {
+    const base = selection && selection.type === 'fait' ? fait(selection.id) : null;
+    if (!base) return toast("Selectionner d'abord le fait qui a provoque la consequence", 'error');
+    if (base.type === 'dommage') return toast('La blessure est le point de depart : ses causes se placent a gauche', 'error');
+    memoriser();
+    const col = Math.min(colDommage(), colonneDe(base.x) + 1);
+    const f = {
+      id: uid(), x: xColonne(col), y: yLibre(col, base.y),
+      type: col === colDommage() ? 'dommage' : 'etat', texte: '', actions: [], images: []
+    };
+    etat.faits.push(f);
+    etat.liens.push({ id: uid(), de: base.id, vers: f.id, pointille: $('opt-pointille').checked });
+    selection = { type: 'fait', id: f.id };
+    dessinerFaits();
+    dessinerLiens();
+    dessinerPanneau();
+    planifierSauvegarde();
+    const zone = $('panneau').querySelector('#champ-texte');
+    if (zone) zone.focus();
+    const noeud = $('faits').querySelector(`[data-id="${f.id}"]`);
+    if (noeud) noeud.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    if (etat.liens.filter(l => l.de === base.id).length >= 2) toast('Disjonction : ce fait a provoque, a lui seul, plusieurs faits');
+  }
+
   function supprimerSelection() {
     if (!selection) return;
     memoriser();
@@ -504,10 +560,12 @@
       <ol class="adc-etapes">
         <li><b>Decrire la blessure</b> ou le dommage dans la colonne rouge.</li>
         <li><b>Remonter les causes</b> : cliquer sur un fait puis <b>+ Pourquoi ?</b> — la cause s'ajoute a gauche, deja reliee.</li>
-        <li><b>Relier</b> : glisser le rond orange d'un fait vers le fait qu'il a provoque. Plusieurs fleches vers un fait = il a fallu tout cela (ET).</li>
+        <li><b>Relier</b> : glisser le rond orange d'un fait vers le fait qu'il a provoque.
+          Plusieurs fleches <i>vers</i> un fait = <b>conjonction</b> (il a fallu tout cela) ;
+          plusieurs fleches <i>depuis</i> un fait = <b>disjonction</b> (il a provoque tout cela a lui seul, bouton <b>Consequence +</b>).</li>
         <li><b>Encadrer les causes racines</b> (☆ Racine) et leur associer des actions.</li>
       </ol>
-      <button class="adc-exemple-btn" data-vue="exemple">💡 Voir un exemple<small>Glissade sur une flaque d'huile : 5 Pourquoi, 3 causes racines</small></button>
+      <button class="adc-exemple-btn" data-vue="exemple">💡 Voir un exemple<small>Glissade sur une flaque d'huile : conjonctions, disjonction, 3 causes racines</small></button>
       <h4>Legende INRS</h4>
       <div class="adc-legende">
         <div><i></i> Fait habituel (etat)</div>
@@ -516,9 +574,33 @@
         <div><i class="racine"></i> Cause racine</div>
         <div><i class="trait"></i> Lien etabli</div>
         <div><i class="pointille"></i> Lien incertain</div>
+        <div><svg class="adc-mini-schema" viewBox="0 0 34 22"><path d="M2,4 C14,4 14,11 24,11 M2,18 C14,18 14,11 24,11"/><circle cx="24" cy="11" r="6"/><text x="24" y="13.3">ET</text></svg> Conjonction</div>
+        <div><svg class="adc-mini-schema" viewBox="0 0 34 22"><path d="M10,11 C20,11 20,4 32,4 M10,11 C20,11 20,18 32,18"/><circle cx="10" cy="11" r="6"/><text x="10" y="13.3">ET</text></svg> Disjonction</div>
       </div>
       <p class="adc-aide">Des faits, pas d'interpretation : noter seulement ce qui a ete constate,
       sans jugement ni supposition.</p>`;
+  }
+
+  // Lecture INRS des liens du fait : enchainement, conjonction (causes) ou disjonction (consequences).
+  function htmlLiensLogiques(f) {
+    const causes = etat.liens.filter(l => l.vers === f.id).map(l => fait(l.de)).filter(Boolean);
+    const suites = etat.liens.filter(l => l.de === f.id).map(l => fait(l.vers)).filter(Boolean);
+    const liste = faits => `<ul class="adc-liens-liste">${faits.map(x =>
+      `<li data-aller-fait="${x.id}">${esc(x.texte || '(fait sans description)')}</li>`).join('')}</ul>`;
+    const bloc = (titre, faits, vide, seul, plusieurs, genre) => `
+      <div class="adc-logique ${faits.length >= 2 ? genre : ''}">
+        <div class="adc-logique-titre">${titre} <span>${faits.length}</span></div>
+        <p>${faits.length === 0 ? vide : faits.length === 1 ? seul : plusieurs}</p>
+        ${faits.length ? liste(faits) : ''}
+      </div>`;
+    return bloc('Ce qu\'il a fallu', causes,
+        f.type === 'dommage' ? 'Ajouter la cause directe avec <b>+ Pourquoi ?</b>' : 'Aucune cause : <b>+ Pourquoi ?</b> ou cause racine.',
+        '<b>Enchainement</b> : ce fait a suffi, a lui seul.',
+        '<b>Conjonction (ET)</b> : il a fallu tous ces faits ensemble. Chacun a-t-il ete necessaire ?', 'conjonction')
+      + (f.type === 'dommage' ? '' : bloc('Ce qu\'il a provoque', suites,
+        'Aucune consequence : relier ce fait (rond orange) au fait qu\'il a provoque.',
+        '<b>Enchainement</b> vers ce fait.',
+        '<b>Disjonction (ET)</b> : ce fait a provoque, a lui seul, tous ces faits.', 'disjonction'));
   }
 
   function panneauFait(p, f) {
@@ -540,8 +622,12 @@
       <div class="ligne">
         <button class="btn small" id="btn-cause" title="Ajoute une cause une colonne plus a gauche, reliee a ce fait">+ Pourquoi ?</button>
         <button class="btn small secondary" id="btn-cause-variation">+ Variation</button>
+        ${f.type === 'dommage' ? '' : '<button class="btn small secondary" id="btn-consequence" title="Ce fait a aussi provoque un autre fait (disjonction)">Consequence +</button>'}
         <button class="btn small danger" id="btn-suppr-fait">Supprimer</button>
       </div>
+
+      <h4>🔗 Liens logiques</h4>
+      ${htmlLiensLogiques(f)}
 
       <h4>⚑ Actions de prevention</h4>
       <div id="liste-actions">${(f.actions || []).map(a => `
@@ -590,6 +676,13 @@
     if (btnRacine) btnRacine.addEventListener('click', () => basculerRacine(f));
     p.querySelector('#btn-cause').addEventListener('click', () => ajouterFait('etat'));
     p.querySelector('#btn-cause-variation').addEventListener('click', () => ajouterFait('variation'));
+    const btnConsequence = p.querySelector('#btn-consequence');
+    if (btnConsequence) btnConsequence.addEventListener('click', ajouterConsequence);
+    p.querySelectorAll('[data-aller-fait]').forEach(li => li.addEventListener('click', () => {
+      selectionner({ type: 'fait', id: li.dataset.allerFait });
+      const n = $('faits').querySelector(`[data-id="${li.dataset.allerFait}"]`);
+      if (n) n.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+    }));
     p.querySelector('#btn-suppr-fait').addEventListener('click', supprimerSelection);
 
     p.querySelector('#btn-ajout-action').addEventListener('click', () => {

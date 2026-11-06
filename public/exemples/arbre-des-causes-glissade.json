@@ -11,9 +11,18 @@
     {
       "id": "d",
       "x": 1070,
-      "y": 367,
+      "y": 290,
       "type": "dommage",
       "texte": "Entorse de la cheville gauche de l'opérateur",
+      "actions": [],
+      "images": []
+    },
+    {
+      "id": "d2",
+      "x": 1070,
+      "y": 470,
+      "type": "dommage",
+      "texte": "Le carton tombe au sol : 6 flacons cassés",
       "actions": [],
       "images": []
     },
@@ -47,7 +56,7 @@
       "x": 650,
       "y": 480,
       "type": "etat",
-      "texte": "L'opérateur traverse l'allée à pied pour rejoindre le poste d'emballage",
+      "texte": "L'opérateur traverse l'allée à pied en portant un carton de flacons",
       "actions": [],
       "images": []
     },
@@ -157,60 +166,72 @@
     },
     {
       "id": "l2",
-      "de": "f2",
-      "vers": "f1",
+      "de": "f1",
+      "vers": "d2",
       "pointille": false
     },
     {
       "id": "l3",
       "de": "f3",
-      "vers": "f1",
+      "vers": "d2",
       "pointille": false
     },
     {
       "id": "l4",
+      "de": "f2",
+      "vers": "f1",
+      "pointille": false
+    },
+    {
+      "id": "l5",
+      "de": "f3",
+      "vers": "f1",
+      "pointille": false
+    },
+    {
+      "id": "l6",
       "de": "f4",
       "vers": "f2",
       "pointille": false
     },
     {
-      "id": "l5",
+      "id": "l7",
       "de": "f5",
       "vers": "f2",
       "pointille": false
     },
     {
-      "id": "l6",
+      "id": "l8",
       "de": "f6",
       "vers": "f2",
       "pointille": false
     },
     {
-      "id": "l7",
+      "id": "l9",
       "de": "f7",
       "vers": "f4",
       "pointille": false
     },
     {
-      "id": "l8",
+      "id": "l10",
       "de": "f8",
       "vers": "f5",
       "pointille": false
     },
     {
-      "id": "l9",
+      "id": "l11",
       "de": "f11",
       "vers": "f5",
       "pointille": false
     },
     {
-      "id": "l10",
+      "id": "l12",
       "de": "f9",
       "vers": "f7",
       "pointille": false
     },
     {
-      "id": "l11",
+      "id": "l13",
       "de": "f10",
       "vers": "f8",
       "pointille": false
