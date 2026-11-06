@@ -40,10 +40,16 @@
   let minuterieSauvegarde = null;
   let modeExemple = false;   // true : l'exemple est affiche, rien n'est enregistre
   let arbrePerso = null;     // arbre de l'utilisateur mis de cote pendant l'exemple
-  const FICHIER_EXEMPLE = '/exemples/arbre-des-causes-glissade.json';
+  // Exemples livres avec l'outil.
+  const EXEMPLES = [
+    { id: 'glissade', titre: "Glissade sur une flaque d'huile", fichier: '/exemples/arbre-des-causes-glissade.json' },
+    { id: 'jambe', titre: "Jambe happée (d'après l'INRS)", fichier: '/exemples/arbre-des-causes-jambe-happee.json' }
+  ];
+  let exempleCourant = EXEMPLES[0].id;
   // Evenements des exemples livres : un brouillon qui en est une copie n'est pas repris.
   const EVENEMENTS_EXEMPLES = ["Chute de plain-pied dans l'allée de la presse P3",
-    "Main happée au rouleau presseur lors d'un dégagement de bourrage"];
+    "Main happée au rouleau presseur lors d'un dégagement de bourrage",
+    'Jambe happée par le tambour de retour du convoyeur'];
 
   const $ = (id) => document.getElementById(id);
   const canvas = $('canvas');
@@ -565,7 +571,8 @@
           plusieurs fleches <i>depuis</i> un fait = <b>disjonction</b> (il a provoque tout cela a lui seul, bouton <b>Consequence +</b>).</li>
         <li><b>Encadrer les causes racines</b> (☆ Racine) et leur associer des actions.</li>
       </ol>
-      <button class="adc-exemple-btn" data-vue="exemple">💡 Voir un exemple<small>Glissade sur une flaque d'huile : conjonctions, disjonction, 3 causes racines</small></button>
+      <button class="adc-exemple-btn" data-vue="exemple" data-exemple-id="glissade">💡 Exemple : glissade<small>Flaque d'huile : conjonctions, disjonction, 3 causes racines</small></button>
+      <button class="adc-exemple-btn" data-vue="exemple" data-exemple-id="jambe">💡 Exemple : jambe happée<small>Le cas de la carrière de la brochure INRS ED 6163, reformulé</small></button>
       <h4>Legende INRS</h4>
       <div class="adc-legende">
         <div><i></i> Fait habituel (etat)</div>
@@ -1038,7 +1045,7 @@
       } catch (err) { /* brouillon absent ou illisible */ }
     }
     toutRedessiner();
-    if (params.get('exemple') !== null) basculerExemple(true);
+    if (params.get('exemple') !== null) basculerExemple(true, params.get('exemple'));
   }
 
   // Change le nombre de Pourquoi. Les faits gardent leur niveau par rapport a la
@@ -1073,25 +1080,33 @@
   // ---------- Exemple : vue a part, jamais enregistree ----------
   // L'exemple s'affiche a la place de l'arbre de l'utilisateur sans l'ecraser :
   // on garde son arbre de cote et on le remet en revenant sur « Mon arbre ».
-  let exempleCache = null;
-  async function basculerExemple(actif) {
-    if (actif === modeExemple) return;
+  const exemplesCharges = {};
+  async function basculerExemple(actif, idExemple) {
+    const choix = EXEMPLES.find(x => x.id === idExemple) || EXEMPLES.find(x => x.id === exempleCourant);
+    if (actif === modeExemple && (!actif || choix.id === exempleCourant)) return;
     if (actif) {
       try {
-        if (!exempleCache) {
-          const res = await fetch(FICHIER_EXEMPLE);
+        if (!exemplesCharges[choix.id]) {
+          const res = await fetch(choix.fichier);
           if (!res.ok) throw new Error();
-          exempleCache = await res.json();
+          exemplesCharges[choix.id] = await res.json();
         }
       } catch (err) {
         return toast("Impossible de charger l'exemple", 'error');
       }
-      // Enregistre tout de suite ce qui etait en attente sur l'arbre de l'utilisateur.
-      if (minuterieSauvegarde) { clearTimeout(minuterieSauvegarde); minuterieSauvegarde = null; await sauvegarder(); }
-      arbrePerso = { etat, historique, statut: $('etat-sauvegarde').textContent };
-      etat = normaliser(JSON.parse(JSON.stringify(exempleCache)));
+      if (!modeExemple) {
+        // Enregistre tout de suite ce qui etait en attente sur l'arbre de l'utilisateur.
+        if (minuterieSauvegarde) { clearTimeout(minuterieSauvegarde); minuterieSauvegarde = null; await sauvegarder(); }
+        arbrePerso = { etat, historique, statut: $('etat-sauvegarde').textContent };
+      }
+      exempleCourant = choix.id;
+      etat = normaliser(JSON.parse(JSON.stringify(exemplesCharges[choix.id])));
       historique = [];
       modeExemple = true;
+      document.querySelectorAll('[data-exemple-id]').forEach(b => {
+        b.classList.toggle('actif', b.dataset.exempleId === choix.id);
+        b.setAttribute('aria-pressed', String(b.dataset.exempleId === choix.id));
+      });
     } else {
       etat = arbrePerso.etat;
       historique = arbrePerso.historique;
@@ -1113,7 +1128,7 @@
   $('vue-exemple').addEventListener('click', () => basculerExemple(true));
   document.addEventListener('click', e => {
     const b = e.target.closest('[data-vue]');
-    if (b) basculerExemple(b.dataset.vue === 'exemple');
+    if (b) basculerExemple(b.dataset.vue === 'exemple', b.dataset.exempleId);
   });
   $('btn-imprimer').addEventListener('click', () => { selectionner(null); setTimeout(() => window.print(), 50); });
   $('btn-enregistrer').addEventListener('click', () => {

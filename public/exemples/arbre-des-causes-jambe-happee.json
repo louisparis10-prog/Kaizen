@@ -1,0 +1,248 @@
+{
+  "version": 1,
+  "nbPourquoi": 7,
+  "header": {
+    "animateur": "",
+    "secteur": "Carrière - tunnel de la trémie",
+    "date": "22/02/2018",
+    "evenement": "Jambe happée par le tambour de retour du convoyeur"
+  },
+  "faits": [
+    {
+      "id": "d",
+      "x": 1490,
+      "y": 390,
+      "type": "dommage",
+      "texte": "Blessure grave à la jambe : amputation",
+      "actions": [],
+      "images": []
+    },
+    {
+      "id": "happee",
+      "x": 1280,
+      "y": 383,
+      "type": "variation",
+      "texte": "La jambe est happée par le tambour de retour",
+      "actions": [],
+      "images": []
+    },
+    {
+      "id": "chute",
+      "x": 1070,
+      "y": 218,
+      "type": "variation",
+      "texte": "L'ouvrier chute contre le tambour du convoyeur",
+      "actions": [],
+      "images": []
+    },
+    {
+      "id": "tourne",
+      "x": 1070,
+      "y": 410,
+      "type": "variation",
+      "texte": "Le tambour de retour tourne",
+      "actions": [],
+      "images": []
+    },
+    {
+      "id": "accessible",
+      "x": 1070,
+      "y": 530,
+      "type": "etat",
+      "texte": "Le tambour de retour est accessible",
+      "actions": [
+        {
+          "id": "a1",
+          "description": "Poser un carter fixe sur le tambour de retour",
+          "responsable": "Maintenance",
+          "echeance": "2026-12-04"
+        }
+      ],
+      "images": [],
+      "racine": true
+    },
+    {
+      "id": "glisse",
+      "x": 860,
+      "y": 225,
+      "type": "variation",
+      "texte": "Le pied de l'ouvrier glisse",
+      "actions": [],
+      "images": []
+    },
+    {
+      "id": "marche",
+      "x": 860,
+      "y": 400,
+      "type": "variation",
+      "texte": "Le convoyeur est laissé en marche",
+      "actions": [
+        {
+          "id": "a2",
+          "description": "Arrêt et consignation du convoyeur avant tout débourrage",
+          "responsable": "HSE / Production",
+          "echeance": "2026-11-27"
+        }
+      ],
+      "images": [],
+      "racine": true
+    },
+    {
+      "id": "debout",
+      "x": 650,
+      "y": 90,
+      "type": "variation",
+      "texte": "L'ouvrier se tient debout contre la trémie",
+      "actions": [],
+      "images": []
+    },
+    {
+      "id": "effort",
+      "x": 650,
+      "y": 225,
+      "type": "variation",
+      "texte": "L'ouvrier force sur une tige métallique",
+      "actions": [],
+      "images": []
+    },
+    {
+      "id": "sol",
+      "x": 650,
+      "y": 345,
+      "type": "etat",
+      "texte": "Le sol du tunnel est glissant",
+      "actions": [
+        {
+          "id": "a3",
+          "description": "Caillebotis antidérapant et nettoyage régulier du tunnel",
+          "responsable": "Production",
+          "echeance": "2026-12-15"
+        }
+      ],
+      "images": [],
+      "racine": true
+    },
+    {
+      "id": "deblocage",
+      "x": 440,
+      "y": 145,
+      "type": "variation",
+      "texte": "Il tente de débloquer les pierres à la main avec une tige métallique",
+      "actions": [],
+      "images": []
+    },
+    {
+      "id": "tunnel",
+      "x": 230,
+      "y": 133,
+      "type": "variation",
+      "texte": "Il va directement dans le tunnel, sans passer par la passerelle prévue",
+      "actions": [
+        {
+          "id": "a4",
+          "description": "Rendre la passerelle d'intervention accessible depuis l'entrée du tunnel",
+          "responsable": "Travaux neufs",
+          "echeance": "2027-01-15"
+        }
+      ],
+      "images": []
+    },
+    {
+      "id": "engorgee",
+      "x": 20,
+      "y": 133,
+      "type": "variation",
+      "texte": "La trémie d'alimentation est engorgée de pierres",
+      "actions": [
+        {
+          "id": "a5",
+          "description": "Installer une grille de pré-criblage pour arrêter les gros blocs",
+          "responsable": "Méthodes",
+          "echeance": "2027-02-26"
+        }
+      ],
+      "images": [],
+      "racine": true
+    }
+  ],
+  "liens": [
+    {
+      "id": "l1",
+      "de": "happee",
+      "vers": "d",
+      "pointille": false
+    },
+    {
+      "id": "l2",
+      "de": "chute",
+      "vers": "happee",
+      "pointille": false
+    },
+    {
+      "id": "l3",
+      "de": "tourne",
+      "vers": "happee",
+      "pointille": false
+    },
+    {
+      "id": "l4",
+      "de": "accessible",
+      "vers": "happee",
+      "pointille": false
+    },
+    {
+      "id": "l5",
+      "de": "glisse",
+      "vers": "chute",
+      "pointille": false
+    },
+    {
+      "id": "l6",
+      "de": "marche",
+      "vers": "tourne",
+      "pointille": false
+    },
+    {
+      "id": "l7",
+      "de": "debout",
+      "vers": "glisse",
+      "pointille": false
+    },
+    {
+      "id": "l8",
+      "de": "effort",
+      "vers": "glisse",
+      "pointille": false
+    },
+    {
+      "id": "l9",
+      "de": "sol",
+      "vers": "glisse",
+      "pointille": false
+    },
+    {
+      "id": "l10",
+      "de": "deblocage",
+      "vers": "debout",
+      "pointille": false
+    },
+    {
+      "id": "l11",
+      "de": "deblocage",
+      "vers": "effort",
+      "pointille": false
+    },
+    {
+      "id": "l12",
+      "de": "tunnel",
+      "vers": "deblocage",
+      "pointille": false
+    },
+    {
+      "id": "l13",
+      "de": "engorgee",
+      "vers": "tunnel",
+      "pointille": false
+    }
+  ]
+}

@@ -311,3 +311,10 @@
 .adc-liens-liste { margin: 4px 0 0; padding-left: 16px; font-size: 0.78rem; }
 .adc-liens-liste li { cursor: pointer; color: var(--swm-texte); margin-bottom: 2px; }
 .adc-liens-liste li:hover { text-decoration: underline; }
+
+/* Choix de l'exemple */
+.adc-choix-exemple { display: inline-flex; background: #d7f0e8; border-radius: 9px; padding: 3px; gap: 2px; }
+.adc-choix-exemple button { border: none; background: transparent; border-radius: 7px; padding: 5px 11px; cursor: pointer;
+  font-family: inherit; font-size: 0.8rem; font-weight: 600; color: #11624f; }
+.adc-choix-exemple button:hover { background: rgba(255, 255, 255, 0.6); }
+.adc-choix-exemple button.actif { background: #fff; box-shadow: 0 1px 3px rgba(17, 98, 79, 0.25); }
