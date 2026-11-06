@@ -785,8 +785,17 @@
   function remplirEntete() {
     document.querySelectorAll('[data-header]').forEach(input => {
       input.value = etat.header[input.dataset.header] || '';
+      ajusterChamp(input);
     });
   }
+
+  // Les zones de texte de l'entete grandissent avec leur contenu au lieu de le couper.
+  function ajusterChamp(champ) {
+    if (champ.tagName !== 'TEXTAREA') return;
+    champ.style.height = 'auto';
+    champ.style.height = champ.scrollHeight + 'px';
+  }
+  window.addEventListener('resize', () => document.querySelectorAll('textarea[data-header]').forEach(ajusterChamp));
 
   // ---------- Sauvegarde ----------
   function afficherEtat(texte, erreur) {
@@ -1022,6 +1031,7 @@
     input.addEventListener('focus', memoriser, { once: true });
     input.addEventListener('input', () => {
       etat.header[input.dataset.header] = input.value;
+      ajusterChamp(input);
       planifierSauvegarde();
     });
   });

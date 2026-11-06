@@ -63,12 +63,12 @@
 .adc-logo-opex { height: 58px; width: auto; flex-shrink: 0; margin-left: auto; }
 .adc-titre { color: #fff; font-weight: 700; font-size: 2rem; white-space: nowrap; line-height: 1.05; }
 .adc-titre small { display: block; font-size: 0.85rem; font-weight: 400; opacity: 0.85; letter-spacing: 0.3px; margin-top: 3px; }
-.adc-infos { flex: 1; min-width: 280px; max-width: 560px; display: grid; grid-template-columns: 1.4fr 1fr 0.8fr;
+.adc-infos { flex: 1; min-width: 280px; max-width: 760px; display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(140px, 1fr); overflow: hidden;
   gap: 4px 14px; background: #fff; border: 1px solid var(--swm-gris); border-radius: 8px; padding: 7px 12px; }
-.adc-infos label { font-size: 0.8rem; font-weight: 700; color: var(--swm-texte); display: flex; align-items: center; gap: 5px; }
-.adc-infos input { flex: 1; min-width: 0; border: none; border-bottom: 1px solid var(--swm-texte); padding: 2px;
+.adc-infos label { font-size: 0.8rem; font-weight: 700; color: var(--swm-texte); display: flex; align-items: center; gap: 5px; min-width: 0; white-space: nowrap; }
+.adc-infos input, .adc-infos textarea { flex: 1; min-width: 0; width: 100%; border-radius: 0; text-overflow: ellipsis; border: none; border-bottom: 1px solid var(--swm-texte); padding: 2px;
   font: inherit; font-weight: 400; color: #000; background: transparent; }
-.adc-infos input:focus { outline: none; border-bottom-width: 2px; }
+.adc-infos input:focus, .adc-infos textarea:focus { outline: none; border-bottom-width: 2px; }
 .adc-infos-large { grid-column: 1 / -1; }
 
 /* ---------- Colonnes ---------- */
@@ -266,3 +266,7 @@
   border: 1px solid #9fd3c7; border-radius: 8px; background: #eefaf6; color: #11624f; font-family: inherit; font-size: 0.86rem; font-weight: 700; }
 .adc-exemple-btn:hover { background: #dcf4ec; }
 .adc-exemple-btn small { display: block; font-weight: 400; color: #3d7a6b; font-size: 0.75rem; margin-top: 2px; }
+
+/* Evenement : passe a la ligne au lieu de deborder */
+.adc-infos textarea { resize: none; overflow: hidden; line-height: 1.3; min-height: 1.6em; white-space: pre-wrap; word-break: break-word; }
+.adc-infos .adc-infos-large:has(textarea) { align-items: flex-start; }
