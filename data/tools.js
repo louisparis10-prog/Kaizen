@@ -190,7 +190,7 @@ const TOOLS = [
     phase: 'analyse',
     // Outil interactif : la carte ouvre directement l'editeur au lieu de la fiche.
     page: 'arbre-causes.html',
-    summary: "Methode INRS d'analyse d'un accident ou d'un dommage : on part de la blessure et on remonte les faits qui l'ont rendue possible, en les reliant comme une chaine de 6 Pourquoi.",
+    summary: "Methode INRS d'analyse d'un accident ou d'un dommage : on part de la blessure et on remonte les faits qui l'ont rendue possible, en les reliant comme une chaine de Pourquoi (de 3 a 10, 6 par defaut).",
     whenToUse: [
       "Accident du travail, presqu'accident ou incident a analyser",
       "Dommage materiel ou corporel dont il faut comprendre l'enchainement",

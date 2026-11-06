@@ -37,6 +37,7 @@
 .adc-zone { display: flex; gap: 12px; align-items: flex-start; }
 .adc-scroll { flex: 1; min-width: 0; overflow: auto; background: #fff; border: 1px solid var(--swm-trait);
   border-radius: 6px; max-height: 74vh; }
+/* Largeur et nombre de colonnes fixes par le script selon le nombre de Pourquoi. */
 .adc-canvas { position: relative; width: calc(var(--adc-col) * 7); min-height: 640px; }
 .adc-colonnes { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(7, var(--adc-col)); }
 .adc-colonne { border-right: 1px dashed var(--swm-trait); background: #fbfcfe; }
@@ -135,6 +136,7 @@
   .adc-fait.selection { outline: none; }
   .adc-poignee { display: none; }
   .adc-infos input::placeholder { color: transparent; }
+  .adc-canvas { zoom: var(--adc-zoom, 1); }
   .adc-colonne-titre { position: static; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .adc-titre, .adc-section, .adc-colonne, .adc-fait { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .adc-actions-bloc { break-before: page; }

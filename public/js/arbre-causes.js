@@ -9,17 +9,20 @@
   const HAUT_MIN = 52;      // sous le titre de colonne
   const CLE_LOCALE = 'kaizen-arbre-causes-brouillon';
 
+  // Nombre de Pourquoi reglable : 6 par defaut (5 Pourquoi SWM + 1).
+  const NB_DEFAUT = 6, NB_MIN = 3, NB_MAX = 10;
+
   // De gauche a droite : le plus en amont d'abord, la blessure a droite (sens INRS).
-  const COLONNES = [
-    ['Pourquoi 6', 'le plus en amont'],
-    ['Pourquoi 5', ''],
-    ['Pourquoi 4', ''],
-    ['Pourquoi 3', ''],
-    ['Pourquoi 2', ''],
-    ['Pourquoi 1', 'fait le plus proche'],
-    ['Blessure / dommage', 'point de depart']
-  ];
-  const COL_DOMMAGE = COLONNES.length - 1;
+  function colonnes() {
+    const n = etat.nbPourquoi;
+    const liste = [];
+    for (let i = n; i >= 1; i--) {
+      liste.push([`Pourquoi ${i}`, i === n ? 'le plus en amont' : (i === 1 ? 'fait le plus proche' : '')]);
+    }
+    liste.push(['Blessure / dommage', 'point de depart']);
+    return liste;
+  }
+  function colDommage() { return etat.nbPourquoi; }
 
   const TYPES = {
     etat: 'Fait habituel (etat)',
@@ -64,18 +67,20 @@
     setTimeout(() => t.remove(), 3000);
   }
 
-  function nouvelArbre(header) {
+  function nouvelArbre(header, nbPourquoi) {
+    const nb = nbPourquoi || NB_DEFAUT;
     return {
       version: 1,
+      nbPourquoi: nb,
       header: Object.assign({ animateur: '', secteur: '', date: '', evenement: '' }, header || {}),
-      faits: [{ id: uid(), x: xColonne(COL_DOMMAGE), y: 70, type: 'dommage', texte: '', actions: [], images: [] }],
+      faits: [{ id: uid(), x: xColonne(nb), y: 70, type: 'dommage', texte: '', actions: [], images: [] }],
       liens: []
     };
   }
 
   function xColonne(i) { return i * COL + (COL - LARGEUR_FAIT) / 2; }
   function colonneDe(x) {
-    return Math.max(0, Math.min(COL_DOMMAGE, Math.floor((x + LARGEUR_FAIT / 2) / COL)));
+    return Math.max(0, Math.min(colDommage(), Math.floor((x + LARGEUR_FAIT / 2) / COL)));
   }
   function fait(id) { return etat.faits.find(f => f.id === id); }
   function lien(id) { return etat.liens.find(l => l.id === id); }
@@ -105,8 +110,15 @@
 
   // ---------- Dessin ----------
   function dessinerColonnes() {
-    $('colonnes').innerHTML = COLONNES.map(([titre, sous], i) => `
-      <div class="adc-colonne${i === COL_DOMMAGE ? ' dommage' : ''}" data-col="${i}">
+    const nbCol = colonnes().length;
+    canvas.style.width = (nbCol * COL) + 'px';
+    $('colonnes').style.gridTemplateColumns = `repeat(${nbCol}, ${COL}px)`;
+    // A l'impression, l'arbre est reduit pour tenir dans la largeur d'une page A3.
+    canvas.style.setProperty('--adc-zoom', Math.min(1, 1480 / (nbCol * COL)).toFixed(3));
+    $('titre-nb').textContent = etat.nbPourquoi;
+    $('opt-nb').value = String(etat.nbPourquoi);
+    $('colonnes').innerHTML = colonnes().map(([titre, sous], i) => `
+      <div class="adc-colonne${i === colDommage() ? ' dommage' : ''}" data-col="${i}">
         <div class="adc-colonne-titre">${esc(titre)}${sous ? `<span>${esc(sous)}</span>` : '<span>&nbsp;</span>'}</div>
       </div>`).join('');
   }
@@ -190,6 +202,7 @@
   }
 
   function toutRedessiner() {
+    dessinerColonnes();
     remplirEntete();
     dessinerFaits();
     dessinerLiens();
@@ -234,7 +247,7 @@
         const dx = p.x - depart.x, dy = p.y - depart.y;
         if (!bouge && Math.abs(dx) + Math.abs(dy) < 4) return;
         if (!bouge) { bouge = true; memoriser(); noeud.classList.add('glisse'); }
-        f.x = Math.max(0, Math.min(COL * COLONNES.length - LARGEUR_FAIT, origine.x + dx));
+        f.x = Math.max(0, Math.min(COL * colonnes().length - LARGEUR_FAIT, origine.x + dx));
         f.y = Math.max(HAUT_MIN, origine.y + dy);
         noeud.style.left = f.x + 'px';
         noeud.style.top = f.y + 'px';
@@ -331,13 +344,13 @@
       col = colonneDe(position.x - LARGEUR_FAIT / 2);
       y = Math.max(HAUT_MIN, position.y - 25);
     } else if (type === 'dommage') {
-      col = COL_DOMMAGE;
+      col = colDommage();
       y = yLibre(col, 70);
     } else if (base) {
       col = Math.max(0, colonneDe(base.x) - 1);
       y = yLibre(col, base.y);
     } else {
-      col = COL_DOMMAGE - 1;
+      col = colDommage() - 1;
       y = yLibre(col, 70);
     }
     const f = {
@@ -593,7 +606,7 @@
           <th style="width:12%">Echeance</th>${chantier ? '<th style="width:14%" class="no-print">Plan d\'action</th>' : ''}</tr></thead>
         <tbody>${lignes.map(({ f, a }) => `
           <tr>
-            <td>${esc(f.texte || '(fait sans description)')} <small>(${esc(COLONNES[colonneDe(f.x)][0])})</small></td>
+            <td>${esc(f.texte || '(fait sans description)')} <small>(${esc(colonnes()[colonneDe(f.x)][0])})</small></td>
             <td>${esc(a.description)}</td>
             <td>${esc(a.responsable)}</td>
             <td>${esc(a.echeance)}</td>
@@ -676,7 +689,8 @@
   }
 
   function normaliser(donnees) {
-    const n = nouvelArbre();
+    const nb = Number(donnees.nbPourquoi);
+    const n = nouvelArbre(null, nb >= NB_MIN && nb <= NB_MAX ? nb : NB_DEFAUT);
     n.header = Object.assign(n.header, donnees.header || {});
     n.faits = donnees.faits.map(f => Object.assign({ actions: [], images: [], texte: '', type: 'etat' }, f));
     const ids = new Set(n.faits.map(f => f.id));
@@ -770,7 +784,28 @@
     toutRedessiner();
   }
 
+  // Change le nombre de Pourquoi. Les faits gardent leur niveau par rapport a la
+  // blessure : toutes les colonnes se decalent ensemble.
+  function changerNombre(nb) {
+    const ancien = etat.nbPourquoi;
+    if (nb === ancien) return;
+    const niveauMax = Math.max(0, ...etat.faits.map(f => ancien - colonneDe(f.x)));
+    if (nb < niveauMax) {
+      $('opt-nb').value = String(ancien);
+      return toast(`Un fait occupe le Pourquoi ${niveauMax} : le deplacer avant de reduire a ${nb}`, 'error');
+    }
+    memoriser();
+    etat.faits.forEach(f => { f.x += (nb - ancien) * COL; });
+    etat.nbPourquoi = nb;
+    toutRedessiner();
+    planifierSauvegarde();
+  }
+
   // ---------- Branchements ----------
+  for (let i = NB_MIN; i <= NB_MAX; i++) {
+    $('opt-nb').appendChild(new Option(`${i} Pourquoi`, String(i)));
+  }
+  $('opt-nb').addEventListener('change', e => changerNombre(Number(e.target.value)));
   dessinerColonnes();
 
   $('btn-etat').addEventListener('click', () => ajouterFait('etat'));
@@ -785,7 +820,7 @@
   $('btn-vider').addEventListener('click', () => {
     if (!confirm("Effacer tout l'arbre ? (Annuler permet de revenir en arriere)")) return;
     memoriser();
-    etat = nouvelArbre(etat.header);
+    etat = nouvelArbre(etat.header, etat.nbPourquoi);
     selection = null;
     toutRedessiner();
     planifierSauvegarde();
@@ -835,7 +870,7 @@
     if (e.target.closest('.adc-fait')) return;
     const p = pointCanvas(e);
     selection = null;
-    ajouterFait(colonneDe(p.x - LARGEUR_FAIT / 2) === COL_DOMMAGE ? 'dommage' : 'etat', p);
+    ajouterFait(colonneDe(p.x - LARGEUR_FAIT / 2) === colDommage() ? 'dommage' : 'etat', p);
   });
 
   // Deposer une image directement sur un fait.

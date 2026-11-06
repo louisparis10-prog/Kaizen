@@ -25,7 +25,7 @@
   <!-- Entete reprise de la trame SWM 5 Pourquoi -->
   <div class="adc-entete">
     <div class="adc-titre">
-      <span class="adc-titre-num">6</span>
+      <span class="adc-titre-num" id="titre-nb">6</span>
       <span>Pourquoi<small>Arbre des causes INRS</small></span>
     </div>
     <div class="adc-infos">
@@ -43,6 +43,7 @@
       <button class="btn small danger" id="btn-dommage" title="Blessure ou dommage : colonne de droite">+ Blessure / dommage</button>
     </div>
     <div class="adc-groupe">
+      <label class="adc-case">Colonnes : <select id="opt-nb" title="De 3 a 10 Pourquoi"></select></label>
       <label class="adc-case"><input type="checkbox" id="opt-pointille"> Nouveau lien en pointille</label>
       <label class="adc-case"><input type="checkbox" id="opt-aligner" checked> Aligner sur les colonnes</label>
     </div>
