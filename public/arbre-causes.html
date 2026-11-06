@@ -24,24 +24,28 @@
 
   <div class="adc-barre no-print">
     <div class="adc-groupe">
-      <button class="btn small adc-btn-etat" id="btn-etat" title="Fait habituel (etat) : rectangle">+ Fait habituel</button>
-      <button class="btn small adc-btn-variation" id="btn-variation" title="Fait inhabituel (variation) : ovale">+ Variation</button>
-      <button class="btn small danger" id="btn-dommage" title="Blessure ou dommage : colonne de droite">+ Blessure / dommage</button>
+      <span class="adc-groupe-titre">Ajouter</span>
+      <button class="adc-outil" id="btn-etat" title="Fait habituel (etat) : rectangle"><i class="adc-ico-etat"></i>Fait habituel</button>
+      <button class="adc-outil" id="btn-variation" title="Fait inhabituel (variation) : ovale"><i class="adc-ico-variation"></i>Variation</button>
+      <button class="adc-outil" id="btn-dommage" title="Blessure ou dommage : colonne de droite"><i class="adc-ico-dommage"></i>Blessure</button>
     </div>
     <div class="adc-groupe">
-      <label class="adc-case">Colonnes : <select id="opt-nb" title="De 3 a 10 Pourquoi"></select></label>
-      <label class="adc-case"><input type="checkbox" id="opt-pointille"> Nouveau lien en pointille</label>
-      <label class="adc-case"><input type="checkbox" id="opt-aligner" checked> Aligner sur les colonnes</label>
+      <span class="adc-groupe-titre">Affichage</span>
+      <button class="adc-outil adc-outil-racines" id="btn-racines" aria-pressed="false" title="Faire ressortir les causes racines et leur chemin jusqu'a la blessure">★ Causes racines <b>0</b></button>
+      <label class="adc-case">Pourquoi : <select id="opt-nb" title="De 3 a 10 Pourquoi"></select></label>
+      <label class="adc-case"><input type="checkbox" id="opt-pointille"> Liens en pointille</label>
+      <label class="adc-case"><input type="checkbox" id="opt-aligner" checked> Aligner</label>
     </div>
-    <div class="adc-groupe">
-      <button class="btn small secondary" id="btn-annuler" title="Ctrl+Z">Annuler</button>
-      <button class="btn small secondary" id="btn-exporter">Exporter</button>
-      <button class="btn small secondary" id="btn-importer">Importer</button>
-      <button class="btn small secondary" id="btn-vider">Tout effacer</button>
-      <button class="btn small" id="btn-imprimer" title="Choisir « Enregistrer au format PDF » comme imprimante">Exporter en PDF</button>
+    <div class="adc-groupe adc-groupe-fichier">
+      <button class="adc-outil adc-outil-discret" id="btn-annuler" title="Annuler (Ctrl+Z)">↶ Annuler</button>
+      <button class="adc-outil adc-outil-discret" id="btn-exporter" title="Telecharger l'arbre (fichier JSON)">⤓ Sauvegarder</button>
+      <button class="adc-outil adc-outil-discret" id="btn-importer" title="Reprendre un arbre telecharge">⤒ Ouvrir</button>
+      <button class="adc-outil adc-outil-discret" id="btn-vider" title="Effacer tout l'arbre">🗑</button>
+      <button class="btn small" id="btn-imprimer" title="Choisir « Enregistrer au format PDF » comme imprimante">📄 Exporter en PDF</button>
       <button class="btn small orange" id="btn-enregistrer">Enregistrer dans un chantier</button>
     </div>
   </div>
+  <div class="adc-astuce no-print" id="astuce"></div>
 
   <div class="adc-zone">
     <!-- Trame au format des supports SWM : cadre, bandeau, entete et colonnes numerotees -->
@@ -76,16 +80,18 @@
         </div>
       </div>
 
-      <p class="adc-note">Pour faciliter la lecture : partir de la blessure et, pour chaque fait, se demander
-      « qu'a-t-il fallu pour qu'il se produise ? » puis « a-t-il fallu autre chose ? ».
-      Rectangle = fait habituel, ovale = variation, lien en pointille = lien incertain.</p>
+      <p class="adc-note">Pour faciliter la lecture : relier les cases et encadrer votre cause racine (★).
+      Partir de la blessure et, pour chaque fait, se demander « qu'a-t-il fallu pour qu'il se produise ? » puis « a-t-il fallu autre chose ? ».
+      Rectangle = fait habituel, ovale = variation, pointille = lien incertain.</p>
     </div>
 
     <aside class="adc-panneau no-print" id="panneau"></aside>
   </div>
 
   <section class="adc-actions-bloc">
-    <h2 class="adc-section">Actions de prevention</h2>
+    <h2 class="adc-section">★ Causes racines</h2>
+    <div id="liste-racines" class="adc-cadre"></div>
+    <h2 class="adc-section adc-section-suite">⚑ Actions de prevention</h2>
     <div id="tableau-actions"></div>
   </section>
 

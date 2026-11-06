@@ -142,13 +142,55 @@
     return '#' + c.map(v => v.toString(16).padStart(2, '0')).join('');
   }
 
-  function htmlFait(f) {
+  // ---------- Causes racines ----------
+  function racines() {
+    return etat.faits.filter(f => f.racine && f.type !== 'dommage')
+      .sort((a, b) => colonneDe(a.x) - colonneDe(b.x) || a.y - b.y);
+  }
+
+  // Faits et liens situes entre les causes racines et la blessure (pour les faire ressortir).
+  function cheminRacines() {
+    const faits = new Set(racines().map(f => f.id));
+    const liens = new Set();
+    const pile = [...faits];
+    while (pile.length) {
+      const id = pile.pop();
+      etat.liens.filter(l => l.de === id).forEach(l => {
+        liens.add(l.id);
+        if (!faits.has(l.vers)) { faits.add(l.vers); pile.push(l.vers); }
+      });
+    }
+    return { faits, liens };
+  }
+
+  function basculerRacine(f) {
+    if (!f) return;
+    if (f.type === 'dommage') return toast('La blessure ne peut pas etre une cause racine', 'error');
+    memoriser();
+    f.racine = !f.racine;
+    dessinerFaits();
+    dessinerLiens();
+    dessinerPanneau();
+    dessinerActions();
+    planifierSauvegarde();
+    toast(f.racine ? 'Cause racine encadree' : 'Ce fait n\'est plus une cause racine');
+  }
+
+  function htmlFait(f, chemin) {
     const nbActions = (f.actions || []).length;
     const images = (f.images || []).slice(0, 3).map(src => `<img src="${src}" alt="">`).join('');
+    const racine = f.racine && f.type !== 'dommage';
     return `
-      <div class="adc-fait ${f.type}${selection && selection.type === 'fait' && selection.id === f.id ? ' selection' : ''}"
+      <div class="adc-fait ${f.type}${racine ? ' racine' : ''}${chemin && chemin.faits.has(f.id) ? ' chemin' : ''}${selection && selection.type === 'fait' && selection.id === f.id ? ' selection' : ''}"
            data-id="${f.id}" style="left:${f.x}px;top:${f.y}px">
-        <div class="adc-fait-texte${f.texte ? '' : ' vide'}">${f.texte ? esc(f.texte) : (f.type === 'dommage' ? 'Decrire la blessure ou le dommage' : 'Decrire le fait')}</div>
+        ${racine ? '<span class="adc-racine-tag">★ Cause racine</span>' : ''}
+        <div class="adc-outils no-print${f.y < 130 ? ' bas' : ''}">
+          ${f.type === 'dommage' ? '' : `<button data-outil="racine" title="Encadrer comme cause racine (touche R)">${racine ? '★ Retirer' : '☆ Racine'}</button>`}
+          <button data-outil="etat" title="Ajouter une cause (fait habituel) a gauche">+ Pourquoi ?</button>
+          <button data-outil="variation" title="Ajouter une variation a gauche">+ Variation</button>
+          <button data-outil="suppr" class="danger" title="Supprimer ce fait (Suppr)">✕</button>
+        </div>
+        <div class="adc-fait-texte${f.texte ? '' : ' vide'}">${f.texte ? esc(f.texte) : (f.type === 'dommage' ? 'Decrire la blessure ou le dommage' : 'Double-cliquer pour decrire le fait')}</div>
         ${images ? `<div class="adc-fait-images">${images}</div>` : ''}
         ${nbActions || (f.images || []).length > 3 ? `<div class="adc-fait-badges">
           ${nbActions ? `<span class="adc-badge">⚑ ${nbActions} action${nbActions > 1 ? 's' : ''}</span>` : ''}
@@ -159,7 +201,8 @@
   }
 
   function dessinerFaits() {
-    $('faits').innerHTML = etat.faits.map(htmlFait).join('');
+    const chemin = cheminRacines();
+    $('faits').innerHTML = etat.faits.map(f => htmlFait(f, chemin)).join('');
     $('faits').querySelectorAll('.adc-fait').forEach(brancherFait);
     ajusterHauteur();
   }
@@ -168,7 +211,7 @@
     const ancien = $('faits').querySelector(`[data-id="${id}"]`);
     const f = fait(id);
     if (!ancien || !f) return dessinerFaits();
-    const nouveau = el(htmlFait(f));
+    const nouveau = el(htmlFait(f, cheminRacines()));
     ancien.replaceWith(nouveau);
     brancherFait(nouveau);
     ajusterHauteur();
@@ -203,12 +246,13 @@
 
   function dessinerLiens() {
     const g = $('liens-g');
+    const chemin = cheminRacines();
     g.innerHTML = etat.liens.map(l => {
       const a = boite(l.de), b = boite(l.vers);
       if (!a || !b) return '';
       const d = trace(a, b);
       const actif = selection && selection.type === 'lien' && selection.id === l.id;
-      return `<path class="adc-lien${l.pointille ? ' pointille' : ''}${actif ? ' actif' : ''}" d="${d}"
+      return `<path class="adc-lien${l.pointille ? ' pointille' : ''}${actif ? ' actif' : ''}${chemin.liens.has(l.id) ? ' chemin' : ''}" d="${d}"
                 marker-end="url(#${actif ? 'fleche-active' : 'fleche'})"></path>
               <path class="adc-lien-hit" data-lien="${l.id}" d="${d}"></path>`;
     }).join('');
@@ -243,6 +287,19 @@
 
   function brancherFait(noeud) {
     const id = noeud.dataset.id;
+
+    // Mini barre d'outils du fait selectionne.
+    noeud.querySelectorAll('[data-outil]').forEach(b => {
+      b.addEventListener('pointerdown', e => e.stopPropagation());
+      b.addEventListener('dblclick', e => e.stopPropagation());
+      b.addEventListener('click', e => {
+        e.stopPropagation();
+        const outil = b.dataset.outil;
+        if (outil === 'racine') basculerRacine(fait(id));
+        else if (outil === 'suppr') supprimerSelection();
+        else ajouterFait(outil);
+      });
+    });
 
     noeud.querySelector('.adc-poignee').addEventListener('pointerdown', e => {
       e.stopPropagation();
@@ -287,6 +344,7 @@
           f.x = xColonne(colonneDe(f.x));
           noeud.style.left = f.x + 'px';
         }
+        noeud.querySelector('.adc-outils').classList.toggle('bas', f.y < 130);
         ajusterHauteur();
         dessinerLiens();
         planifierSauvegarde();
@@ -410,26 +468,45 @@
   }
 
   // ---------- Panneau lateral ----------
+  // Bandeau d'aide qui suit ce que l'on est en train de faire.
+  function majAstuce() {
+    const zone = $('astuce');
+    if (!zone) return;
+    let texte;
+    if (selection && selection.type === 'fait' && fait(selection.id)) {
+      const f = fait(selection.id);
+      texte = f.type === 'dommage'
+        ? '<b>Etape suivante :</b> cliquez sur <b>+ Pourquoi ?</b> au-dessus de la blessure : « qu\'a-t-il fallu pour qu\'elle se produise ? »'
+        : '<b>Pour relier :</b> glissez le <span class="adc-point"></span> orange vers le fait qu\'il a provoque. <b>R</b> encadre la cause racine, <b>Suppr</b> efface.';
+    } else if (selection && selection.type === 'lien') {
+      texte = 'Lien selectionne : rendez-le <b>pointille</b> s\'il est incertain, ou inversez son sens dans le panneau.';
+    } else if (etat.faits.length <= 1) {
+      texte = '<b>Pour commencer :</b> decrivez la blessure (cadre rouge), puis cliquez dessus et remontez les causes avec <b>+ Pourquoi ?</b>';
+    } else {
+      texte = 'Cliquez sur un fait pour le modifier. <b>Double-clic</b> dans une colonne pour poser un fait a cet endroit.';
+    }
+    zone.innerHTML = '<span class="adc-astuce-ico">💡</span><span>' + texte + '</span>';
+  }
+
   function dessinerPanneau() {
+    majAstuce();
     const p = $('panneau');
     if (selection && selection.type === 'fait' && fait(selection.id)) return panneauFait(p, fait(selection.id));
     if (selection && selection.type === 'lien' && lien(selection.id)) return panneauLien(p, lien(selection.id));
     p.innerHTML = `
       <h3>Comment construire l'arbre</h3>
-      <ol class="adc-aide">
-        <li>Decrire la <strong>blessure ou le dommage</strong> dans la colonne de droite.</li>
-        <li>Selectionner un fait puis <strong>+ Fait habituel</strong> ou <strong>+ Variation</strong> :
-          la cause s'ajoute une colonne plus a gauche, deja reliee (« pourquoi ? »).</li>
-        <li>Double-cliquer dans une colonne pour poser un fait ou vous voulez.</li>
-        <li>Glisser la <strong>poignee orange</strong> d'un fait vers le fait qu'il a provoque pour les relier.</li>
-        <li>Deplacer les faits par glisser-deposer ; plusieurs causes vers un meme fait = conjonction (ET).</li>
-        <li>Associer actions et images dans ce panneau, apres avoir selectionne un fait.</li>
+      <ol class="adc-etapes">
+        <li><b>Decrire la blessure</b> ou le dommage dans la colonne rouge.</li>
+        <li><b>Remonter les causes</b> : cliquer sur un fait puis <b>+ Pourquoi ?</b> — la cause s'ajoute a gauche, deja reliee.</li>
+        <li><b>Relier</b> : glisser le rond orange d'un fait vers le fait qu'il a provoque. Plusieurs fleches vers un fait = il a fallu tout cela (ET).</li>
+        <li><b>Encadrer les causes racines</b> (☆ Racine) et leur associer des actions.</li>
       </ol>
       <h4>Legende INRS</h4>
       <div class="adc-legende">
         <div><i></i> Fait habituel (etat)</div>
         <div><i class="ovale"></i> Variation (fait inhabituel)</div>
         <div><i class="dommage"></i> Blessure / dommage</div>
+        <div><i class="racine"></i> Cause racine</div>
         <div><i class="trait"></i> Lien etabli</div>
         <div><i class="pointille"></i> Lien incertain</div>
       </div>
@@ -439,18 +516,27 @@
 
   function panneauFait(p, f) {
     const aChantier = !!chantier;
+    const racine = f.racine && f.type !== 'dommage';
     p.innerHTML = `
-      <h3>${esc(TYPES[f.type])}</h3>
+      <div class="adc-panneau-tete ${f.type}">
+        <span class="adc-pastille ${f.type}"></span>
+        <div><h3>${esc(TYPES[f.type])}</h3><small>${esc(colonnes()[colonneDe(f.x)][0])}</small></div>
+      </div>
       <label for="champ-texte">Description du fait</label>
       <textarea id="champ-texte" placeholder="Un fait observable, sans jugement">${esc(f.texte)}</textarea>
       <label for="champ-type">Nature</label>
       <select id="champ-type">${Object.entries(TYPES).map(([k, v]) => `<option value="${k}"${k === f.type ? ' selected' : ''}>${v}</option>`).join('')}</select>
+      ${f.type === 'dommage' ? '' : `
+      <button class="adc-racine-btn${racine ? ' actif' : ''}" id="btn-racine" title="Touche R">
+        ${racine ? '★ Cause racine — cliquer pour retirer' : '☆ Marquer comme cause racine'}
+      </button>`}
       <div class="ligne">
         <button class="btn small" id="btn-cause" title="Ajoute une cause une colonne plus a gauche, reliee a ce fait">+ Pourquoi ?</button>
+        <button class="btn small secondary" id="btn-cause-variation">+ Variation</button>
         <button class="btn small danger" id="btn-suppr-fait">Supprimer</button>
       </div>
 
-      <h4>Actions de prevention</h4>
+      <h4>⚑ Actions de prevention</h4>
       <div id="liste-actions">${(f.actions || []).map(a => `
         <div class="adc-action">
           <div class="adc-action-tete">
@@ -470,7 +556,7 @@
       <input type="date" id="action-ech">
       <div class="ligne"><button class="btn small orange" id="btn-ajout-action">Ajouter l'action</button></div>
 
-      <h4>Images</h4>
+      <h4>🖼 Images</h4>
       <div class="adc-images">${(f.images || []).map((src, i) => `
         <figure><img src="${src}" alt="" data-voir="${i}"><button data-suppr-image="${i}" title="Retirer">&times;</button></figure>`).join('')}</div>
       <div class="ligne"><button class="btn small secondary" id="btn-image">+ Image</button></div>`;
@@ -486,11 +572,17 @@
     p.querySelector('#champ-type').addEventListener('change', e => {
       memoriser();
       f.type = e.target.value;
-      redessinerFait(f.id);
-      p.querySelector('h3').textContent = TYPES[f.type];
+      if (f.type === 'dommage') f.racine = false;
+      dessinerFaits();
+      dessinerLiens();
+      panneauFait(p, f);
+      dessinerActions();
       planifierSauvegarde();
     });
+    const btnRacine = p.querySelector('#btn-racine');
+    if (btnRacine) btnRacine.addEventListener('click', () => basculerRacine(f));
     p.querySelector('#btn-cause').addEventListener('click', () => ajouterFait('etat'));
+    p.querySelector('#btn-cause-variation').addEventListener('click', () => ajouterFait('variation'));
     p.querySelector('#btn-suppr-fait').addEventListener('click', supprimerSelection);
 
     p.querySelector('#btn-ajout-action').addEventListener('click', () => {
@@ -611,7 +703,37 @@
   }
 
   // ---------- Tableau des actions ----------
+  function dessinerRacines() {
+    const zone = $('liste-racines');
+    const liste = racines();
+    const btn = $('btn-racines');
+    if (btn) btn.querySelector('b').textContent = liste.length;
+    if (!liste.length) {
+      canvas.classList.remove('focus-racines');
+      if (btn) { btn.classList.remove('actif'); btn.setAttribute('aria-pressed', 'false'); }
+      zone.innerHTML = '<p class="adc-vide">Aucune cause racine encadree : cliquer sur un fait puis sur « ☆ Racine ».</p>';
+      return;
+    }
+    zone.innerHTML = `<ol class="adc-racines">${liste.map(f => {
+      const actions = f.actions || [];
+      return `
+        <li data-aller="${f.id}" title="Afficher dans l'arbre">
+          <div class="adc-racine-texte">${esc(f.texte || '(fait sans description)')}
+            <small>${esc(colonnes()[colonneDe(f.x)][0])} · ${f.type === 'variation' ? 'variation' : 'fait habituel'}</small></div>
+          <div class="adc-racine-actions">${actions.length
+            ? actions.map(a => `<span>⚑ ${esc(a.description)}</span>`).join('')
+            : '<em>Aucune action : en proposer une</em>'}</div>
+        </li>`;
+    }).join('')}</ol>`;
+    zone.querySelectorAll('[data-aller]').forEach(li => li.addEventListener('click', () => {
+      selectionner({ type: 'fait', id: li.dataset.aller });
+      const n = $('faits').querySelector(`[data-id="${li.dataset.aller}"]`);
+      if (n) n.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+    }));
+  }
+
   function dessinerActions() {
+    dessinerRacines();
     const lignes = [];
     etat.faits.forEach(f => (f.actions || []).forEach(a => lignes.push({ f, a })));
     const zone = $('tableau-actions');
@@ -625,7 +747,7 @@
           <th style="width:12%">Echeance</th>${chantier ? '<th style="width:14%" class="no-print">Plan d\'action</th>' : ''}</tr></thead>
         <tbody>${lignes.map(({ f, a }) => `
           <tr>
-            <td>${esc(f.texte || '(fait sans description)')} <small>(${esc(colonnes()[colonneDe(f.x)][0])})</small></td>
+            <td>${f.racine && f.type !== 'dommage' ? '<span class="adc-mini-racine" title="Cause racine">★</span> ' : ''}${esc(f.texte || '(fait sans description)')} <small>(${esc(colonnes()[colonneDe(f.x)][0])})</small></td>
             <td>${esc(a.description)}</td>
             <td>${esc(a.responsable)}</td>
             <td>${esc(a.echeance)}</td>
@@ -880,6 +1002,15 @@
     });
   });
 
+  // Faire apparaitre les causes racines : le reste de l'arbre passe au second plan.
+  $('btn-racines').addEventListener('click', () => {
+    if (!racines().length) return toast('Aucune cause racine : cliquer sur un fait puis sur « ☆ Racine »', 'error');
+    const actif = !canvas.classList.contains('focus-racines');
+    canvas.classList.toggle('focus-racines', actif);
+    $('btn-racines').classList.toggle('actif', actif);
+    $('btn-racines').setAttribute('aria-pressed', String(actif));
+  });
+
   // Clic dans le vide : deselection ; double-clic : nouveau fait a cet endroit.
   canvas.addEventListener('pointerdown', e => {
     if (e.target.closest('.adc-fait')) return;
@@ -913,6 +1044,8 @@
       supprimerSelection();
     } else if (e.key === 'Escape' && selection) {
       selectionner(null);
+    } else if (e.key.toLowerCase() === 'r' && !saisie && !e.ctrlKey && !e.metaKey && selection && selection.type === 'fait') {
+      basculerRacine(fait(selection.id));
     }
   });
 
