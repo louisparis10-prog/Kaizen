@@ -517,8 +517,8 @@
         <div><i class="trait"></i> Lien etabli</div>
         <div><i class="pointille"></i> Lien incertain</div>
       </div>
-      <p class="adc-aide">Des faits, pas d'interpretations : « il travaillait en baskets » plutot que
-      « il ne portait pas ses chaussures de securite ».</p>`;
+      <p class="adc-aide">Des faits, pas d'interpretation : noter seulement ce qui a ete constate,
+      sans jugement ni supposition.</p>`;
   }
 
   function panneauFait(p, f) {
