@@ -1,0 +1,219 @@
+{
+  "version": 1,
+  "nbPourquoi": 5,
+  "header": {
+    "animateur": "L. Paris",
+    "secteur": "Atelier presses",
+    "date": "06/11/2026",
+    "evenement": "Chute de plain-pied dans l'allée de la presse P3"
+  },
+  "faits": [
+    {
+      "id": "d",
+      "x": 1070,
+      "y": 367,
+      "type": "dommage",
+      "texte": "Entorse de la cheville gauche de l'opérateur",
+      "actions": [],
+      "images": []
+    },
+    {
+      "id": "f1",
+      "x": 860,
+      "y": 360,
+      "type": "variation",
+      "texte": "L'opérateur glisse sur une flaque d'huile",
+      "actions": [],
+      "images": []
+    },
+    {
+      "id": "f2",
+      "x": 650,
+      "y": 240,
+      "type": "variation",
+      "texte": "Une flaque d'huile est présente dans l'allée",
+      "actions": [
+        {
+          "id": "a0",
+          "description": "Absorber la flaque et baliser la zone",
+          "responsable": "Chef d'équipe",
+          "echeance": "2026-11-06"
+        }
+      ],
+      "images": []
+    },
+    {
+      "id": "f3",
+      "x": 650,
+      "y": 480,
+      "type": "etat",
+      "texte": "L'opérateur traverse l'allée à pied pour rejoindre le poste d'emballage",
+      "actions": [],
+      "images": []
+    },
+    {
+      "id": "f4",
+      "x": 440,
+      "y": 90,
+      "type": "variation",
+      "texte": "De l'huile goutte du flexible hydraulique de la presse",
+      "actions": [],
+      "images": []
+    },
+    {
+      "id": "f5",
+      "x": 440,
+      "y": 270,
+      "type": "variation",
+      "texte": "Le bac de rétention est posé contre le mur, à 3 m de la presse",
+      "actions": [],
+      "images": []
+    },
+    {
+      "id": "f6",
+      "x": 440,
+      "y": 420,
+      "type": "etat",
+      "texte": "L'allée piétonne longe la presse",
+      "actions": [],
+      "images": []
+    },
+    {
+      "id": "f7",
+      "x": 230,
+      "y": 90,
+      "type": "variation",
+      "texte": "Le flexible hydraulique est fissuré",
+      "actions": [],
+      "images": []
+    },
+    {
+      "id": "f8",
+      "x": 230,
+      "y": 270,
+      "type": "variation",
+      "texte": "Le bac a été déplacé lors de la maintenance du 3 novembre",
+      "actions": [],
+      "images": []
+    },
+    {
+      "id": "f11",
+      "x": 230,
+      "y": 420,
+      "type": "etat",
+      "texte": "La fiche de fin d'intervention ne comporte pas de ligne « bac de rétention »",
+      "actions": [
+        {
+          "id": "a3",
+          "description": "Ajouter « bac de rétention en place » à la fiche de fin d'intervention",
+          "responsable": "Maintenance",
+          "echeance": "2026-11-16"
+        }
+      ],
+      "images": [],
+      "racine": true
+    },
+    {
+      "id": "f9",
+      "x": 20,
+      "y": 90,
+      "type": "variation",
+      "texte": "Le flexible frotte contre le bâti à chaque cycle de la presse",
+      "actions": [
+        {
+          "id": "a1",
+          "description": "Fixer le flexible par un collier et le protéger par une gaine anti-frottement",
+          "responsable": "Maintenance",
+          "echeance": "2026-11-20"
+        }
+      ],
+      "images": [],
+      "racine": true
+    },
+    {
+      "id": "f10",
+      "x": 20,
+      "y": 270,
+      "type": "etat",
+      "texte": "Le bac doit être retiré pour accéder au vérin de la presse",
+      "actions": [
+        {
+          "id": "a2",
+          "description": "Monter le bac sur glissières pour accéder au vérin sans le déplacer",
+          "responsable": "Méthodes",
+          "echeance": "2026-12-15"
+        }
+      ],
+      "images": [],
+      "racine": true
+    }
+  ],
+  "liens": [
+    {
+      "id": "l1",
+      "de": "f1",
+      "vers": "d",
+      "pointille": false
+    },
+    {
+      "id": "l2",
+      "de": "f2",
+      "vers": "f1",
+      "pointille": false
+    },
+    {
+      "id": "l3",
+      "de": "f3",
+      "vers": "f1",
+      "pointille": false
+    },
+    {
+      "id": "l4",
+      "de": "f4",
+      "vers": "f2",
+      "pointille": false
+    },
+    {
+      "id": "l5",
+      "de": "f5",
+      "vers": "f2",
+      "pointille": false
+    },
+    {
+      "id": "l6",
+      "de": "f6",
+      "vers": "f2",
+      "pointille": false
+    },
+    {
+      "id": "l7",
+      "de": "f7",
+      "vers": "f4",
+      "pointille": false
+    },
+    {
+      "id": "l8",
+      "de": "f8",
+      "vers": "f5",
+      "pointille": false
+    },
+    {
+      "id": "l9",
+      "de": "f11",
+      "vers": "f5",
+      "pointille": false
+    },
+    {
+      "id": "l10",
+      "de": "f9",
+      "vers": "f7",
+      "pointille": false
+    },
+    {
+      "id": "l11",
+      "de": "f10",
+      "vers": "f8",
+      "pointille": false
+    }
+  ]
+}

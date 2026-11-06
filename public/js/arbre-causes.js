@@ -501,7 +501,7 @@
         <li><b>Relier</b> : glisser le rond orange d'un fait vers le fait qu'il a provoque. Plusieurs fleches vers un fait = il a fallu tout cela (ET).</li>
         <li><b>Encadrer les causes racines</b> (☆ Racine) et leur associer des actions.</li>
       </ol>
-      <button class="adc-exemple-btn" data-exemple>💡 Voir un exemple complet<small>Accident sur une bobineuse : 6 Pourquoi, 4 causes racines</small></button>
+      <button class="adc-exemple-btn" data-exemple>💡 Voir un exemple<small>Glissade sur une flaque d'huile : 5 Pourquoi, 3 causes racines</small></button>
       <h4>Legende INRS</h4>
       <div class="adc-legende">
         <div><i></i> Fait habituel (etat)</div>
@@ -955,12 +955,12 @@
   $('btn-dommage').addEventListener('click', () => ajouterFait('dommage'));
   $('btn-annuler').addEventListener('click', annuler);
 
-  // Exemple complet (accident sur une bobineuse) pour decouvrir la methode.
+  // Exemple simple et factuel (glissade sur une flaque d'huile) pour decouvrir la methode.
   async function chargerExemple() {
     const entame = etat.faits.length > 1 || etat.faits.some(f => f.texte);
     if (entame && !confirm("Remplacer l'arbre actuel par l'exemple ? (le bouton Annuler permet de revenir en arriere)")) return;
     try {
-      const res = await fetch('/exemples/arbre-des-causes-bobineuse.json');
+      const res = await fetch('/exemples/arbre-des-causes-glissade.json');
       if (!res.ok) throw new Error();
       const donnees = await res.json();
       memoriser();
