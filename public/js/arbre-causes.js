@@ -38,6 +38,12 @@
   let selection = null;     // { type: 'fait' | 'lien', id }
   let historique = [];
   let minuterieSauvegarde = null;
+  let modeExemple = false;   // true : l'exemple est affiche, rien n'est enregistre
+  let arbrePerso = null;     // arbre de l'utilisateur mis de cote pendant l'exemple
+  const FICHIER_EXEMPLE = '/exemples/arbre-des-causes-glissade.json';
+  // Evenements des exemples livres : un brouillon qui en est une copie n'est pas repris.
+  const EVENEMENTS_EXEMPLES = ["Chute de plain-pied dans l'allée de la presse P3",
+    "Main happée au rouleau presseur lors d'un dégagement de bourrage"];
 
   const $ = (id) => document.getElementById(id);
   const canvas = $('canvas');
@@ -481,7 +487,7 @@
     } else if (selection && selection.type === 'lien') {
       texte = 'Lien selectionne : rendez-le <b>pointille</b> s\'il est incertain, ou inversez son sens dans le panneau.';
     } else if (etat.faits.length <= 1) {
-      texte = '<b>Pour commencer :</b> decrivez la blessure (cadre rouge), puis cliquez dessus et remontez les causes avec <b>+ Pourquoi ?</b> — ou partez de <b>💡 Exemple</b>.';
+      texte = '<b>Pour commencer :</b> decrivez la blessure (cadre rouge), puis cliquez dessus et remontez les causes avec <b>+ Pourquoi ?</b> — ou regardez d\'abord <b>💡 l\'exemple</b>.';
     } else {
       texte = 'Cliquez sur un fait pour le modifier. <b>Double-clic</b> dans une colonne pour poser un fait a cet endroit.';
     }
@@ -501,7 +507,7 @@
         <li><b>Relier</b> : glisser le rond orange d'un fait vers le fait qu'il a provoque. Plusieurs fleches vers un fait = il a fallu tout cela (ET).</li>
         <li><b>Encadrer les causes racines</b> (☆ Racine) et leur associer des actions.</li>
       </ol>
-      <button class="adc-exemple-btn" data-exemple>💡 Voir un exemple<small>Glissade sur une flaque d'huile : 5 Pourquoi, 3 causes racines</small></button>
+      <button class="adc-exemple-btn" data-vue="exemple">💡 Voir un exemple<small>Glissade sur une flaque d'huile : 5 Pourquoi, 3 causes racines</small></button>
       <h4>Legende INRS</h4>
       <div class="adc-legende">
         <div><i></i> Fait habituel (etat)</div>
@@ -805,12 +811,15 @@
   }
 
   function planifierSauvegarde(delai) {
+    if (modeExemple) return afficherEtat('Exemple : rien n\'est enregistre');
     clearTimeout(minuterieSauvegarde);
     afficherEtat('Modifications en cours...');
     minuterieSauvegarde = setTimeout(sauvegarder, delai == null ? 1200 : delai);
   }
 
   async function sauvegarder() {
+    minuterieSauvegarde = null;
+    if (modeExemple) return;
     if (chantier) {
       try {
         const corps = JSON.stringify({ header: etat.header, fields: { arbre: etat } });
@@ -929,10 +938,14 @@
     } else {
       try {
         const brouillon = JSON.parse(localStorage.getItem(CLE_LOCALE) || 'null');
-        if (valide(brouillon)) { etat = normaliser(brouillon); afficherEtat('Brouillon repris'); }
+        // Ancien comportement : l'exemple pouvait remplacer le brouillon. On repart alors d'un arbre vierge.
+        const copieExemple = brouillon && brouillon.header && EVENEMENTS_EXEMPLES.includes(brouillon.header.evenement);
+        if (copieExemple) localStorage.removeItem(CLE_LOCALE);
+        else if (valide(brouillon)) { etat = normaliser(brouillon); afficherEtat('Brouillon repris'); }
       } catch (err) { /* brouillon absent ou illisible */ }
     }
     toutRedessiner();
+    if (params.get('exemple') !== null) basculerExemple(true);
   }
 
   // Change le nombre de Pourquoi. Les faits gardent leur niveau par rapport a la
@@ -964,30 +977,54 @@
   $('btn-dommage').addEventListener('click', () => ajouterFait('dommage'));
   $('btn-annuler').addEventListener('click', annuler);
 
-  // Exemple simple et factuel (glissade sur une flaque d'huile) pour decouvrir la methode.
-  async function chargerExemple() {
-    const entame = etat.faits.length > 1 || etat.faits.some(f => f.texte);
-    if (entame && !confirm("Remplacer l'arbre actuel par l'exemple ? (le bouton Annuler permet de revenir en arriere)")) return;
-    try {
-      const res = await fetch('/exemples/arbre-des-causes-glissade.json');
-      if (!res.ok) throw new Error();
-      const donnees = await res.json();
-      memoriser();
-      etat = normaliser(donnees);
-      selection = null;
-      toutRedessiner();
-      planifierSauvegarde();
-      toast("Exemple charge : cliquez sur « ★ Causes racines » pour les faire ressortir");
-    } catch (err) {
-      toast("Impossible de charger l'exemple", 'error');
+  // ---------- Exemple : vue a part, jamais enregistree ----------
+  // L'exemple s'affiche a la place de l'arbre de l'utilisateur sans l'ecraser :
+  // on garde son arbre de cote et on le remet en revenant sur « Mon arbre ».
+  let exempleCache = null;
+  async function basculerExemple(actif) {
+    if (actif === modeExemple) return;
+    if (actif) {
+      try {
+        if (!exempleCache) {
+          const res = await fetch(FICHIER_EXEMPLE);
+          if (!res.ok) throw new Error();
+          exempleCache = await res.json();
+        }
+      } catch (err) {
+        return toast("Impossible de charger l'exemple", 'error');
+      }
+      // Enregistre tout de suite ce qui etait en attente sur l'arbre de l'utilisateur.
+      if (minuterieSauvegarde) { clearTimeout(minuterieSauvegarde); minuterieSauvegarde = null; await sauvegarder(); }
+      arbrePerso = { etat, historique, statut: $('etat-sauvegarde').textContent };
+      etat = normaliser(JSON.parse(JSON.stringify(exempleCache)));
+      historique = [];
+      modeExemple = true;
+    } else {
+      etat = arbrePerso.etat;
+      historique = arbrePerso.historique;
+      modeExemple = false;
     }
+    selection = null;
+    canvas.classList.remove('focus-racines');
+    $('btn-racines').classList.remove('actif');
+    document.body.classList.toggle('mode-exemple', modeExemple);
+    $('vue-perso').classList.toggle('actif', !modeExemple);
+    $('vue-exemple').classList.toggle('actif', modeExemple);
+    $('vue-perso').setAttribute('aria-pressed', String(!modeExemple));
+    $('vue-exemple').setAttribute('aria-pressed', String(modeExemple));
+    toutRedessiner();
+    afficherEtat(modeExemple ? 'Exemple : rien n\'est enregistre' : (arbrePerso.statut || ''));
+    if (!modeExemple) arbrePerso = null;
   }
-  $('btn-exemple').addEventListener('click', chargerExemple);
-  $('panneau').addEventListener('click', e => {
-    if (e.target.closest('[data-exemple]')) chargerExemple();
+  $('vue-perso').addEventListener('click', () => basculerExemple(false));
+  $('vue-exemple').addEventListener('click', () => basculerExemple(true));
+  document.addEventListener('click', e => {
+    const b = e.target.closest('[data-vue]');
+    if (b) basculerExemple(b.dataset.vue === 'exemple');
   });
   $('btn-imprimer').addEventListener('click', () => { selectionner(null); setTimeout(() => window.print(), 50); });
   $('btn-enregistrer').addEventListener('click', () => {
+    if (modeExemple) return toast('Revenez sur « Mon arbre » pour enregistrer votre arbre', 'error');
     if (chantier) planifierSauvegarde(0);
     else choisirChantier();
   });
@@ -1014,6 +1051,7 @@
       try {
         const donnees = JSON.parse(await input.files[0].text());
         if (!valide(donnees)) throw new Error();
+        if (modeExemple) await basculerExemple(false);
         memoriser();
         etat = normaliser(donnees);
         selection = null;

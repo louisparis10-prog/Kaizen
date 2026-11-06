@@ -94,7 +94,8 @@
           ` : ''}
 
           <div class="modal-actions">
-            ${tool.page ? `<a class="btn orange" href="/${tool.page}">Creer un ${tool.name.replace(/ INRS$/, '').toLowerCase()}</a>` : ''}
+            ${tool.page ? `<a class="btn orange" href="/${tool.page}">Creer un ${tool.name.replace(/ INRS$/, '').toLowerCase()}</a>
+              <a class="btn secondary" href="/${tool.page}?exemple">Voir un exemple</a>` : ''}
             <button class="btn ${tool.page ? 'secondary' : 'orange'}" id="btn-use-in-chantier">Utiliser dans un chantier</button>            <button class="btn secondary" id="btn-print-memo">Imprimer le memo</button>
           </div>
         </div>

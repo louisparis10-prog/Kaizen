@@ -19,6 +19,10 @@
 <main class="adc-main">
   <div class="adc-retour no-print">
     <a href="/index.html" id="lien-retour">&larr; Retour aux outils</a>
+    <div class="adc-bascule" role="group" aria-label="Affichage">
+      <button id="vue-perso" class="actif" aria-pressed="true" title="Votre arbre, enregistre automatiquement">✏️ Mon arbre</button>
+      <button id="vue-exemple" aria-pressed="false" title="Un arbre complet pour voir la methode, sans toucher au votre">💡 Exemple</button>
+    </div>
     <span id="etat-sauvegarde" class="adc-etat"></span>
   </div>
 
@@ -37,7 +41,6 @@
       <label class="adc-case"><input type="checkbox" id="opt-aligner" checked> Aligner</label>
     </div>
     <div class="adc-groupe adc-groupe-fichier">
-      <button class="adc-outil adc-outil-exemple" id="btn-exemple" title="Charger un arbre des causes complet pour decouvrir la methode">💡 Exemple</button>
       <button class="adc-outil adc-outil-discret" id="btn-annuler" title="Annuler (Ctrl+Z)">↶ Annuler</button>
       <button class="adc-outil adc-outil-discret" id="btn-exporter" title="Telecharger l'arbre (fichier JSON)">⤓ Sauvegarder</button>
       <button class="adc-outil adc-outil-discret" id="btn-importer" title="Reprendre un arbre telecharge">⤒ Ouvrir</button>
@@ -47,6 +50,10 @@
     </div>
   </div>
   <div class="adc-astuce no-print" id="astuce"></div>
+  <div class="adc-alerte-exemple no-print">
+    <span>💡 <b>Vous regardez l'exemple.</b> Vous pouvez cliquer et essayer : rien n'est enregistre et votre arbre reste intact.</span>
+    <button class="btn small" data-vue="perso">✏️ Revenir a mon arbre</button>
+  </div>
 
   <div class="adc-zone">
     <!-- Trame au format des supports SWM : cadre, bandeau, entete et colonnes numerotees -->
