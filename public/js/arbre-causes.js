@@ -481,7 +481,7 @@
     } else if (selection && selection.type === 'lien') {
       texte = 'Lien selectionne : rendez-le <b>pointille</b> s\'il est incertain, ou inversez son sens dans le panneau.';
     } else if (etat.faits.length <= 1) {
-      texte = '<b>Pour commencer :</b> decrivez la blessure (cadre rouge), puis cliquez dessus et remontez les causes avec <b>+ Pourquoi ?</b>';
+      texte = '<b>Pour commencer :</b> decrivez la blessure (cadre rouge), puis cliquez dessus et remontez les causes avec <b>+ Pourquoi ?</b> — ou partez de <b>💡 Exemple</b>.';
     } else {
       texte = 'Cliquez sur un fait pour le modifier. <b>Double-clic</b> dans une colonne pour poser un fait a cet endroit.';
     }
@@ -501,6 +501,7 @@
         <li><b>Relier</b> : glisser le rond orange d'un fait vers le fait qu'il a provoque. Plusieurs fleches vers un fait = il a fallu tout cela (ET).</li>
         <li><b>Encadrer les causes racines</b> (☆ Racine) et leur associer des actions.</li>
       </ol>
+      <button class="adc-exemple-btn" data-exemple>💡 Voir un exemple complet<small>Accident sur une bobineuse : 6 Pourquoi, 4 causes racines</small></button>
       <h4>Legende INRS</h4>
       <div class="adc-legende">
         <div><i></i> Fait habituel (etat)</div>
@@ -953,6 +954,29 @@
   $('btn-variation').addEventListener('click', () => ajouterFait('variation'));
   $('btn-dommage').addEventListener('click', () => ajouterFait('dommage'));
   $('btn-annuler').addEventListener('click', annuler);
+
+  // Exemple complet (accident sur une bobineuse) pour decouvrir la methode.
+  async function chargerExemple() {
+    const entame = etat.faits.length > 1 || etat.faits.some(f => f.texte);
+    if (entame && !confirm("Remplacer l'arbre actuel par l'exemple ? (le bouton Annuler permet de revenir en arriere)")) return;
+    try {
+      const res = await fetch('/exemples/arbre-des-causes-bobineuse.json');
+      if (!res.ok) throw new Error();
+      const donnees = await res.json();
+      memoriser();
+      etat = normaliser(donnees);
+      selection = null;
+      toutRedessiner();
+      planifierSauvegarde();
+      toast("Exemple charge : cliquez sur « ★ Causes racines » pour les faire ressortir");
+    } catch (err) {
+      toast("Impossible de charger l'exemple", 'error');
+    }
+  }
+  $('btn-exemple').addEventListener('click', chargerExemple);
+  $('panneau').addEventListener('click', e => {
+    if (e.target.closest('[data-exemple]')) chargerExemple();
+  });
   $('btn-imprimer').addEventListener('click', () => { selectionner(null); setTimeout(() => window.print(), 50); });
   $('btn-enregistrer').addEventListener('click', () => {
     if (chantier) planifierSauvegarde(0);

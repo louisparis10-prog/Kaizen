@@ -258,3 +258,11 @@
 .adc-outils.bas { bottom: auto; top: calc(100% + 10px); }
 .adc-outils.bas::after { top: auto; bottom: 100%; border-top-color: transparent; border-bottom-color: var(--swm-texte); }
 .focus-racines .adc-fait.selection { opacity: 1; filter: none; }
+
+/* Exemple complet */
+.adc-outil-exemple { border-color: #9fd3c7; background: #eefaf6; color: #11624f; }
+.adc-outil-exemple:hover { background: #dcf4ec; border-color: #11624f; }
+.adc-exemple-btn { display: block; width: 100%; margin: 6px 0 4px; padding: 10px 12px; text-align: left; cursor: pointer;
+  border: 1px solid #9fd3c7; border-radius: 8px; background: #eefaf6; color: #11624f; font-family: inherit; font-size: 0.86rem; font-weight: 700; }
+.adc-exemple-btn:hover { background: #dcf4ec; }
+.adc-exemple-btn small { display: block; font-weight: 400; color: #3d7a6b; font-size: 0.75rem; margin-top: 2px; }
