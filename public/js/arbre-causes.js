@@ -115,7 +115,6 @@
     $('colonnes').style.gridTemplateColumns = `repeat(${nbCol}, ${COL}px)`;
     // A l'impression, l'arbre est reduit pour tenir dans la largeur d'une page A3.
     canvas.style.setProperty('--adc-zoom', Math.min(1, 1480 / (nbCol * COL)).toFixed(3));
-    $('titre-nb').textContent = etat.nbPourquoi;
     $('opt-nb').value = String(etat.nbPourquoi);
     const n = etat.nbPourquoi;
     $('colonnes').innerHTML = colonnes().map(([titre, sous], i) => {
