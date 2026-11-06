@@ -185,7 +185,7 @@ const TOOLS = [
   {
     id: 'arbre-des-causes',
     name: 'Arbre des causes INRS',
-    icon: '🩹',
+    icon: '<img src="/img/pansement.svg" alt="" style="height:1em;width:auto;vertical-align:-0.15em">',
     category: 'Diagnostic',
     phase: 'analyse',
     // Outil interactif : la carte ouvre directement l'editeur au lieu de la fiche.
