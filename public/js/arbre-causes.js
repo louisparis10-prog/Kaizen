@@ -1049,7 +1049,7 @@
     if (params.get('exemple') !== null) basculerExemple(true, params.get('exemple'));
   }
 
-  // Une analyse Flash qui demande d'approfondir arrive avec son arbre deja
+  // Une analyse simplifiée qui demande d'approfondir arrive avec son arbre deja
   // prepare (faits, liens, causes racines, actions) : on le reprend comme brouillon.
   function reprendreAnalyseFlash() {
     const CLE = 'kaizen-arbre-depuis-flash';
@@ -1058,16 +1058,16 @@
     history.replaceState(null, '', location.pathname);
     if (!valide(arbre)) return;
     const enCours = etat.faits.length > 1 || etat.faits.some(f => (f.texte || '').trim());
-    if (enCours && !confirm("Un arbre des causes est deja en cours sur ce navigateur.\n\nLe remplacer par l'analyse Flash ? (Annuler garde l'arbre en cours)")) return;
+    if (enCours && !confirm("Un arbre des causes est deja en cours sur ce navigateur.\n\nLe remplacer par l'analyse simplifiée ? (Annuler garde l'arbre en cours)")) return;
     try { localStorage.removeItem(CLE); } catch (err) { /* ignore */ }
     etat = normaliser(arbre);
     historique = [];
     planifierSauvegarde(0);
-    afficherEtat("Analyse Flash reprise : completez l'arbre en groupe");
+    afficherEtat("Analyse simplifiée reprise : completez l'arbre en groupe");
     // Les faits repris sont pres de la blessure, a droite : on y amene la vue.
     setTimeout(() => {
       $('scroll').scrollLeft = $('scroll').scrollWidth;
-      toast("Analyse Flash reprise : ajoutez les faits manquants et verifiez les liens");
+      toast("Analyse simplifiée reprise : ajoutez les faits manquants et verifiez les liens");
     }, 300);
   }
 

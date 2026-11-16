@@ -1,4 +1,4 @@
-// Analyse Flash d'accident benin : un parcours guide en 4 etapes et un bilan,
+// Analyse simplifiée d'accident benin : un parcours guide en 4 etapes et un bilan,
 // pour des personnes qui ne connaissent ni le Lean ni la securite.
 // Le vocabulaire des methodes (Ishikawa, 5 Pourquoi...) n'apparait jamais :
 // on pose des questions simples, on propose des exemples, et on s'arrete des
@@ -248,7 +248,7 @@
     const t = a.typologie;
     const alerte = t.suites === 'arret' ? `
       <div class="af-alerte forte">
-        <b>🛑 Avec un arrêt de travail, l'analyse Flash ne suffit pas.</b>
+        <b>🛑 Avec un arrêt de travail, l'analyse simplifiée ne suffit pas.</b>
         <p>Il faut faire un arbre des causes complet, en groupe. Vous pouvez aussi commencer ici : tout sera repris dans l'arbre des causes à la fin.</p>
         <a class="btn small" href="/arbre-causes.html">Aller à l'arbre des causes</a>
       </div>` : (t.suites === 'medecin' ? `
@@ -394,7 +394,7 @@
     const p = a.potentiel;
     const risque = TYPES_A_RISQUE.includes(a.typologie.type);
     const verdict = !p ? '' : (p === 'non' ? `
-      <div class="af-verdict ok"><span>✅</span><div><b>L'analyse Flash suffit.</b> Imprimez ou enregistrez la fiche, et suivez les actions.</div></div>` : `
+      <div class="af-verdict ok"><span>✅</span><div><b>L'analyse simplifiée suffit.</b> Imprimez ou enregistrez la fiche, et suivez les actions.</div></div>` : `
       <div class="af-verdict approfondir"><span>🌳</span><div><b>${p === 'oui' ? 'Il faut une analyse approfondie.' : 'Dans le doute, on approfondit.'}</b>
         Ouvrez l'arbre des causes : ce que vous avez saisi est repris, il reste à compléter en groupe.
         <button type="button" class="btn orange" id="btn-vers-arbre">Continuer dans l'arbre des causes →</button></div></div>`);
@@ -427,7 +427,7 @@
 
   function ficheHTML() {
     const t = a.typologie;
-    const verdict = a.potentiel === 'non' ? '✅ Analyse Flash suffisante'
+    const verdict = a.potentiel === 'non' ? '✅ Analyse simplifiée suffisante'
       : (a.potentiel === 'oui' ? '🌳 Analyse approfondie déclenchée (arbre des causes)' : '🌳 Doute sur la gravité : analyse approfondie déclenchée');
     return `
       <div class="af-fiche">
@@ -878,7 +878,7 @@
   $('btn-quitter-exemple').addEventListener('click', () => basculerExemple(false));
   $('btn-nouvelle').addEventListener('click', async () => {
     if (chantier) {
-      // Un chantier porte une seule analyse Flash : en commencer une autre l'efface.
+      // Un chantier porte une seule analyse simplifiée : en commencer une autre l'efface.
       if (!confirm('Effacer l\'analyse de ce chantier et en commencer une nouvelle ?')) return;
       a = nouvelle({ secteur: chantier.perimetre || '', animateur: chantier.pilote || '' });
       rendre();

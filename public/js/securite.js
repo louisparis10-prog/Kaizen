@@ -1,4 +1,4 @@
-// Page d'accueil du module Securite : historique des analyses Flash
+// Page d'accueil du module Securite : historique des analyses simplifiées
 // (brouillons, analyses terminees, analyses a approfondir).
 (function () {
   const TYPES = {
@@ -54,7 +54,7 @@
       .filter(x => !recherche || [x.titre, x.secteur, x.auteur, dateFr(x.date_accident)].some(v => String(v || '').toLowerCase().includes(recherche)));
     if (!analyses.length) {
       $('hist-liste').innerHTML = `<p class="sec-vide">Aucune analyse pour l'instant. Elles apparaîtront ici dès la première saisie,
-        brouillons compris. <a href="/analyse-flash.html">Commencer une analyse Flash →</a></p>`;
+        brouillons compris. <a href="/analyse-flash.html">Commencer une analyse simplifiée →</a></p>`;
       return;
     }
     if (!visibles.length) {

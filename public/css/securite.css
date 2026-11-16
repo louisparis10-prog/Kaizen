@@ -1,4 +1,4 @@
-/* Module Securite : page d'accueil et analyse Flash d'accident.
+/* Module Securite : page d'accueil et analyse simplifiée d'accident.
    Charte SWM (bleus du bandeau) + orange de l'application pour les actions. */
 :root {
   --swm-bandeau: #0b1487;
@@ -42,7 +42,7 @@
 .sec-exemples { margin-top: 18px; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; font-size: 0.9rem; color: var(--text-muted); }
 .sec-exemples a { color: var(--swm-cadre); font-weight: 600; }
 
-/* ---------- Analyse Flash ---------- */
+/* ---------- Analyse simplifiée ---------- */
 .af-main [hidden] { display: none !important; }
 .af-main { max-width: 900px; }
 .af-haut { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 12px; }

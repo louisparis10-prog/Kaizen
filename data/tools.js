@@ -219,7 +219,7 @@ const TOOLS = [
   },
   {
     id: 'analyse-flash',
-    name: "Analyse Flash d'accident",
+    name: "Analyse simplifiée d'accident",
     icon: '⚡',
     category: 'Securite',
     phase: 'analyse',
