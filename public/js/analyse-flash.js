@@ -132,6 +132,8 @@
   let modeExemple = false;
   let analysePerso = null;
   let minuterie = null;
+  // Numero de l'analyse dans l'historique (null tant qu'elle n'est pas enregistree).
+  let analyseId = params.get('id');
 
   const $ = (id) => document.getElementById(id);
 
@@ -262,8 +264,8 @@
       <h2 class="af-q"><span class="af-num">4</span>Quand et où ?</h2>
       <div class="af-infos">
         <label>Date de l'accident<input type="date" data-champ="infos.date" value="${esc(a.infos.date)}"></label>
-        <label>Lieu, secteur<input type="text" data-champ="infos.secteur" value="${esc(a.infos.secteur)}" placeholder="Ex. : atelier découpe, poste 4"></label>
-        <label>Personne concernée <small>(poste ou nom)</small><input type="text" data-champ="infos.personne" value="${esc(a.infos.personne)}" placeholder="Ex. : opérateur découpe"></label>
+        <label>Lieu, secteur<input type="text" data-champ="infos.secteur" value="${esc(a.infos.secteur)}" placeholder="Ex. : atelier, poste 4"></label>
+        <label>Personne concernée<input type="text" data-champ="infos.personne" value="${esc(a.infos.personne)}" placeholder="Poste ou nom"></label>
         <label>Analyse faite par<input type="text" data-champ="infos.animateur" value="${esc(a.infos.animateur)}" placeholder="Votre nom"></label>
       </div>`;
   }
@@ -417,6 +419,11 @@
         ${ficheHTML()}` : ''}`;
   }
 
+  // Le titre de la fiche (et du PDF) est l'accident lui-meme.
+  function titreAccident() {
+    return a.recit.evenement.trim() || a.recit.consequence.trim() || libelle(TYPES, a.typologie.type) || "Analyse d'accident";
+  }
+
   function ficheHTML() {
     const t = a.typologie;
     const verdict = a.potentiel === 'non' ? '✅ Analyse Flash suffisante'
@@ -425,8 +432,7 @@
       <div class="af-fiche">
         <div class="af-fiche-bandeau">
           <img src="/img/swm-blanc.png" alt="SWM International">
-          <div class="af-fiche-titre">Analyse Flash<small>Accident bénin</small></div>
-          <img src="/img/opex.png" alt="OPEX">
+          <div class="af-fiche-titre">${esc(titreAccident())}<small>${esc([libelle(TYPES, t.type), dateFr(a.infos.date)].filter(Boolean).join(' · '))}</small></div>
         </div>
         <div class="af-fiche-infos">
           <div><small>Date</small>${esc(dateFr(a.infos.date)) || '—'}</div>
@@ -497,7 +503,6 @@
     a.recit.consequence = a.typologie.zone === 'aucune' ? "Pas de blessure (presqu'accident)."
       : `${libelle(TYPES, a.typologie.type)}${zone ? ' (' + zone + ')' : ''} : ${suites}.`;
   }
-
   // Une action vide par point d'action, pour ne pas partir d'une page blanche.
   function preparerActions() {
     a.actions = a.actions.filter(x => facteur(x.facteur));
@@ -587,6 +592,11 @@
     } else if (b.id === 'btn-photo') {
       $('input-photo').click();
     } else if (b.id === 'btn-imprimer') {
+      // Le PDF prend le nom de la page : on y met la date et l'accident.
+      const avant = document.title;
+      const court = titreAccident().replace(/[\\/:*?"<>|.]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 70);
+      document.title = [dateFr(a.infos.date).split('/').join('-'), court].filter(Boolean).join(' - ');
+      window.addEventListener('afterprint', () => { document.title = avant; }, { once: true });
       window.print();
     } else if (b.id === 'btn-vers-arbre') {
       versArbre();
@@ -709,8 +719,20 @@
     clearTimeout(minuterie);
     minuterie = setTimeout(enregistrer, delai == null ? 900 : delai);
   }
-  async function enregistrer(enPartant) {
+  // Les ecritures passent l'une apres l'autre : la creation (POST) doit avoir
+  // rendu son numero avant que la suivante ne mette l'analyse a jour (PUT).
+  let fileEcritures = Promise.resolve();
+  function enregistrer(enPartant) {
     minuterie = null;
+    fileEcritures = fileEcritures.then(() => ecrire(enPartant), () => ecrire(enPartant));
+    return fileEcritures;
+  }
+  // Une analyse ou rien n'a encore ete saisi ne merite pas une ligne d'historique.
+  function estVide() {
+    return !a.typologie.type && !a.typologie.suites && !a.recit.evenement.trim() && !a.recit.activite.trim() && !a.facteurs.length;
+  }
+  const LIBELLES_STATUT = { brouillon: 'brouillon', terminee: 'analyse terminée', approfondie: 'à approfondir' };
+  async function ecrire(enPartant) {
     if (modeExemple) return;
     if (chantier) {
       try {
@@ -727,11 +749,31 @@
       }
       return;
     }
+    if (!analyseId && estVide()) return;
     try {
-      localStorage.setItem(CLE_LOCALE, JSON.stringify(a));
-      afficherEtat('Enregistré sur ce navigateur');
+      const corps = JSON.stringify({ type: 'flash', donnees: a });
+      const res = await fetch(analyseId ? `/api/securite/analyses/${encodeURIComponent(analyseId)}` : '/api/securite/analyses', {
+        method: analyseId ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: corps,
+        keepalive: !!enPartant && corps.length < 60000
+      });
+      if (!res.ok) throw new Error(res.status);
+      const ligne = await res.json();
+      if (!analyseId) {
+        // L'analyse a maintenant son numero : l'adresse de la page permet de la rouvrir.
+        analyseId = String(ligne.id);
+        history.replaceState(null, '', `/analyse-flash.html?id=${encodeURIComponent(analyseId)}`);
+      }
+      try { localStorage.removeItem(CLE_LOCALE); } catch (err) { /* ignore */ }
+      afficherEtat(`Enregistrée à ${new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} · ${LIBELLES_STATUT[ligne.statut] || ''}`);
     } catch (err) {
-      afficherEtat('Brouillon trop lourd (photos) : enregistrez-le dans un chantier', true);
+      // Serveur injoignable : on garde l'analyse sur ce navigateur, elle partira
+      // vers le serveur a la prochaine ouverture.
+      try {
+        localStorage.setItem(CLE_LOCALE, JSON.stringify(Object.assign({}, a, { idServeur: analyseId || null })));
+        afficherEtat('Serveur injoignable : analyse gardée sur ce navigateur', true);
+      } catch (e) {
+        afficherEtat("Échec de l'enregistrement", true);
+      }
     }
   }
   function enTete() {
@@ -833,11 +875,17 @@
   }
   $('btn-exemple').addEventListener('click', () => basculerExemple(true));
   $('btn-quitter-exemple').addEventListener('click', () => basculerExemple(false));
-  $('btn-nouvelle').addEventListener('click', () => {
-    if (!confirm('Effacer cette analyse et en commencer une nouvelle ?')) return;
-    a = nouvelle(chantier ? { secteur: chantier.perimetre || '', animateur: chantier.pilote || '' } : null);
-    rendre();
-    sauver(0);
+  $('btn-nouvelle').addEventListener('click', async () => {
+    if (chantier) {
+      // Un chantier porte une seule analyse Flash : en commencer une autre l'efface.
+      if (!confirm('Effacer l\'analyse de ce chantier et en commencer une nouvelle ?')) return;
+      a = nouvelle({ secteur: chantier.perimetre || '', animateur: chantier.pilote || '' });
+      rendre();
+      return sauver(0);
+    }
+    // Hors chantier, l'analyse en cours reste dans l'historique.
+    if (minuterie) { clearTimeout(minuterie); await enregistrer(); }
+    location.href = '/analyse-flash.html';
   });
 
   // ---------- Chargement ----------
@@ -859,10 +907,30 @@
         ? normaliser(enregistre.fields.analyse)
         : nouvelle({ secteur: chantier.perimetre || '', animateur: chantier.pilote || '' });
       afficherEtat(enregistre ? `Analyse du chantier « ${chantier.titre} »` : `Nouvelle analyse pour « ${chantier.titre} »`);
+    } else if (analyseId) {
+      try {
+        const res = await fetch(`/api/securite/analyses/${encodeURIComponent(analyseId)}`);
+        if (!res.ok) throw new Error(res.status);
+        const ligne = await res.json();
+        a = normaliser(ligne.donnees);
+        afficherEtat(`Modifiée le ${new Date(ligne.updated_at).toLocaleDateString('fr-FR')} · ${LIBELLES_STATUT[ligne.statut] || ''}`);
+      } catch (err) {
+        analyseId = null;
+        history.replaceState(null, '', '/analyse-flash.html');
+        toast('Analyse introuvable : une nouvelle analyse est ouverte', 'error');
+      }
     } else {
+      // Analyse restee sur ce navigateur (serveur injoignable, ou ancienne version
+      // de l'outil) : on la reprend et on l'envoie dans l'historique.
       try {
         const brouillon = JSON.parse(localStorage.getItem(CLE_LOCALE) || 'null');
-        if (brouillon) { a = normaliser(brouillon); afficherEtat('Analyse en cours reprise'); }
+        if (brouillon) {
+          analyseId = brouillon.idServeur ? String(brouillon.idServeur) : null;
+          if (analyseId) history.replaceState(null, '', `/analyse-flash.html?id=${encodeURIComponent(analyseId)}`);
+          a = normaliser(brouillon);
+          afficherEtat('Analyse non enregistrée reprise');
+          sauver(0);
+        }
       } catch (err) { /* brouillon absent ou illisible */ }
     }
     rendre();

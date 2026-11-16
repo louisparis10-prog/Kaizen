@@ -99,6 +99,24 @@ const SCHEMA = `
 
   CREATE UNIQUE INDEX IF NOT EXISTS supports_chantier_outil
     ON supports (chantier_id, outil_id);
+
+  -- Analyses du module Securite (analyse Flash pour l'instant), avec leur
+  -- historique et leurs brouillons. Les colonnes de resume servent a la liste ;
+  -- l'analyse complete est dans donnees (JSON).
+  CREATE TABLE IF NOT EXISTS analyses_securite (
+    id              SERIAL PRIMARY KEY,
+    type            TEXT NOT NULL,
+    statut          TEXT NOT NULL DEFAULT 'brouillon',
+    titre           TEXT,
+    type_accident   TEXT,
+    date_accident   TEXT,
+    secteur         TEXT,
+    auteur          TEXT,
+    nb_actions      INTEGER DEFAULT 0,
+    donnees         TEXT NOT NULL,
+    created_at      TIMESTAMPTZ DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ DEFAULT NOW()
+  );
 `;
 
 async function initDb() {
@@ -529,6 +547,95 @@ app.delete('/api/chantiers/:id/photos/:photoId', wrap(async (req, res) => {
   if (id === null || photoId === null) return res.status(404).json({ error: 'Non trouve' });
   await pool.query('DELETE FROM photos WHERE id = $1 AND chantier_id = $2', [photoId, id]);
   res.json(await getChantierFull(id));
+}));
+
+// ---------- Analyses du module Securite ----------
+const TYPES_ANALYSE = ['flash'];
+const COLONNES_RESUME = 'id, type, statut, titre, type_accident, date_accident, secteur, auteur, nb_actions, created_at, updated_at';
+
+// Le resume (titre, statut...) est deduit de l'analyse elle-meme : la liste
+// reste coherente avec ce qui a ete saisi, quoi qu'envoie le navigateur.
+function resumeAnalyse(type, d) {
+  const texte = (v, max) => String(v == null ? '' : v).trim().slice(0, max);
+  const recit = (d && d.recit) || {};
+  const infos = (d && d.infos) || {};
+  const potentiel = d && d.potentiel;
+  return {
+    statut: potentiel === 'non' ? 'terminee' : (potentiel === 'oui' || potentiel === 'doute' ? 'approfondie' : 'brouillon'),
+    titre: texte(recit.evenement || recit.consequence, 300),
+    type_accident: texte(d && d.typologie && d.typologie.type, 40),
+    date_accident: texte(infos.date, 20),
+    secteur: texte(infos.secteur, 200),
+    auteur: texte(infos.animateur, 200),
+    nb_actions: Array.isArray(d && d.actions) ? d.actions.filter(a => a && String(a.description || '').trim()).length : 0
+  };
+}
+
+function lireAnalyse(req, res) {
+  const donnees = req.body && req.body.donnees;
+  if (!donnees || typeof donnees !== 'object' || Array.isArray(donnees)) {
+    res.status(400).json({ error: 'donnees (objet) requises' });
+    return null;
+  }
+  const texte = JSON.stringify(donnees);
+  if (texte.length > 14 * 1024 * 1024) {
+    res.status(413).json({ error: 'Analyse trop volumineuse (photos) : 14 Mo maximum' });
+    return null;
+  }
+  return { donnees, texte };
+}
+
+app.get('/api/securite/analyses', wrap(async (req, res) => {
+  const type = TYPES_ANALYSE.includes(req.query.type) ? req.query.type : null;
+  const { rows } = type
+    ? await pool.query(`SELECT ${COLONNES_RESUME} FROM analyses_securite WHERE type = $1 ORDER BY updated_at DESC`, [type])
+    : await pool.query(`SELECT ${COLONNES_RESUME} FROM analyses_securite ORDER BY updated_at DESC`);
+  res.json(rows);
+}));
+
+app.get('/api/securite/analyses/:id', wrap(async (req, res) => {
+  const id = asId(req.params.id);
+  if (id === null) return res.status(404).json({ error: 'Analyse non trouvee' });
+  const { rows } = await pool.query(`SELECT ${COLONNES_RESUME}, donnees FROM analyses_securite WHERE id = $1`, [id]);
+  if (!rows.length) return res.status(404).json({ error: 'Analyse non trouvee' });
+  const ligne = rows[0];
+  res.json({ ...ligne, donnees: JSON.parse(ligne.donnees) });
+}));
+
+app.post('/api/securite/analyses', wrap(async (req, res) => {
+  const type = req.body && req.body.type;
+  if (!TYPES_ANALYSE.includes(type)) return res.status(400).json({ error: "Type d'analyse inconnu" });
+  const lu = lireAnalyse(req, res);
+  if (!lu) return;
+  const r = resumeAnalyse(type, lu.donnees);
+  const { rows } = await pool.query(`
+    INSERT INTO analyses_securite (type, statut, titre, type_accident, date_accident, secteur, auteur, nb_actions, donnees)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING ${COLONNES_RESUME}`,
+    [type, r.statut, r.titre, r.type_accident, r.date_accident, r.secteur, r.auteur, r.nb_actions, lu.texte]);
+  res.status(201).json(rows[0]);
+}));
+
+app.put('/api/securite/analyses/:id', wrap(async (req, res) => {
+  const id = asId(req.params.id);
+  if (id === null) return res.status(404).json({ error: 'Analyse non trouvee' });
+  const existe = await pool.query('SELECT type FROM analyses_securite WHERE id = $1', [id]);
+  if (!existe.rows.length) return res.status(404).json({ error: 'Analyse non trouvee' });
+  const lu = lireAnalyse(req, res);
+  if (!lu) return;
+  const r = resumeAnalyse(existe.rows[0].type, lu.donnees);
+  const { rows } = await pool.query(`
+    UPDATE analyses_securite SET statut = $1, titre = $2, type_accident = $3, date_accident = $4, secteur = $5,
+      auteur = $6, nb_actions = $7, donnees = $8, updated_at = NOW()
+    WHERE id = $9 RETURNING ${COLONNES_RESUME}`,
+    [r.statut, r.titre, r.type_accident, r.date_accident, r.secteur, r.auteur, r.nb_actions, lu.texte, id]);
+  res.json(rows[0]);
+}));
+
+app.delete('/api/securite/analyses/:id', wrap(async (req, res) => {
+  const id = asId(req.params.id);
+  if (id === null) return res.status(404).json({ error: 'Analyse non trouvee' });
+  await pool.query('DELETE FROM analyses_securite WHERE id = $1', [id]);
+  res.json({ success: true });
 }));
 
 // Demarre le serveur apres l'initialisation de la base.
