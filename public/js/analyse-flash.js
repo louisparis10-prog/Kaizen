@@ -421,7 +421,8 @@
 
   // Le titre de la fiche (et du PDF) est l'accident lui-meme.
   function titreAccident() {
-    return a.recit.evenement.trim() || a.recit.consequence.trim() || libelle(TYPES, a.typologie.type) || "Analyse d'accident";
+    const consequence = a.recit.consequence.trim() || a.recit.evenement.trim() || libelle(TYPES, a.typologie.type) || "Analyse d'accident";
+    return [consequence, a.infos.secteur.trim(), a.infos.personne.trim()].filter(Boolean).join(' - ');
   }
 
   function ficheHTML() {
@@ -594,7 +595,7 @@
     } else if (b.id === 'btn-imprimer') {
       // Le PDF prend le nom de la page : on y met la date et l'accident.
       const avant = document.title;
-      const court = titreAccident().replace(/[\\/:*?"<>|.]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 70);
+      const court = titreAccident().replace(/[\\/:*?"<>|.]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 110);
       document.title = [dateFr(a.infos.date).split('/').join('-'), court].filter(Boolean).join(' - ');
       window.addEventListener('afterprint', () => { document.title = avant; }, { once: true });
       window.print();
