@@ -1049,7 +1049,7 @@
     if (params.get('exemple') !== null) basculerExemple(true, params.get('exemple'));
   }
 
-  // Une analyse simplifiée qui demande d'approfondir arrive avec son arbre deja
+  // Une analyse (simplifiée ou approfondie) arrive avec son arbre deja
   // prepare (faits, liens, causes racines, actions) : on le reprend comme brouillon.
   function reprendreAnalyseFlash() {
     const CLE = 'kaizen-arbre-depuis-flash';
@@ -1058,7 +1058,9 @@
     history.replaceState(null, '', location.pathname);
     if (!valide(arbre)) return;
     const enCours = etat.faits.length > 1 || etat.faits.some(f => (f.texte || '').trim());
-    if (enCours && !confirm("Un arbre des causes est deja en cours sur ce navigateur.\n\nLe remplacer par l'analyse simplifiée ? (Annuler garde l'arbre en cours)")) return;
+    // Une nouvelle analyse demarre toujours sur un arbre vierge. Le brouillon precedent,
+    // s'il y en avait un, est mis de cote (cle « precedent ») au lieu d'etre perdu.
+    if (enCours) { try { localStorage.setItem('kaizen-arbre-causes-precedent', JSON.stringify(etat)); } catch (err) { /* ignore */ } }
     try { localStorage.removeItem(CLE); } catch (err) { /* ignore */ }
     etat = normaliser(arbre);
     historique = [];
