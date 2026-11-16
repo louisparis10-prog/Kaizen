@@ -288,3 +288,6 @@
 .af-infos { align-items: end; }
 .af-infos label { justify-content: flex-end; }
 .af-main input[type=text], .af-main input[type=date], .af-main select { height: 42px; }
+
+/* Bandeau du haut fige au defilement */
+.topbar { position: sticky; top: 0; z-index: 50; }
