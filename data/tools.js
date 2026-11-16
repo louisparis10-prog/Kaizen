@@ -188,6 +188,8 @@ const TOOLS = [
     icon: '<img src="/img/pansement.svg" alt="" style="height:1em;width:auto;vertical-align:-0.15em">',
     category: 'Diagnostic',
     phase: 'analyse',
+    // Range dans le module Securite plutot que dans la bibliotheque Lean.
+    module: 'securite',
     // Outil interactif : la carte ouvre directement l'editeur au lieu de la fiche.
     page: 'arbre-causes.html',
     summary: "Methode INRS d'analyse d'un accident ou d'un dommage : on part de la blessure et on remonte les faits qui l'ont rendue possible, en les reliant comme une chaine de Pourquoi (de 3 a 10, 6 par defaut).",
@@ -214,6 +216,37 @@ const TOOLS = [
       "Rechercher les causes, pas des responsables"
     ],
     keywords: ['arbre des causes', 'inrs', 'accident du travail', 'at', 'presqu\'accident', 'blessure', 'dommage', 'securite', 'analyse accident', 'variation', 'fait habituel', 'cause racine', '6 pourquoi']
+  },
+  {
+    id: 'analyse-flash',
+    name: "Analyse Flash d'accident",
+    icon: '⚡',
+    category: 'Securite',
+    phase: 'analyse',
+    module: 'securite',
+    page: 'analyse-flash.html',
+    libelles: { creer: "Faire l'analyse", ouvrir: "Ouvrir l'analyse" },
+    summary: "Analyse guidee d'un accident benin en une dizaine de minutes : ce qui s'est passe, ce qui a joue, ce qu'on change. Bascule vers l'arbre des causes si l'accident aurait pu etre grave.",
+    whenToUse: [
+      "Petit accident sans arret : coupure legere, glissade, choc, faux mouvement",
+      "Presqu'accident a comprendre rapidement avec la personne concernee",
+      "Manager ou chef d'equipe sans formation Lean ni securite"
+    ],
+    steps: [
+      "Dire quel type d'accident et quelles suites (quelques clics)",
+      "Raconter les faits, sans jugement",
+      "Choisir ce qui a joue et creuser jusqu'a ce sur quoi on peut agir",
+      "Decider 1 a 3 actions avec un responsable et une date",
+      "Se demander si cela aurait pu etre beaucoup plus grave : si oui, arbre des causes"
+    ],
+    benefits: "Une analyse courte mais utile pour chaque petit accident, faite sur le terrain, qui debouche sur des actions concretes plutot que sur un rappel des consignes.",
+    memo: [
+      "Des faits, pas de jugement",
+      "On cherche des causes, pas un responsable",
+      "Agir sur la situation de travail avant le rappel de consigne",
+      "Potentiel grave ou doute : arbre des causes"
+    ],
+    keywords: ['analyse flash', 'accident benin', 'at benin', "presqu'accident", 'securite', 'blessure', 'coupure', 'glissade', 'analyse simplifiee']
   },
   {
     id: 'pareto',

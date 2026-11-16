@@ -869,7 +869,7 @@
             <span class="outil-bloc-nom">${t.icon} ${esc(t.name)}</span>
             <span class="no-print">
               ${remplissable ? `<button type="button" class="btn secondary small btn-remplir">${support ? 'Revoir le support' : 'Remplir le support'}</button>` : ''}
-              ${t.page ? `<a class="btn ${support ? 'orange' : 'secondary'} small" href="/${esc(t.page)}?chantier=${c.id}">${support ? "Ouvrir l'arbre" : "Construire l'arbre"}</a>` : ''}
+              ${t.page ? `<a class="btn ${support ? 'orange' : 'secondary'} small" href="/${esc(t.page)}?chantier=${c.id}">${esc(support ? ((t.libelles && t.libelles.ouvrir) || "Ouvrir l'arbre") : ((t.libelles && t.libelles.creer) || "Construire l'arbre"))}</a>` : ''}
               ${t.template ? `<a class="btn secondary small" href="/${esc(t.template.file)}" download>Telecharger la trame</a>` : ''}
               <button type="button" class="btn secondary small btn-photo-outil">+ Photo</button>
             </span>

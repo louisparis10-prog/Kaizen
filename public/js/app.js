@@ -41,6 +41,8 @@
     const query = (document.getElementById('search').value || '').toLowerCase();
     grid.innerHTML = '';
     tools
+      // Les outils du module Securite ont leur propre page (securite.html).
+      .filter(t => t.module !== 'securite')
       .filter(t => activePhase === 'toutes' || t.phase === activePhase)
       .filter(t => !query || t.name.toLowerCase().includes(query) || t.summary.toLowerCase().includes(query) || t.keywords.some(k => k.includes(query)))
       .forEach(tool => {
