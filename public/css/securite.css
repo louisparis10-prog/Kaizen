@@ -116,11 +116,11 @@
 .af-photo-suppr { position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; border-radius: 50%; border: none; background: rgba(0,0,0,.6); color: #fff; cursor: pointer; font-size: 1rem; line-height: 1; }
 .af-photo-ajout { height: 110px; min-width: 150px; border: 2px dashed var(--swm-trait); border-radius: 8px; background: var(--swm-case-alt); color: var(--swm-cadre); font: inherit; font-weight: 700; cursor: pointer; }
 
-/* Le poisson : six familles autour d'une arete qui mene a l'accident */
+/* Le poisson : cinq familles autour d'une arete qui mene a l'accident */
 .af-poisson { display: grid; grid-template-columns: 1fr 190px; grid-template-rows: auto 26px auto; gap: 0 14px; margin: 6px 0 18px; }
 .af-poisson-haut, .af-poisson-bas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; grid-column: 1; }
 .af-poisson-haut { grid-row: 1; }
-.af-poisson-bas { grid-row: 3; }
+.af-poisson-bas { grid-row: 3; grid-template-columns: repeat(2, 1fr); padding: 0 12%; }
 .af-poisson-arete { grid-column: 1; grid-row: 2; position: relative; }
 .af-poisson-arete span { position: absolute; left: 0; right: -14px; top: 50%; height: 5px; margin-top: -2.5px; background: var(--swm-cadre); border-radius: 3px; }
 .af-poisson-arete span::after { content: ''; position: absolute; right: -2px; top: 50%; transform: translateY(-50%); border: 9px solid transparent; border-left: 13px solid var(--swm-cadre); border-right: 0; }
@@ -228,7 +228,7 @@
   .af-carte { padding: 16px; }
   .af-poisson { grid-template-columns: 1fr; grid-template-rows: auto; gap: 10px; }
   .af-poisson-tete { grid-column: 1; grid-row: 1; }
-  .af-poisson-haut, .af-poisson-bas { grid-row: auto; grid-template-columns: 1fr 1fr; }
+  .af-poisson-haut, .af-poisson-bas { grid-row: auto; grid-template-columns: 1fr 1fr; padding: 0; }
   .af-poisson-arete, .af-arete::after { display: none; }
   .af-action-ligne { grid-template-columns: 1fr 1fr; }
   .af-echelle { grid-template-columns: 1fr 1fr; }

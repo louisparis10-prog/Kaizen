@@ -41,10 +41,10 @@
   // Accidents dont le potentiel est souvent grave, meme quand l'issue est benigne.
   const TYPES_A_RISQUE = ['hauteur', 'coincement', 'engin'];
 
-  // Les six familles de ce qui a pu jouer, en mots de terrain.
+  // Les cinq familles de ce qui a pu jouer, en mots de terrain. La piece
+  // travaillee est rangee avec le materiel : le produit change peu d'un poste a l'autre.
   const RUBRIQUES = [
-    { id: 'materiel', ico: '🛠️', label: 'Machine, outil, matériel', q: "Qu'est-ce qui, dans la machine, l'outil ou le matériel, a joué ?" },
-    { id: 'produit', ico: '📦', label: 'Pièce ou produit', q: "Qu'est-ce qui, dans la pièce ou le produit manipulé, a joué ?" },
+    { id: 'materiel', ico: '🛠️', label: 'Machine, outil, matériel', q: "Qu'est-ce qui, dans la machine, l'outil, le matériel ou la pièce manipulée, a joué ?" },
     { id: 'lieu', ico: '🏭', label: 'Lieu de travail', q: "Qu'est-ce qui, dans le lieu (sol, passage, éclairage, rangement), a joué ?" },
     { id: 'facon', ico: '👷', label: 'Façon de faire', q: "Qu'est-ce qui, dans la façon de faire le travail, a joué ?" },
     { id: 'protection', ico: '🧤', label: 'Protections', q: "Qu'est-ce qui, dans les protections (gants, lunettes, carters…), a joué ?" },
@@ -53,8 +53,7 @@
   const rubrique = (id) => RUBRIQUES.find(r => r.id === id);
 
   const EXEMPLES_FAITS = {
-    materiel: ['Outil usé ou abîmé', 'Machine sans carter à cet endroit', "Outil pas adapté à la tâche"],
-    produit: ['Arête vive sur la pièce', 'Pièce lourde ou encombrante', 'Produit chaud ou corrosif'],
+    materiel: ['Outil usé ou abîmé', 'Machine sans carter à cet endroit', 'Arête vive sur la pièce', "Outil pas adapté à la tâche"],
     lieu: ['Sol mouillé ou gras', 'Objet qui traînait dans le passage', 'Éclairage faible à cet endroit', 'Poste encombré'],
     facon: ['Geste fait à la main faute de moyen adapté', 'Tâche inhabituelle, rarement faite', 'Posture penchée ou en torsion'],
     protection: ['Gants portés non résistants à la coupure', 'Lunettes non portées pour cette tâche', 'Protection de la machine retirée'],
@@ -62,27 +61,25 @@
   };
   // Exemples propres a certains types d'accident, proposes en premier.
   const EXEMPLES_PAR_TYPE = {
-    coupure: { produit: ['Tôle ou pièce à arête vive'], materiel: ['Cutter à lame fixe'], protection: ['Gants en coton portés'] },
+    coupure: { materiel: ['Cutter à lame fixe'], protection: ['Gants en coton portés'] },
     glissade: { lieu: ["Flaque d'huile ou d'eau au sol", "Câble ou palette dans l'allée", 'Marche peu visible'], materiel: ['Fuite sur une machine voisine'] },
     hauteur: { materiel: ['Escabeau instable ou abîmé', 'Pas de garde-corps à cet endroit'], facon: ['Montée sur un support non prévu (caisse, chaise)'] },
-    choc: { lieu: ['Passage étroit près d\'une partie saillante'], produit: ['Charge mal calée qui a bougé'] },
+    choc: { lieu: ['Passage étroit près d\'une partie saillante'], materiel: ['Charge mal calée qui a bougé'] },
     coincement: { materiel: ['Partie mobile accessible en marche'], facon: ['Intervention sans arrêter la machine'] },
-    effort: { produit: ['Charge lourde portée à la main'], facon: ['Charge soulevée dos courbé', 'Geste répété très souvent'], materiel: ["Pas d'aide à la manutention au poste"] },
+    effort: { materiel: ['Charge lourde portée à la main', "Pas d'aide à la manutention au poste"], facon: ['Charge soulevée dos courbé', 'Geste répété très souvent'] },
     projection: { protection: ['Lunettes non portées pour cette tâche'], materiel: ['Soufflette utilisée pour nettoyer'] },
-    brulure: { produit: ['Pièce encore chaude', 'Produit chimique transvasé'], materiel: ['Surface chaude non protégée'] },
+    brulure: { materiel: ['Pièce encore chaude', 'Surface chaude non protégée', 'Produit chimique transvasé'] },
     engin: { lieu: ['Piétons et chariots dans la même allée', 'Angle sans visibilité'], organisation: ['Pas de sens de circulation défini'] }
   };
   const EXEMPLES_RAISONS = {
-    materiel: ["Pas d'entretien prévu sur cet outil", 'Matériel adapté absent du poste', 'Défaut signalé mais pas réparé'],
-    produit: ['La pièce arrive ainsi de l\'étape précédente', 'Aucun moyen de préhension prévu', "Danger du produit pas affiché"],
+    materiel: ["Pas d'entretien prévu sur cet outil", 'Matériel adapté absent du poste', 'Défaut signalé mais pas réparé', 'Aucun moyen de préhension prévu'],
     lieu: ['Fuite connue mais pas réparée', "Pas d'emplacement prévu pour ranger", 'Nettoyage pas prévu à ce moment'],
     facon: ['Le mode opératoire ne prévoit pas ce cas', 'Moyen adapté trop loin ou indisponible', 'Habitude prise depuis longtemps'],
     protection: ['Protection adaptée absente du poste', 'Protection gênante pour travailler', 'Risque pas identifié pour cette tâche'],
     organisation: ['Retard de production à rattraper', 'Absence non remplacée', 'Accueil au poste pas encore fait']
   };
   const EXEMPLES_ACTIONS = {
-    materiel: ["Réparer ou remplacer l'outil", 'Installer une protection fixe (carter)', 'Mettre un outil adapté à disposition au poste'],
-    produit: ['Supprimer les arêtes vives à la source', 'Prévoir un moyen de préhension ou de manutention', 'Afficher le danger et la protection au poste'],
+    materiel: ["Réparer ou remplacer l'outil", 'Installer une protection fixe (carter)', 'Supprimer les arêtes vives à la source', 'Prévoir un moyen de préhension ou de manutention'],
     lieu: ['Réparer la fuite à la source', "Matérialiser et dégager l'allée", "Ajouter de l'éclairage"],
     facon: ["Revoir le mode opératoire avec l'équipe", 'Rapprocher le moyen adapté du poste', 'Supprimer la manipulation à la main'],
     protection: ['Fournir des gants anti-coupure adaptés', 'Mettre la protection adaptée à disposition au poste', 'Remettre la protection en place et la fixer'],
@@ -115,7 +112,7 @@
     },
     photos: [],
     facteurs: [
-      { id: 'f1', rubrique: 'produit', chaine: ['Le bord de la tôle est coupant (bavure de découpe)', "L'outil de découpe en amont laisse une bavure"], fin: true },
+      { id: 'f1', rubrique: 'materiel', chaine: ['Le bord de la tôle est coupant (bavure de découpe)', "L'outil de découpe en amont laisse une bavure"], fin: true },
       { id: 'f2', rubrique: 'facon', chaine: ['La tôle est positionnée à la main', "Aucun moyen de préhension n'est prévu au poste"], fin: true },
       { id: 'f3', rubrique: 'protection', chaine: ['Gants en coton portés, peu résistants à la coupure', 'Pas de gants anti-coupure au poste'], fin: true }
     ],
@@ -152,7 +149,11 @@
     if (!d || typeof d !== 'object') return n;
     ['typologie', 'infos', 'recit'].forEach(k => Object.assign(n[k], d[k] || {}));
     n.photos = Array.isArray(d.photos) ? d.photos.slice(0, MAX_PHOTOS) : [];
-    n.facteurs = (Array.isArray(d.facteurs) ? d.facteurs : []).filter(f => f && rubrique(f.rubrique))
+    // Les analyses commencees avec l'ancienne famille « Piece ou produit » passent dans le materiel.
+    const bruts = Array.isArray(d.facteurs) ? d.facteurs : [];
+    const avecMateriel = bruts.some(g => g && g.rubrique === 'materiel');
+    n.facteurs = bruts.map(f => (f && f.rubrique === 'produit' && !avecMateriel) ? Object.assign({}, f, { rubrique: 'materiel' }) : f)
+      .filter(f => f && rubrique(f.rubrique))
       .map(f => ({ id: f.id || uid(), rubrique: f.rubrique, chaine: Array.isArray(f.chaine) && f.chaine.length ? f.chaine.slice(0, MAX_NIVEAUX) : [''], fin: !!f.fin }));
     n.actions = (Array.isArray(d.actions) ? d.actions : []).map(x => Object.assign({ id: uid(), facteur: '', description: '', responsable: '', echeance: '', statut: 'a_faire' }, x));
     n.potentiel = ['oui', 'non', 'doute'].includes(d.potentiel) ? d.potentiel : '';
