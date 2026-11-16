@@ -106,6 +106,7 @@ const SCHEMA = `
   CREATE TABLE IF NOT EXISTS analyses_securite (
     id              SERIAL PRIMARY KEY,
     type            TEXT NOT NULL,
+    mode            TEXT NOT NULL DEFAULT 'simplifiee',
     statut          TEXT NOT NULL DEFAULT 'brouillon',
     titre           TEXT,
     type_accident   TEXT,
@@ -121,6 +122,7 @@ const SCHEMA = `
 
 async function initDb() {
   await pool.query(SCHEMA);
+  await pool.query("ALTER TABLE analyses_securite ADD COLUMN IF NOT EXISTS mode TEXT NOT NULL DEFAULT 'simplifiee'");
   console.log('  Base PostgreSQL prete.');
 }
 
@@ -551,17 +553,23 @@ app.delete('/api/chantiers/:id/photos/:photoId', wrap(async (req, res) => {
 
 // ---------- Analyses du module Securite ----------
 const TYPES_ANALYSE = ['flash'];
-const COLONNES_RESUME = 'id, type, statut, titre, type_accident, date_accident, secteur, auteur, nb_actions, created_at, updated_at';
+const COLONNES_RESUME = 'id, type, mode, statut, titre, type_accident, date_accident, secteur, auteur, nb_actions, created_at, updated_at';
 
 // Le resume (titre, statut...) est deduit de l'analyse elle-meme : la liste
 // reste coherente avec ce qui a ete saisi, quoi qu'envoie le navigateur.
-function resumeAnalyse(type, d) {
+function resumeAnalyse(type, d, mode) {
   const texte = (v, max) => String(v == null ? '' : v).trim().slice(0, max);
   const recit = (d && d.recit) || {};
   const infos = (d && d.infos) || {};
   const potentiel = d && d.potentiel;
   return {
-    statut: potentiel === 'non' ? 'terminee' : (potentiel === 'oui' || potentiel === 'doute' ? 'approfondie' : 'brouillon'),
+    // mode : « simplifiee » (parcours complet) ou « approfondie » (parcours direct vers l'arbre).
+    mode,
+    // Simplifiee : terminee, ou passee en approfondie si la gravite potentielle l'impose.
+    // Approfondie directe : brouillon jusqu'au passage a l'arbre des causes.
+    statut: mode === 'approfondie'
+      ? (potentiel === 'oui' ? 'approfondie' : 'brouillon')
+      : (potentiel === 'non' ? 'terminee' : (potentiel === 'oui' || potentiel === 'doute' ? 'approfondie' : 'brouillon')),
     titre: texte(recit.evenement || recit.consequence, 300),
     type_accident: texte(d && d.typologie && d.typologie.type, 40),
     date_accident: texte(infos.date, 20),
@@ -607,22 +615,23 @@ app.post('/api/securite/analyses', wrap(async (req, res) => {
   if (!TYPES_ANALYSE.includes(type)) return res.status(400).json({ error: "Type d'analyse inconnu" });
   const lu = lireAnalyse(req, res);
   if (!lu) return;
-  const r = resumeAnalyse(type, lu.donnees);
+  const mode = req.body.mode === 'approfondie' ? 'approfondie' : 'simplifiee';
+  const r = resumeAnalyse(type, lu.donnees, mode);
   const { rows } = await pool.query(`
-    INSERT INTO analyses_securite (type, statut, titre, type_accident, date_accident, secteur, auteur, nb_actions, donnees)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING ${COLONNES_RESUME}`,
-    [type, r.statut, r.titre, r.type_accident, r.date_accident, r.secteur, r.auteur, r.nb_actions, lu.texte]);
+    INSERT INTO analyses_securite (type, statut, titre, type_accident, date_accident, secteur, auteur, nb_actions, donnees, mode)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING ${COLONNES_RESUME}`,
+    [type, r.statut, r.titre, r.type_accident, r.date_accident, r.secteur, r.auteur, r.nb_actions, lu.texte, mode]);
   res.status(201).json(rows[0]);
 }));
 
 app.put('/api/securite/analyses/:id', wrap(async (req, res) => {
   const id = asId(req.params.id);
   if (id === null) return res.status(404).json({ error: 'Analyse non trouvee' });
-  const existe = await pool.query('SELECT type FROM analyses_securite WHERE id = $1', [id]);
+  const existe = await pool.query('SELECT type, mode FROM analyses_securite WHERE id = $1', [id]);
   if (!existe.rows.length) return res.status(404).json({ error: 'Analyse non trouvee' });
   const lu = lireAnalyse(req, res);
   if (!lu) return;
-  const r = resumeAnalyse(existe.rows[0].type, lu.donnees);
+  const r = resumeAnalyse(existe.rows[0].type, lu.donnees, existe.rows[0].mode);
   const { rows } = await pool.query(`
     UPDATE analyses_securite SET statut = $1, titre = $2, type_accident = $3, date_accident = $4, secteur = $5,
       auteur = $6, nb_actions = $7, donnees = $8, updated_at = NOW()

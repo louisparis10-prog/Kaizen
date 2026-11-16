@@ -784,7 +784,7 @@
     }
     if (!analyseId && estVide()) return;
     try {
-      const corps = JSON.stringify({ type: 'flash', donnees: a });
+      const corps = JSON.stringify({ type: 'flash', mode: approfondi ? 'approfondie' : 'simplifiee', donnees: a });
       const res = await fetch(analyseId ? `/api/securite/analyses/${encodeURIComponent(analyseId)}` : '/api/securite/analyses', {
         method: analyseId ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: corps,
         keepalive: !!enPartant && corps.length < 60000

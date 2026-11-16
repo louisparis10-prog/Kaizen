@@ -65,14 +65,15 @@
 
   <section class="sec-historique" id="historique">
     <div class="sec-historique-tete">
-      <h2>📂 Analyses simplifiées enregistrées</h2>
+      <h2>📂 Analyses enregistrées</h2>
       <input type="search" id="hist-recherche" placeholder="Rechercher (lieu, événement, personne…)">
     </div>
     <div class="sec-filtres" id="hist-filtres" role="group" aria-label="Filtrer les analyses">
       <button type="button" class="actif" data-filtre="toutes">Toutes <b></b></button>
       <button type="button" data-filtre="brouillon">✏️ Brouillons <b></b></button>
-      <button type="button" data-filtre="terminee">✅ Terminées <b></b></button>
-      <button type="button" data-filtre="approfondie"><img class="ico-pansement" src="/img/pansement.svg" alt=""> À approfondir <b></b></button>
+      <button type="button" data-filtre="simplifiee">✅ Simplifiées terminées <b></b></button>
+      <button type="button" data-filtre="passee"><img class="ico-pansement" src="/img/pansement.svg" alt=""> Simplifiées passées en approfondie <b></b></button>
+      <button type="button" data-filtre="approfondie"><img class="ico-pansement" src="/img/pansement.svg" alt=""> Approfondies <b></b></button>
     </div>
     <div id="hist-liste" class="sec-liste"><p class="sec-vide">Chargement…</p></div>
   </section>

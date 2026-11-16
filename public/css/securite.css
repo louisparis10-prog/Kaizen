@@ -262,8 +262,9 @@
 .sec-vide a { color: var(--swm-cadre); font-weight: 700; }
 .sec-ligne { display: flex; align-items: stretch; background: #fff; border: 1px solid var(--border); border-left: 5px solid var(--swm-trait); border-radius: 10px; overflow: hidden; }
 .sec-ligne.statut-brouillon { border-left-color: #c9a227; }
-.sec-ligne.statut-terminee { border-left-color: var(--af-vert); }
-.sec-ligne.statut-approfondie { border-left-color: var(--orange); }
+.sec-ligne.statut-simplifiee { border-left-color: var(--af-vert); }
+.sec-ligne.statut-passee { border-left-color: var(--orange); }
+.sec-ligne.statut-approfondie { border-left-color: var(--swm-cadre); }
 .sec-ligne:hover { box-shadow: var(--shadow); }
 .sec-ligne-lien { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 11px 14px; text-decoration: none; color: var(--text); }
 .sec-ligne-ico { font-size: 1.5rem; flex-shrink: 0; }
@@ -274,8 +275,9 @@
 .sec-ligne-infos { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex-shrink: 0; text-align: right; }
 .sec-badge { font-size: 0.78rem; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: var(--swm-case-alt); color: var(--swm-texte); white-space: nowrap; }
 .statut-brouillon .sec-badge { background: #fff6d6; color: #7a5b00; }
-.statut-terminee .sec-badge { background: #e8f6ee; color: #17663a; }
-.statut-approfondie .sec-badge { background: #fff0e3; color: #a14a10; }
+.statut-simplifiee .sec-badge { background: #e8f6ee; color: #17663a; }
+.statut-passee .sec-badge { background: #fff0e3; color: #a14a10; }
+.statut-approfondie .sec-badge { background: var(--swm-case); color: var(--swm-texte); }
 .sec-suppr { border: none; border-left: 1px solid var(--border); background: #fafbfd; padding: 0 14px; cursor: pointer; font-size: 1rem; opacity: .55; }
 .sec-suppr:hover { opacity: 1; background: #fdecec; }
 @media (max-width: 640px) {

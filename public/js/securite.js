@@ -5,11 +5,22 @@
     coupure: '✂️', glissade: '🦶', hauteur: '🪜', choc: '💥', coincement: '🖐️',
     effort: '🏋️', projection: '👁️', brulure: '🔥', engin: '🚜', autre: '❔'
   };
-  const STATUTS = {
+  // Quatre cas a distinguer dans l'historique :
+  //  - brouillon : analyse commencee, pas encore finie (simplifiee ou approfondie) ;
+  //  - simplifiee : analyse simplifiee terminee, pas de gravite potentielle ;
+  //  - passee : analyse simplifiee qui a demande une analyse approfondie ;
+  //  - approfondie : analyse approfondie lancee directement (arbre des causes).
+  const CATEGORIES = {
     brouillon: { label: 'Brouillon', ico: '✏️' },
-    terminee: { label: 'Terminée', ico: '✅' },
-    approfondie: { label: 'À approfondir', ico: '<img class="ico-pansement" src="/img/pansement.svg" alt="">' }
+    simplifiee: { label: 'Simplifiée terminée', ico: '✅' },
+    passee: { label: 'Simplifiée passée en approfondie', ico: '<img class="ico-pansement" src="/img/pansement.svg" alt="">' },
+    approfondie: { label: 'Approfondie', ico: '<img class="ico-pansement" src="/img/pansement.svg" alt="">' }
   };
+  function categorie(x) {
+    if (x.statut === 'brouillon') return 'brouillon';
+    if (x.mode === 'approfondie') return 'approfondie';
+    return x.statut === 'approfondie' ? 'passee' : 'simplifiee';
+  }
   const $ = (id) => document.getElementById(id);
   let analyses = [];
   let filtre = 'toutes';
@@ -45,12 +56,12 @@
   function rendre() {
     const recherche = $('hist-recherche').value.trim().toLowerCase();
     document.querySelectorAll('#hist-filtres button').forEach(b => {
-      const n = b.dataset.filtre === 'toutes' ? analyses.length : analyses.filter(x => x.statut === b.dataset.filtre).length;
+      const n = b.dataset.filtre === 'toutes' ? analyses.length : analyses.filter(x => categorie(x) === b.dataset.filtre).length;
       b.querySelector('b').textContent = n;
       b.classList.toggle('actif', b.dataset.filtre === filtre);
     });
     const visibles = analyses
-      .filter(x => filtre === 'toutes' || x.statut === filtre)
+      .filter(x => filtre === 'toutes' || categorie(x) === filtre)
       .filter(x => !recherche || [x.titre, x.secteur, x.auteur, dateFr(x.date_accident)].some(v => String(v || '').toLowerCase().includes(recherche)));
     if (!analyses.length) {
       $('hist-liste').innerHTML = `<p class="sec-vide">Aucune analyse pour l'instant. Elles apparaîtront ici dès la première saisie,
@@ -62,14 +73,16 @@
       return;
     }
     $('hist-liste').innerHTML = visibles.map(x => {
-      const s = STATUTS[x.statut] || STATUTS.brouillon;
+      const cat = categorie(x);
+      const s = CATEGORIES[cat];
+      const approfondie = x.mode === 'approfondie';
       return `
-        <article class="sec-ligne statut-${esc(x.statut)}">
-          <a class="sec-ligne-lien" href="/analyse-flash.html?id=${encodeURIComponent(x.id)}">
+        <article class="sec-ligne statut-${cat}">
+          <a class="sec-ligne-lien" href="/analyse-flash.html?id=${encodeURIComponent(x.id)}${approfondie ? '&mode=approfondie' : ''}">
             <span class="sec-ligne-ico">${TYPES[x.type_accident] || '⚡'}</span>
             <span class="sec-ligne-texte">
               <b>${esc(x.titre) || '<i>Analyse sans description</i>'}</b>
-              <small>${[dateFr(x.date_accident), x.secteur, x.auteur ? 'par ' + x.auteur : ''].filter(Boolean).map(esc).join(' · ')}</small>
+              <small>${[approfondie ? 'Analyse approfondie' : 'Analyse simplifiée', dateFr(x.date_accident), x.secteur, x.auteur ? 'par ' + x.auteur : ''].filter(Boolean).map(esc).join(' · ')}</small>
             </span>
             <span class="sec-ligne-infos">
               <span class="sec-badge">${s.ico} ${s.label}</span>
