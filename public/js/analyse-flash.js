@@ -404,7 +404,7 @@
     const risque = TYPES_A_RISQUE.includes(a.typologie.type);
     const verdict = !p ? '' : (p === 'non' ? `
       <div class="af-verdict ok"><span>✅</span><div><b>L'analyse simplifiée suffit.</b> Imprimez ou enregistrez la fiche, et suivez les actions.</div></div>` : `
-      <div class="af-verdict approfondir"><span>🌳</span><div><b>${p === 'oui' ? 'Il faut une analyse approfondie.' : 'Dans le doute, on approfondit.'}</b>
+      <div class="af-verdict approfondir"><span><img class="ico-pansement" src="/img/pansement.svg" alt=""></span><div><b>${p === 'oui' ? 'Il faut une analyse approfondie.' : 'Dans le doute, on approfondit.'}</b>
         Ouvrez l'arbre des causes : ce que vous avez saisi est repris, il reste à compléter en groupe.
         <button type="button" class="btn orange" id="btn-vers-arbre">Continuer dans l'arbre des causes →</button></div></div>`);
     return `
@@ -437,7 +437,7 @@
   function ficheHTML() {
     const t = a.typologie;
     const verdict = a.potentiel === 'non' ? '✅ Analyse simplifiée suffisante'
-      : (a.potentiel === 'oui' ? '🌳 Analyse approfondie déclenchée (arbre des causes)' : '🌳 Doute sur la gravité : analyse approfondie déclenchée');
+      : (a.potentiel === 'oui' ? 'Analyse approfondie déclenchée (arbre des causes)' : 'Doute sur la gravité : analyse approfondie déclenchée');
     return `
       <div class="af-fiche">
         <div class="af-fiche-bandeau">

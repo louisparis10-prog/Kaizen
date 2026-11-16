@@ -8,7 +8,7 @@
   const STATUTS = {
     brouillon: { label: 'Brouillon', ico: '✏️' },
     terminee: { label: 'Terminée', ico: '✅' },
-    approfondie: { label: 'À approfondir', ico: '🌳' }
+    approfondie: { label: 'À approfondir', ico: '<img class="ico-pansement" src="/img/pansement.svg" alt="">' }
   };
   const $ = (id) => document.getElementById(id);
   let analyses = [];
