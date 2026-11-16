@@ -124,6 +124,20 @@
     potentiel: 'non'
   };
 
+  // Exemple du mode « analyse approfondie » : le meme accident que l'arbre d'exemple « glissade »,
+  // pour que l'on voie ensuite l'arbre construit a partir de ces reponses.
+  const EXEMPLE_APPROFONDI = {
+    version: 1, etape: 1,
+    typologie: { type: 'glissade', zone: 'pied', suites: 'medecin' },
+    infos: { date: '2026-11-06', secteur: 'Atelier presses, allée de la presse P3', personne: 'Opérateur presse', animateur: 'L. Paris' },
+    recit: {
+      activite: "L'opérateur traversait l'allée à pied en portant un carton de flacons.",
+      evenement: "Il a glissé sur une flaque d'huile présente dans l'allée de la presse P3.",
+      consequence: "Entorse de la cheville gauche. Le carton est tombé : 6 flacons cassés."
+    },
+    photos: [], facteurs: [], actions: [], potentiel: 'oui'
+  };
+
   // ---------- Etat ----------
   const params = new URLSearchParams(location.search);
   const chantierId = params.get('chantier');
@@ -238,7 +252,7 @@
     let suite = '';
     if (approfondi && a.etape === 2) {
       suite = `<div class="af-suite">${raison ? `<span class="af-raison">${esc(raison)}</span>` : ''}
-        <button type="button" class="btn orange" id="btn-vers-arbre"${raison ? ' disabled' : ''}>Construire l'arbre des causes →</button></div>`;
+        <button type="button" class="btn orange" id="btn-vers-arbre"${raison ? ' disabled' : ''}>${modeExemple ? "Voir l'arbre de l'exemple →" : "Construire l'arbre des causes →"}</button></div>`;
     } else if (a.etape < 5) {
       suite = `<div class="af-suite">${raison ? `<span class="af-raison">${esc(raison)}</span>` : ''}
         <button type="button" class="btn orange" data-aller="suiv"${raison ? ' disabled' : ''}>${a.etape === 4 ? 'Voir le bilan →' : 'Continuer →'}</button></div>`;
@@ -673,6 +687,8 @@
   // Chaque famille devient une branche : le fait constate pres de la blessure,
   // ses explications plus a gauche, la derniere encadree comme cause racine.
   async function versArbre() {
+    // Dans l'exemple, on montre l'arbre d'exemple correspondant sans toucher a l'arbre de l'utilisateur.
+    if (modeExemple && approfondi) { location.href = '/arbre-causes.html?exemple=glissade'; return; }
     // La derniere reponse (« Oui ») doit etre gardee avant de quitter la page.
     if (approfondi) a.potentiel = 'oui';   // apparait « A approfondir » dans l'historique
     if (minuterie || approfondi) { clearTimeout(minuterie); await enregistrer(); }
@@ -876,7 +892,7 @@
     if (actif) {
       if (minuterie) { clearTimeout(minuterie); minuterie = null; enregistrer(); }
       analysePerso = a;
-      a = normaliser(JSON.parse(JSON.stringify(EXEMPLE)));
+      a = normaliser(JSON.parse(JSON.stringify(approfondi ? EXEMPLE_APPROFONDI : EXEMPLE)));
       afficherEtat("Exemple : rien n'est enregistré");
     } else {
       a = analysePerso;
@@ -953,7 +969,7 @@
     if (approfondi) {
       const h1 = document.querySelector('.af-titre h1');
       const p = document.querySelector('.af-titre p');
-      if (h1) h1.textContent = '\u{1F333} Analyse approfondie';
+      if (h1) h1.innerHTML = '<img class="ico-pansement" src="/img/pansement.svg" alt=""> Analyse approfondie';
       if (p) p.textContent = "Deux étapes pour poser les faits (l'accident, puis ce qui s'est passé), puis vous construisez l'arbre des causes en groupe.";
       document.title = 'Analyse approfondie - Kaizen Toolbox';
     }
