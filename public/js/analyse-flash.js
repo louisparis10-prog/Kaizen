@@ -127,6 +127,12 @@
   // ---------- Etat ----------
   const params = new URLSearchParams(location.search);
   const chantierId = params.get('chantier');
+  // Mode « analyse approfondie » : les memes questions guidees pour l'accident et le recit,
+  // puis on passe directement a l'arbre des causes, deja prerempli.
+  const approfondi = params.get('mode') === 'approfondie';
+  const urlAnalyse = (id) => '/analyse-flash.html' + (id ? `?id=${encodeURIComponent(id)}` : '') +
+    (approfondi ? (id ? '&' : '?') + 'mode=approfondie' : '');
+  const etapesAffichees = () => (approfondi ? ETAPES.slice(0, 2) : ETAPES);
   let chantier = null;
   let a = nouvelle();
   let modeExemple = false;
@@ -210,7 +216,7 @@
 
   // ---------- Rendu ----------
   function rendre(focus) {
-    $('etapes').innerHTML = ETAPES.map(e => {
+    $('etapes').innerHTML = etapesAffichees().map(e => {
       const cls = e.n === a.etape ? 'actif' : (e.n < a.etape && !manque(e.n) ? 'fait' : '');
       const ok = etapeAccessible(e.n);
       return `<li class="${cls}"><button type="button" data-aller="${e.n}"${ok ? '' : ' disabled'}><span>${e.n < a.etape && !manque(e.n) ? '✓' : e.n}</span>${esc(e.titre)}</button></li>`;
@@ -230,7 +236,10 @@
     const raison = manque(a.etape);
     const retour = a.etape > 1 ? '<button type="button" class="btn secondary" data-aller="prec">← Retour</button>' : '<span></span>';
     let suite = '';
-    if (a.etape < 5) {
+    if (approfondi && a.etape === 2) {
+      suite = `<div class="af-suite">${raison ? `<span class="af-raison">${esc(raison)}</span>` : ''}
+        <button type="button" class="btn orange" id="btn-vers-arbre"${raison ? ' disabled' : ''}>Construire l'arbre des causes →</button></div>`;
+    } else if (a.etape < 5) {
       suite = `<div class="af-suite">${raison ? `<span class="af-raison">${esc(raison)}</span>` : ''}
         <button type="button" class="btn orange" data-aller="suiv"${raison ? ' disabled' : ''}>${a.etape === 4 ? 'Voir le bilan →' : 'Continuer →'}</button></div>`;
     }
@@ -665,7 +674,8 @@
   // ses explications plus a gauche, la derniere encadree comme cause racine.
   async function versArbre() {
     // La derniere reponse (« Oui ») doit etre gardee avant de quitter la page.
-    if (minuterie) { clearTimeout(minuterie); await enregistrer(); }
+    if (approfondi) a.potentiel = 'oui';   // apparait « A approfondir » dans l'historique
+    if (minuterie || approfondi) { clearTimeout(minuterie); await enregistrer(); }
     const COL = 210, LARGEUR = 170, NB = 6;
     const xCol = (i) => i * COL + (COL - LARGEUR) / 2;
     const branches = a.facteurs.filter(f => f.chaine[0].trim());
@@ -677,6 +687,12 @@
       texte: a.recit.consequence.trim() || a.recit.evenement.trim() || libelle(TYPES, a.typologie.type)
     };
     faits.push(dommage);
+    // Sans branche (mode approfondi), l'evenement raconte devient le premier fait de l'arbre.
+    if (!branches.length && a.recit.evenement.trim()) {
+      const e = { id: uid(), x: xCol(NB - 1), y: yDommage, type: 'etat', texte: a.recit.evenement.trim(), actions: [], images: [] };
+      faits.push(e);
+      liens.push({ id: uid(), de: e.id, vers: dommage.id, pointille: false });
+    }
     branches.forEach((f, i) => {
       const y = 70 + i * 110;
       let aval = dommage;
@@ -762,7 +778,7 @@
       if (!analyseId) {
         // L'analyse a maintenant son numero : l'adresse de la page permet de la rouvrir.
         analyseId = String(ligne.id);
-        history.replaceState(null, '', `/analyse-flash.html?id=${encodeURIComponent(analyseId)}`);
+        history.replaceState(null, '', urlAnalyse(analyseId));
       }
       try { localStorage.removeItem(CLE_LOCALE); } catch (err) { /* ignore */ }
       afficherEtat(`Enregistrée à ${new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} · ${LIBELLES_STATUT[ligne.statut] || ''}`);
@@ -886,7 +902,7 @@
     }
     // Hors chantier, l'analyse en cours reste dans l'historique.
     if (minuterie) { clearTimeout(minuterie); await enregistrer(); }
-    location.href = '/analyse-flash.html';
+    location.href = urlAnalyse();
   });
 
   // ---------- Chargement ----------
@@ -917,7 +933,7 @@
         afficherEtat(`Modifiée le ${new Date(ligne.updated_at).toLocaleDateString('fr-FR')} · ${LIBELLES_STATUT[ligne.statut] || ''}`);
       } catch (err) {
         analyseId = null;
-        history.replaceState(null, '', '/analyse-flash.html');
+        history.replaceState(null, '', urlAnalyse());
         toast('Analyse introuvable : une nouvelle analyse est ouverte', 'error');
       }
     } else {
@@ -927,12 +943,19 @@
         const brouillon = JSON.parse(localStorage.getItem(CLE_LOCALE) || 'null');
         if (brouillon) {
           analyseId = brouillon.idServeur ? String(brouillon.idServeur) : null;
-          if (analyseId) history.replaceState(null, '', `/analyse-flash.html?id=${encodeURIComponent(analyseId)}`);
+          if (analyseId) history.replaceState(null, '', urlAnalyse(analyseId));
           a = normaliser(brouillon);
           afficherEtat('Analyse non enregistrée reprise');
           sauver(0);
         }
       } catch (err) { /* brouillon absent ou illisible */ }
+    }
+    if (approfondi) {
+      const h1 = document.querySelector('.af-titre h1');
+      const p = document.querySelector('.af-titre p');
+      if (h1) h1.textContent = '\u{1F333} Analyse approfondie';
+      if (p) p.textContent = "Deux étapes pour poser les faits (l'accident, puis ce qui s'est passé), puis vous construisez l'arbre des causes en groupe.";
+      document.title = 'Analyse approfondie - Kaizen Toolbox';
     }
     rendre();
     if (params.get('exemple') !== null) basculerExemple(true);
