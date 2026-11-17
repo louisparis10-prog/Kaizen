@@ -131,3 +131,31 @@
 
   charger();
 })();
+
+// Deux espaces : « Aide à la déclaration » (par défaut) et « Analyser un accident ».
+// L'adresse (#declaration, #analyse, #historique) permet d'y revenir directement.
+(function () {
+  const onglets = Array.from(document.querySelectorAll('.sec-onglets [data-espace]'));
+  if (!onglets.length) return;
+  function afficher(id, majAdresse) {
+    onglets.forEach(b => {
+      const actif = b.dataset.espace === id;
+      b.classList.toggle('actif', actif);
+      b.setAttribute('aria-selected', String(actif));
+      document.getElementById('espace-' + b.dataset.espace).hidden = !actif;
+    });
+    if (majAdresse) history.replaceState(null, '', '#' + id);
+  }
+  function depuisAdresse() {
+    const h = location.hash.slice(1);
+    if (h === 'analyse' || h === 'historique') {
+      afficher('analyse');
+      if (h === 'historique') document.getElementById('historique').scrollIntoView();
+    } else {
+      afficher('declaration');
+    }
+  }
+  onglets.forEach(b => b.addEventListener('click', () => afficher(b.dataset.espace, true)));
+  window.addEventListener('hashchange', depuisAdresse);
+  depuisAdresse();
+})();

@@ -26,6 +26,82 @@
     </div>
   </div>
 
+  <nav class="sec-onglets" role="tablist" aria-label="Espaces du module Sécurité">
+    <button type="button" role="tab" class="actif" data-espace="declaration" id="onglet-declaration" aria-controls="espace-declaration" aria-selected="true">
+      <span>📝</span><b>Aide à la déclaration</b><small>Classer l'événement avant de le déclarer</small>
+    </button>
+    <button type="button" role="tab" data-espace="analyse" id="onglet-analyse" aria-controls="espace-analyse" aria-selected="false">
+      <span>🔎</span><b>Analyser un accident</b><small>Comprendre les causes, décider des actions</small>
+    </button>
+  </nav>
+
+  <!-- ===== Espace 1 : aide à la déclaration ===== -->
+  <section class="sec-espace" id="espace-declaration" role="tabpanel" aria-labelledby="onglet-declaration">
+    <p class="sec-intro">Les déclarations se font dans <b>Kissflow</b>. Ces deux outils aident à qualifier l'événement avant de le déclarer : répondez aux questions, le classement se calcule tout seul.</p>
+    <div class="sec-decl">
+      <div class="sec-decl-outils">
+        <a class="sec-outil" href="/classement-evenement.html">
+          <span class="sec-outil-num">1</span>
+          <span class="sec-outil-corps">
+            <span class="sec-outil-titre">Classement de l'événement</span>
+            <span class="sec-outil-texte">Situation dangereuse, presqu'accident, accident bénin, avec ou sans arrêt… Huit questions au maximum.</span>
+            <span class="sec-outil-go">Ouvrir le formulaire →</span>
+          </span>
+        </a>
+        <a class="sec-outil" href="/classement-hipo.html">
+          <span class="sec-outil-num">2</span>
+          <span class="sec-outil-corps">
+            <span class="sec-outil-titre">Classement HIPO</span>
+            <span class="sec-outil-texte">Le scénario le plus grave était-il crédible ? Exposition réelle, barrières, ce qui a évité le pire.</span>
+            <span class="sec-outil-go">Ouvrir le formulaire →</span>
+          </span>
+        </a>
+        <p class="sec-note">Le classement de l'événement décrit la conséquence réellement constatée. La qualification HIPO se fait séparément : elle prévaut sur la conséquence réelle.</p>
+      </div>
+
+      <aside class="sec-niveaux" aria-labelledby="niveaux-titre">
+        <h2 id="niveaux-titre">Analyser au bon niveau</h2>
+        <p class="sec-niveaux-sous">Une organisation proportionnée à la gravité réelle et au potentiel de l'événement.</p>
+        <div class="sec-niveau sec-niveau-0">
+          <span class="sec-niveau-num">0</span>
+          <div><b>Traitement</b><span>Situations dangereuses (SD)</span></div>
+        </div>
+        <div class="sec-niveau-grille">
+          <article class="sec-niveau-carte">
+            <header><span>1</span>Analyse simplifiée</header>
+            <h3>Événements à faible potentiel</h3>
+            <ul>
+              <li>AT bénins, SD récurrentes, PAT ou ATM à faible potentiel</li>
+              <li>Méthode simplifiée</li>
+              <li class="qui">Manager pilote · Appui HSE / CSSCT</li>
+            </ul>
+          </article>
+          <article class="sec-niveau-carte">
+            <header><span>2</span>Analyse conjointe</header>
+            <h3>Accidents corporels</h3>
+            <ul>
+              <li>ATAA, ATSA et premiers soins</li>
+              <li>Méthode arbre des causes</li>
+              <li class="qui">Manager planifie · HSE anime · CSSCT participe</li>
+            </ul>
+          </article>
+          <article class="sec-niveau-carte">
+            <header><span>3</span>Analyse critique</header>
+            <h3>Tout événement HIPO</h3>
+            <ul>
+              <li>Corporel ou non</li>
+              <li>Méthode inspirée d'ICAM</li>
+              <li class="qui">HSE planifie · HSE pilote · CSSCT et experts participent</li>
+            </ul>
+          </article>
+        </div>
+        <p class="sec-niveaux-regle"><b>Règle clé :</b> le classement HIPO prévaut sur la conséquence réelle constatée.</p>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ===== Espace 2 : analyser un accident ===== -->
+  <div class="sec-espace" id="espace-analyse" role="tabpanel" aria-labelledby="onglet-analyse" hidden>
   <h2 class="sec-question">Que s'est-il passé ?</h2>
   <div class="sec-choix">
     <a class="sec-carte sec-carte-flash" href="/analyse-flash.html">
@@ -77,6 +153,7 @@
     </div>
     <div id="hist-liste" class="sec-liste"><p class="sec-vide">Chargement…</p></div>
   </section>
+  </div>
 </main>
 
 <div id="toast-root"></div>
