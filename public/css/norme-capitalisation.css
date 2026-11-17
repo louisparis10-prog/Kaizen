@@ -1,0 +1,99 @@
+/* Norme et capitalisation : fiche A3 paysage, a remplir a l'ecran puis afficher en salle. */
+.nc-page { --nc-bandeau: #0b1487; --nc-cadre: #2e3192; --nc-texte: #171d8f; --nc-case: #e2eaf8; --nc-case-alt: #ecf1fb; --nc-trait: #c0cae4; }
+.nc-main { max-width: min(1560px, 100%); margin: 0 auto; padding: 20px 24px 70px; }
+.nc-haut { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; margin-bottom: 12px; }
+.nc-haut a { color: var(--nc-cadre); font-weight: 600; text-decoration: none; margin-right: auto; }
+.nc-haut a:hover { text-decoration: underline; }
+.nc-etat { color: var(--text-muted); font-size: 0.85rem; }
+.nc-bandeau-exemple { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 14px; background: #fff4e5; border: 2px solid #f0a24a; border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; }
+.nc-titre h1 { margin: 0 0 4px; color: var(--nc-texte); font-size: 2rem; }
+.nc-titre p { margin: 0 0 18px; color: var(--text-muted); line-height: 1.5; max-width: 900px; font-size: 1.05rem; }
+
+.nc-fiche { background: #fff; border: 2px solid var(--nc-cadre); border-radius: 14px; overflow: hidden; box-shadow: var(--shadow); }
+.nc-fiche-entete { display: grid; grid-template-columns: auto 1fr minmax(200px, 1fr) 170px minmax(160px, 0.7fr); align-items: center; gap: 12px 18px; background: var(--nc-bandeau); color: #fff; padding: 12px 20px; }
+.nc-logo img { height: 34px; display: block; }
+.nc-fiche-entete h2 { margin: 0; font-size: 1.5rem; }
+.nc-champ { display: grid; gap: 3px; font-size: 0.78rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.nc-fiche-entete .nc-champ { color: #cfd6f7; }
+.nc-champ input { font: inherit; font-size: 1rem; font-weight: 600; text-transform: none; letter-spacing: 0; padding: 7px 10px; border: 1.5px solid var(--nc-trait); border-radius: 8px; background: #fff; color: var(--text); width: 100%; min-width: 0; }
+
+.nc-colonnes { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 20px; padding: 20px; align-items: start; }
+.nc-bloc { display: grid; gap: 14px; }
+.nc-bandeau { margin: 0; display: flex; align-items: center; gap: 10px; background: var(--nc-cadre); color: #fff; font-size: 1.25rem; padding: 10px 14px; border-radius: 10px; }
+.nc-bandeau span { background: #fff; color: var(--nc-cadre); border-radius: 50%; width: 30px; height: 30px; display: grid; place-items: center; font-size: 1rem; flex: 0 0 30px; }
+.nc-aide { margin: -4px 0 0; color: var(--text-muted); }
+
+.nc-cadre { border: 1.5px solid var(--nc-trait); border-radius: 10px; padding: 12px 14px; background: #fff; display: grid; gap: 8px; align-content: start; }
+.nc-cadre h4 { margin: 0; color: var(--nc-texte); font-size: 1.05rem; text-transform: uppercase; letter-spacing: .03em; }
+.nc-avant-apres { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.nc-avant-apres .nc-cadre:first-child h4 { color: #a31d1d; }
+.nc-avant-apres .nc-cadre:last-child h4 { color: #17663a; }
+
+textarea, .nc-page input[type=text], .nc-page input[type=date] { font: inherit; }
+.nc-cadre textarea, .nc-cap-corps textarea { width: 100%; resize: vertical; border: 1.5px solid var(--nc-trait); border-radius: 8px; padding: 8px 10px; background: var(--nc-case-alt); color: var(--text); line-height: 1.4; font-size: 1rem; }
+.nc-cadre textarea:focus, .nc-champ input:focus, .nc-params input:focus, .nc-cap-corps input:focus, .nc-cap-corps textarea:focus { outline: 2px solid var(--orange); outline-offset: 0; }
+
+.nc-photo { position: relative; min-height: 190px; border: 2px dashed var(--nc-trait); border-radius: 8px; background: var(--nc-case-alt); display: grid; place-items: center; overflow: hidden; }
+.nc-photo button.nc-photo-ajout { border: 0; background: transparent; color: var(--nc-cadre); font: inherit; font-weight: 700; cursor: pointer; width: 100%; height: 100%; min-height: 190px; }
+.nc-photo img { width: 100%; max-height: 300px; object-fit: contain; display: block; background: #fff; }
+.nc-photo .nc-photo-retirer { position: absolute; top: 6px; right: 6px; border: 0; border-radius: 50%; width: 28px; height: 28px; background: rgba(23, 29, 143, .85); color: #fff; cursor: pointer; font-size: 1rem; }
+
+.nc-params { width: 100%; border-collapse: collapse; }
+.nc-params th { text-align: left; font-size: 0.8rem; text-transform: uppercase; letter-spacing: .04em; color: var(--text-muted); padding: 0 6px 4px; }
+.nc-params td { padding: 3px; }
+.nc-params td.nc-sup { width: 30px; text-align: center; }
+.nc-params input { width: 100%; border: 1.5px solid var(--nc-trait); border-radius: 8px; padding: 7px 9px; font-size: 1rem; background: var(--nc-case-alt); }
+.nc-retirer { border: 0; background: transparent; color: var(--text-muted); cursor: pointer; font-size: 1.1rem; }
+.nc-retirer:hover { color: var(--red); }
+
+.nc-etapes { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; counter-reset: etape; }
+.nc-etapes li { display: grid; grid-template-columns: 34px 1fr auto; gap: 8px; align-items: start; }
+.nc-etapes .nc-num { width: 34px; height: 34px; border-radius: 50%; background: var(--nc-bandeau); color: #fff; display: grid; place-items: center; font-weight: 800; margin-top: 4px; }
+.nc-etapes textarea { min-height: 56px; }
+
+.nc-cap { border: 2px solid var(--nc-trait); border-radius: 12px; background: #fff; overflow: hidden; margin-bottom: 12px; }
+.nc-cap.coche { border-color: var(--nc-cadre); }
+.nc-cap-tete { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 14px; background: transparent; border: 0; font: inherit; cursor: pointer; text-align: left; color: var(--nc-texte); }
+.nc-cap.coche .nc-cap-tete { background: var(--nc-case); }
+.nc-case { flex: 0 0 28px; height: 28px; border: 2.5px solid var(--nc-cadre); border-radius: 6px; display: grid; place-items: center; font-weight: 800; color: #fff; background: #fff; }
+.nc-cap.coche .nc-case { background: var(--nc-bandeau); border-color: var(--nc-bandeau); }
+.nc-cap-titre { font-size: 1.2rem; font-weight: 800; }
+.nc-cap-sous { display: block; font-size: 0.9rem; font-weight: 400; color: var(--text-muted); }
+.nc-cap-corps { padding: 10px 14px 14px; display: grid; gap: 8px; border-top: 1px solid var(--nc-trait); }
+.nc-cap-ligne { display: grid; grid-template-columns: 1fr 150px; gap: 8px; }
+.nc-cap-corps input[type=text], .nc-cap-corps input[type=date] { width: 100%; border: 1.5px solid var(--nc-trait); border-radius: 8px; padding: 7px 9px; font-size: 1rem; background: var(--nc-case-alt); }
+.nc-valid { display: grid; grid-template-columns: 1fr 180px; gap: 10px; }
+.nc-signatures .nc-champ { color: var(--text-muted); }
+
+/* ---------- Ecran etroit ---------- */
+@media (max-width: 1100px) {
+  .nc-colonnes { grid-template-columns: 1fr; }
+  .nc-fiche-entete { grid-template-columns: 1fr 1fr; }
+  .nc-fiche-entete h2 { grid-column: 1 / -1; order: -1; }
+  .nc-logo { display: none; }
+}
+@media (max-width: 700px) {
+  .nc-main { padding: 14px 10px 50px; }
+  .nc-avant-apres, .nc-etapes { grid-template-columns: 1fr; }
+  .nc-cap-ligne { grid-template-columns: 1fr; }
+}
+
+/* ---------- Impression : A3 paysage, une seule feuille pour la salle ---------- */
+@page { size: A3 landscape; margin: 8mm; }
+@media print {
+  body.nc-page { background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .nc-main { padding: 0; max-width: none; }
+  .nc-fiche { border-radius: 0; box-shadow: none; }
+  .nc-colonnes { grid-template-columns: 1.55fr 1fr; padding: 10px; gap: 12px; }
+  .nc-bloc { gap: 8px; }
+  .nc-fiche-entete { grid-template-columns: auto 1fr 1fr 130px 1fr; padding: 8px 14px; }
+  .nc-photo { min-height: 150px; }
+  .nc-photo img { max-height: 220px; }
+  .nc-photo-ajout, .nc-photo-retirer, .nc-retirer, .nc-sup { display: none !important; }
+  .nc-cap.vide { display: none; }
+  .nc-cap, .nc-cadre { break-inside: avoid; }
+  textarea { background: #fff !important; border-color: #c0cae4 !important; resize: none; }
+  .nc-params input, .nc-cap-corps input, .nc-champ input { background: #fff !important; }
+  .nc-etapes li.vide { display: none; }
+  .nc-params tr.vide { display: none; }
+}

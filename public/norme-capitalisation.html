@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Norme et capitalisation - Kaizen Toolbox</title>
+<link rel="stylesheet" href="/css/styles.css">
+<link rel="stylesheet" href="/css/norme-capitalisation.css">
+</head>
+<body class="nc-page">
+<div class="topbar no-print">
+  <div class="brand"><span class="logo">改善</span> Kaizen Toolbox</div>
+  <nav>
+    <a href="/index.html" class="active">Outils</a>
+    <a href="/chantiers.html">Chantiers Kaizen</a>
+    <a href="/securite.html">Sécurité</a>
+  </nav>
+</div>
+
+<main class="nc-main">
+  <div class="nc-haut no-print">
+    <a href="/index.html" id="lien-retour">&larr; Retour aux outils</a>
+    <span id="etat-sauvegarde" class="nc-etat"></span>
+    <button class="btn secondary small" id="btn-exemple" title="Une fiche remplie, pour voir à quoi ça ressemble">💡 Voir un exemple</button>
+    <button class="btn secondary small" id="btn-nouvelle" title="Vider la fiche pour en commencer une autre">＋ Nouvelle fiche</button>
+    <button class="btn orange small" id="btn-imprimer" title="Imprimer ou enregistrer en PDF (format A3 paysage, pour la salle)">🖨️ Imprimer / PDF</button>
+  </div>
+
+  <div class="nc-bandeau-exemple no-print" id="bandeau-exemple" hidden>
+    <span>💡 <b>Ceci est un exemple.</b> Rien n'est enregistré : votre fiche reste intacte.</span>
+    <button class="btn small" id="btn-quitter-exemple">✏️ Revenir à ma fiche</button>
+  </div>
+
+  <header class="nc-titre no-print">
+    <h1>📐 Norme et capitalisation</h1>
+    <p>Fin de chantier : on fixe la nouvelle façon de travailler (la norme), puis on décide ce qu'on en retire pour les autres (la capitalisation). La fiche s'imprime en A3 pour l'afficher en salle.</p>
+  </header>
+
+  <section class="nc-fiche" id="fiche">
+    <header class="nc-fiche-entete">
+      <div class="nc-logo"><img src="/img/swm-blanc.png" alt="SWM"></div>
+      <h2>Standardisation et capitalisation</h2>
+      <label class="nc-champ">Chantier <input type="text" data-f="chantier" placeholder="Nom du chantier"></label>
+      <label class="nc-champ">Date <input type="date" data-f="date"></label>
+      <label class="nc-champ">Pilote <input type="text" data-f="pilote" placeholder="Nom"></label>
+    </header>
+
+    <div class="nc-colonnes">
+      <!-- ===== 1. La norme ===== -->
+      <div class="nc-bloc">
+        <h3 class="nc-bandeau"><span>1</span> La norme de travail</h3>
+
+        <div class="nc-avant-apres">
+          <div class="nc-cadre">
+            <h4>Avant</h4>
+            <div class="nc-photo" data-photo="avant"></div>
+            <textarea data-f="avant" rows="3" placeholder="Comment on faisait avant (constat, chiffres)"></textarea>
+          </div>
+          <div class="nc-cadre">
+            <h4>Après</h4>
+            <div class="nc-photo" data-photo="apres"></div>
+            <textarea data-f="apres" rows="3" placeholder="Ce qui a changé (résultat, chiffres)"></textarea>
+          </div>
+        </div>
+
+        <div class="nc-cadre">
+          <h4>Paramètres mis sous contrôle</h4>
+          <table class="nc-params">
+            <thead><tr><th>Paramètre</th><th>Valeur cible</th><th>Contrôle (qui, quand)</th></tr></thead>
+            <tbody id="params"></tbody>
+          </table>
+          <button type="button" class="btn secondary small no-print" id="btn-ajout-param">＋ Ajouter un paramètre</button>
+        </div>
+
+        <div class="nc-cadre">
+          <h4>Description de la nouvelle norme de travail</h4>
+          <ol class="nc-etapes" id="etapes"></ol>
+          <button type="button" class="btn secondary small no-print" id="btn-ajout-etape">＋ Ajouter une étape</button>
+        </div>
+      </div>
+
+      <!-- ===== 2. La capitalisation ===== -->
+      <div class="nc-bloc">
+        <h3 class="nc-bandeau"><span>2</span> Capitalisation</h3>
+        <p class="nc-aide no-print">Cochez ce qui s'applique, puis dites quoi, qui s'en charge et pour quand.</p>
+        <div id="capitalisation"></div>
+
+        <div class="nc-cadre nc-signatures">
+          <h4>Validation de la norme</h4>
+          <div class="nc-valid">
+            <label class="nc-champ">Validée par <input type="text" data-f="validePar" placeholder="Nom, fonction"></label>
+            <label class="nc-champ">Le <input type="date" data-f="valideLe"></label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div id="toast-root"></div>
+<input type="file" id="input-photo" accept="image/*" hidden>
+<script src="/js/norme-capitalisation.js"></script>
+</body>
+</html>

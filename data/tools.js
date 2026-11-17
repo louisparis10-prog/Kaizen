@@ -652,6 +652,39 @@ const TOOLS = [
     keywords: ['takt time', 'cadence', 'rythme de production', 'equilibrage de ligne', 'temps de cycle vs demande', 'dimensionnement effectif', 'cadence non alignee avec la demande', 'ligne trop lente', 'ligne trop rapide', 'combien d\'operateurs par poste']
   },
   {
+    id: 'norme-capitalisation',
+    name: 'Norme et capitalisation',
+    icon: '📐',
+    category: 'Pilotage',
+    phase: 'standardisation',
+    page: 'norme-capitalisation.html',
+    libelles: { creer: 'Faire la fiche', ouvrir: 'Ouvrir la fiche' },
+    summary: "Une seule fiche en fin de chantier : la nouvelle norme de travail (avant / apres, parametres sous controle, etapes) et ce qu'on en retire pour les autres (pratiques a diffuser, fiche audit, nouveau rituel, REX). S'imprime en A3 pour l'affichage en salle.",
+    whenToUse: [
+      "Un chantier Kaizen se termine et il faut fixer la nouvelle facon de travailler",
+      "Le gain doit tenir dans la duree : parametres a controler, audit, rituel",
+      "Il faut partager ce qui a marche avec les autres lignes ou sites"
+    ],
+    steps: [
+      "Renseigner le chantier, la date et le pilote",
+      "Montrer l'avant et l'apres, avec une photo et des chiffres",
+      "Lister les parametres mis sous controle : valeur cible, qui controle, quand",
+      "Decrire la nouvelle norme de travail en etapes courtes (9 prevues)",
+      "Cocher la capitalisation : pratiques a diffuser, fiche audit, nouveau rituel, REX",
+      "Faire valider la norme, puis imprimer en A3 et afficher en salle"
+    ],
+    benefits: "Un seul support pour fixer la norme et capitaliser : le gain tient, l'experience circule, la salle affiche l'essentiel.",
+    memo: [
+      "Avant / Apres : un constat chiffre et une photo",
+      "Peu de parametres, mais ceux qui font tenir la norme",
+      "Etapes courtes, une action par etape",
+      "Quatre sorties possibles : pratiques, audit, rituel, REX",
+      "Chaque sortie a un responsable et une date",
+      "Impression A3 paysage pour la salle"
+    ],
+    keywords: ['norme', 'standard', 'standardisation', 'capitalisation', 'rex', 'retour experience', 'rituel', 'fiche audit', 'pratiques a diffuser', 'norme de travail', 'avant apres', 'affichage salle']
+  },
+  {
     id: 'a3',
     name: 'Rapport A3',
     icon: '📄',
