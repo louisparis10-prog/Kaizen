@@ -212,14 +212,13 @@
 
   function rendre(defiler) {
     const p = module_.parcourir(reponses);
-    const html = p.v.map((id, i) => rendreQuestion(id, i === p.v.length - 1)).join('') + rendreResultat(p.code);
-    $('formulaire').innerHTML = html;
-    if (!p.code) {
-      const barre = '<div class="cl-barre"><button type="button" class="btn secondary" id="btn-recommencer"' + (p.v.length && Object.keys(reponses).length ? '' : ' hidden') + '>↺ Recommencer</button></div>';
-      $('formulaire').insertAdjacentHTML('beforeend', barre);
-    }
+    const questions = p.v.map((id, i) => rendreQuestion(id, i === p.v.length - 1)).join('');
+    const barre = p.code ? '' : '<div class="cl-barre"><button type="button" class="btn secondary" id="btn-recommencer"' + (Object.keys(reponses).length ? '' : ' hidden') + '>↺ Recommencer</button></div>';
+    $('formulaire').innerHTML = `<div class="cl-grille"><div class="cl-questions">${questions}</div><aside class="cl-aside">${rendreResultat(p.code)}${barre}</aside></div>`;
     if (defiler) {
-      const cible = p.code ? document.querySelector('.cl-resultat') : document.querySelector('.cl-question.en-cours');
+      // Côte à côte, le résultat reste visible ; sur petit écran il passe sous les questions.
+      const etroit = window.matchMedia('(max-width: 980px)').matches;
+      const cible = p.code ? (etroit ? document.querySelector('.cl-resultat') : null) : document.querySelector('.cl-question.en-cours');
       if (cible && cible.scrollIntoView) cible.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
     return p;

@@ -401,3 +401,73 @@
 @media print {
   .cl-page .topbar, .cl-haut, .cl-barre { display: none !important; }
 }
+
+/* ---------- Mise en page large : on exploite la largeur de l'écran ---------- */
+.sec-main { max-width: min(1560px, 100%); }
+.sec-entete h1 { font-size: 2.1rem; }
+.sec-entete p { font-size: 1.05rem; }
+.sec-onglets { gap: 16px; }
+.sec-onglets button { padding: 16px 22px; }
+.sec-onglets button b { font-size: 1.2rem; }
+.sec-onglets button small { font-size: 0.92rem; }
+.sec-onglets button span { font-size: 2.1rem; }
+.sec-intro { font-size: 1.05rem; margin-bottom: 20px; }
+.sec-decl { grid-template-columns: minmax(340px, 0.85fr) minmax(0, 1.6fr); gap: 28px; align-items: stretch; }
+.sec-decl-outils { display: flex; flex-direction: column; gap: 18px; }
+.sec-outil { flex: 1; align-items: flex-start; gap: 18px; padding: 28px; }
+.sec-outil-num { flex: 0 0 52px; height: 52px; font-size: 1.5rem; }
+.sec-outil-corps { gap: 10px; }
+.sec-outil-titre { font-size: 1.5rem; }
+.sec-outil-texte { font-size: 1.05rem; line-height: 1.5; }
+.sec-outil-go { font-size: 1.05rem; margin-top: 4px; }
+.sec-decl-outils .sec-note { margin: 0; font-size: 0.92rem; }
+.sec-niveaux { padding: 30px 32px; display: flex; flex-direction: column; gap: 0; }
+.sec-niveaux h2 { font-size: 2rem; }
+.sec-niveaux-sous { font-size: 1.05rem; margin: 6px 0 20px; }
+.sec-niveau-0 { margin-bottom: 20px; font-size: 1.1rem; }
+.sec-niveau-0 .sec-niveau-num { padding: 14px 20px; font-size: 1.2rem; }
+.sec-niveau-0 div { padding: 14px 20px; }
+.sec-niveau-grille { gap: 18px; flex: 1; }
+.sec-niveau-carte header { font-size: 0.98rem; padding: 14px 14px; gap: 10px; }
+.sec-niveau-carte header span { width: 28px; height: 28px; flex-basis: 28px; font-size: 0.95rem; }
+.sec-niveau-carte h3 { font-size: 1.25rem; margin: 20px 14px 12px; }
+.sec-niveau-carte ul { font-size: 1rem; gap: 14px; padding: 0 18px 20px 34px; }
+.sec-niveaux-regle { margin-top: 20px; font-size: 1.1rem; padding: 14px 16px; }
+
+/* Formulaires : questions à gauche, résultat toujours visible à droite */
+.cl-main { max-width: min(1400px, 100%); padding: 24px 24px 70px; }
+.cl-titre h1 { font-size: 2rem; }
+.cl-titre p { font-size: 1.05rem; max-width: 900px; }
+.cl-grille { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(340px, 1fr); gap: 28px; align-items: start; }
+.cl-aside { position: sticky; top: 16px; display: grid; gap: 14px; }
+.cl-aside .cl-resultat { margin: 0; }
+.cl-aside .cl-suite { margin: 0; }
+.cl-aside .cl-barre { margin: 0; }
+.cl-question { padding: 20px 22px; gap: 18px; }
+.cl-num { flex-basis: 42px; height: 42px; font-size: 1.15rem; }
+.cl-corps h2 { font-size: 1.2rem; }
+.cl-aide { font-size: 0.98rem; }
+.cl-option { padding: 12px 26px; font-size: 1.05rem; min-width: 130px; }
+.cl-resultat { padding: 22px 24px; }
+.cl-resultat b { font-size: 1.7rem; }
+.cl-resultat p { font-size: 1.02rem; }
+.cl-suite { padding: 18px 22px; }
+.cl-suite p { font-size: 1.02rem; }
+
+@media (max-width: 1100px) {
+  .sec-decl { grid-template-columns: 1fr; }
+  .sec-outil { flex: none; }
+}
+@media (max-width: 980px) {
+  .cl-grille { grid-template-columns: 1fr; }
+  .cl-aside { position: static; }
+}
+@media (max-width: 640px) {
+  .sec-niveaux { padding: 18px; }
+  .sec-niveaux h2 { font-size: 1.5rem; }
+  .sec-outil { padding: 18px; }
+  .sec-outil-titre { font-size: 1.2rem; }
+  .cl-main { padding: 16px 12px 50px; }
+  .cl-question { padding: 14px; gap: 12px; }
+  .cl-num { flex-basis: 34px; height: 34px; }
+}
