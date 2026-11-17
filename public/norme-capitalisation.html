@@ -22,6 +22,7 @@
     <a href="/index.html" id="lien-retour">&larr; Retour aux outils</a>
     <span id="etat-sauvegarde" class="nc-etat"></span>
     <a class="btn secondary small" href="/templates/norme-capitalisation-swm.pptx" download title="Trame PowerPoint vierge aux couleurs SWM">📎 Trame vierge (PowerPoint)</a>
+    <button class="btn secondary small" id="btn-chantier" title="Rattacher cette fiche à un chantier Kaizen">📁 Enregistrer dans un chantier</button>
     <button class="btn secondary small" id="btn-exemple" title="Une fiche remplie, pour voir à quoi ça ressemble">💡 Voir un exemple</button>
     <button class="btn secondary small" id="btn-nouvelle" title="Vider la fiche pour en commencer une autre">＋ Nouvelle fiche</button>
     <button class="btn orange small" id="btn-imprimer" title="Imprimer ou enregistrer en PDF (A3 paysage, pour la salle)">🖨️ Imprimer / PDF</button>
@@ -109,6 +110,7 @@
   </section>
 </main>
 
+<div id="modal-root"></div>
 <div id="toast-root"></div>
 <input type="file" id="input-photo" accept="image/*" hidden>
 <script src="/js/norme-capitalisation.js"></script>

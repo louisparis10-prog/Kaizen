@@ -40,6 +40,9 @@
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const params = new URLSearchParams(location.search);
   const modeExemple = params.has('exemple');
+  const OUTIL_ID = 'norme-capitalisation';
+  const chantierId = params.get('chantier');
+  let chantier = null; // chantier auquel la fiche est rattachee, s'il y en a un
 
   const ligneGain = () => ({ nom: '', avant: '', apres: '', gain: '' });
   const ligneParam = () => ({ nom: '', cible: '', controle: '' });
@@ -101,16 +104,28 @@
     CAPITALISATIONS.forEach(c => { fiche.cap = fiche.cap || {}; fiche.cap[c.id] = Object.assign({}, v.cap[c.id], fiche.cap[c.id]); });
     ['gains', 'params', 'etapes'].forEach(k => { if (!Array.isArray(fiche[k]) || !fiche[k].length) fiche[k] = v[k]; });
   }
+  const enTete = () => ({ chantier: fiche.chantier, pilote: fiche.pilote, date: fiche.date });
+  const heure = () => new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
   function enregistrer() {
     if (enExemple) return;
     $('etat-sauvegarde').textContent = 'Enregistrement…';
     clearTimeout(minuteur);
-    minuteur = setTimeout(() => {
+    minuteur = setTimeout(async () => {
       try {
-        localStorage.setItem(CLE, JSON.stringify(fiche));
-        $('etat-sauvegarde').textContent = '✓ Enregistré sur cet ordinateur';
+        if (chantier) {
+          // Rattachee a un chantier : la fiche est enregistree sur le serveur avec le chantier.
+          const res = await fetch('/api/chantiers/' + encodeURIComponent(chantier.id) + '/supports/' + OUTIL_ID, {
+            method: 'PUT', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ header: enTete(), fields: { fiche } })
+          });
+          if (!res.ok) throw new Error(res.status);
+          $('etat-sauvegarde').textContent = '✓ Enregistré dans « ' + chantier.titre + ' » à ' + heure();
+        } else {
+          localStorage.setItem(CLE, JSON.stringify(fiche));
+          $('etat-sauvegarde').textContent = '✓ Enregistré sur cet ordinateur';
+        }
       } catch (e) {
-        $('etat-sauvegarde').textContent = '⚠ Enregistrement impossible (photos trop lourdes ?)';
+        $('etat-sauvegarde').textContent = chantier ? "⚠ Échec de l'enregistrement dans le chantier" : '⚠ Enregistrement impossible (photos trop lourdes ?)';
       }
     }, 400);
   }
@@ -246,8 +261,9 @@
 
   $('btn-nouvelle').addEventListener('click', () => {
     if (enExemple) { quitterExemple(); return; }
-    if (JSON.stringify(fiche) !== JSON.stringify(vide()) && !confirm('Vider la fiche actuelle pour en commencer une nouvelle ? Cette fiche sera perdue.')) return;
-    fiche = vide(); toutRendre(); enregistrer(); toast('Nouvelle fiche prête.');
+    const msg = chantier ? 'Effacer la fiche de ce chantier et en commencer une nouvelle ?' : 'Vider la fiche actuelle pour en commencer une nouvelle ? Cette fiche sera perdue.';
+    if (JSON.stringify(fiche) !== JSON.stringify(vide()) && !confirm(msg)) return;
+    fiche = vide(); if (chantier) { fiche.chantier = chantier.titre || ''; fiche.pilote = chantier.pilote || ''; } toutRendre(); enregistrer(); toast('Nouvelle fiche prête.');
   });
 
   // ---------- Exemple ----------
@@ -261,14 +277,71 @@
   function quitterExemple() {
     enExemple = false;
     fiche = sauvegarde ? Object.assign(vide(), JSON.parse(sauvegarde)) : vide(); completer();
-    history.replaceState(null, '', location.pathname);
+    history.replaceState(null, '', chantierId ? '?chantier=' + encodeURIComponent(chantierId) : location.pathname);
     $('etat-sauvegarde').textContent = '';
     toutRendre();
   }
-  $('btn-exemple').addEventListener('click', () => { history.replaceState(null, '', '?exemple'); entrerExemple(); });
+  $('btn-exemple').addEventListener('click', () => { history.replaceState(null, '', chantierId ? '?chantier=' + encodeURIComponent(chantierId) + '&exemple' : '?exemple'); entrerExemple(); });
   $('btn-quitter-exemple').addEventListener('click', quitterExemple);
 
+  // ---------- Rattacher la fiche a un chantier ----------
+  async function choisirChantier() {
+    let liste;
+    try { liste = await (await fetch('/api/chantiers')).json(); } catch (e) { return toast('Liste des chantiers indisponible'); }
+    if (!Array.isArray(liste) || !liste.length) return toast("Aucun chantier : en créer un depuis l'onglet Chantiers Kaizen");
+    const fond = document.createElement('div');
+    fond.className = 'modal-backdrop';
+    fond.innerHTML = '<div class="modal"><button class="modal-close" type="button">&times;</button>' +
+      "<h2>Enregistrer dans un chantier</h2><p>La fiche sera rattachée au chantier choisi : vous la retrouverez dans sa liste d'outils.</p>" +
+      '<select id="choix-chantier" style="width:100%;padding:8px;font:inherit">' + liste.map(c => '<option value="' + esc(c.id) + '">' + esc(c.titre) + '</option>').join('') + '</select>' +
+      '<div class="modal-actions"><button class="btn orange" type="button" id="btn-valider-chantier">Enregistrer</button></div></div>';
+    $('modal-root').appendChild(fond);
+    const fermer = () => fond.remove();
+    fond.querySelector('.modal-close').addEventListener('click', fermer);
+    fond.addEventListener('click', (ev) => { if (ev.target === fond) fermer(); });
+    fond.querySelector('#btn-valider-chantier').addEventListener('click', async () => {
+      const c = liste.find(x => String(x.id) === fond.querySelector('#choix-chantier').value);
+      if (!c) return;
+      try {
+        const complet = await (await fetch('/api/chantiers/' + encodeURIComponent(c.id))).json();
+        if (complet.supports && complet.supports[OUTIL_ID] && !confirm('Ce chantier a déjà une fiche. La remplacer par celle-ci ?')) return;
+        const res = await fetch('/api/chantiers/' + encodeURIComponent(c.id) + '/supports/' + OUTIL_ID, {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ header: enTete(), fields: { fiche } })
+        });
+        if (!res.ok) throw new Error(res.status);
+        location.href = '/norme-capitalisation.html?chantier=' + encodeURIComponent(c.id);
+      } catch (e) { toast("Échec de l'enregistrement dans le chantier"); }
+    });
+  }
+  $('btn-chantier').addEventListener('click', choisirChantier);
+
   // ---------- Demarrage ----------
-  charger();
-  if (modeExemple) entrerExemple(); else toutRendre();
+  async function demarrer() {
+    if (chantierId) {
+      try {
+        const res = await fetch('/api/chantiers/' + encodeURIComponent(chantierId));
+        if (!res.ok) throw new Error(res.status);
+        chantier = await res.json();
+      } catch (e) { toast('Chantier introuvable : fiche locale ouverte'); }
+    }
+    if (chantier) {
+      $('lien-retour').href = '/chantiers.html';
+      $('lien-retour').textContent = '← Retour aux chantiers (' + chantier.titre + ')';
+      $('btn-chantier').hidden = true;
+      const enr = (chantier.supports || {})[OUTIL_ID];
+      if (enr && enr.fields && enr.fields.fiche) {
+        fiche = Object.assign(vide(), enr.fields.fiche);
+        $('etat-sauvegarde').textContent = 'Fiche du chantier « ' + chantier.titre + ' »';
+      } else {
+        fiche = vide(); fiche.chantier = chantier.titre || ''; fiche.pilote = chantier.pilote || '';
+        $('etat-sauvegarde').textContent = 'Nouvelle fiche pour « ' + chantier.titre + ' »';
+      }
+      completer();
+    } else {
+      charger();
+    }
+    if (modeExemple) entrerExemple(); else toutRendre();
+  }
+  demarrer();
 })();
