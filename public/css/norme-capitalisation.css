@@ -97,17 +97,3 @@ textarea, .nc-page input[type=text], .nc-page input[type=date] { font: inherit; 
   .nc-etapes li.vide { display: none; }
   .nc-params tr.vide { display: none; }
 }
-
-/* ---------- Fiche vierge : toutes les zones visibles, a remplir a la main ---------- */
-@media print {
-  .nc-vierge .nc-cap.vide, .nc-vierge .nc-etapes li.vide, .nc-vierge .nc-params tr.vide { display: revert; }
-  .nc-vierge .nc-etapes li.vide { display: grid; }
-  .nc-vierge .nc-cap.vide { display: block; }
-  .nc-vierge .nc-params tr.vide { display: table-row; }
-  .nc-vierge ::placeholder { color: transparent; }
-  .nc-vierge .nc-cap-corps textarea { min-height: 70px; }
-  .nc-vierge .nc-etapes textarea { min-height: 70px; }
-  .nc-vierge .nc-cadre textarea { min-height: 80px; }
-  .nc-vierge .nc-params input { height: 34px; }
-  .nc-vierge .nc-photo { min-height: 170px; border-style: solid; background: #fff; }
-}

@@ -17,7 +17,6 @@
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const params = new URLSearchParams(location.search);
   const modeExemple = params.has('exemple');
-  const modeVierge = params.has('vierge');
 
   function vide() {
     return {
@@ -67,7 +66,7 @@
     if (!Array.isArray(fiche.etapes)) fiche.etapes = v.etapes;
   }
   function enregistrer() {
-    if (enExemple || modeVierge) return;
+    if (enExemple) return;
     $('etat-sauvegarde').textContent = 'Enregistrement…';
     clearTimeout(minuteur);
     minuteur = setTimeout(() => {
@@ -138,7 +137,6 @@
     rendreChampsSimples(); rendrePhoto('avant'); rendrePhoto('apres');
     rendreParams(); rendreEtapes(); rendreCapitalisation();
     $('bandeau-exemple').hidden = !enExemple;
-    $('bandeau-vierge').hidden = !modeVierge;
   }
 
   // ---------- Saisie ----------
@@ -224,17 +222,7 @@
   $('btn-quitter-exemple').addEventListener('click', quitterExemple);
 
   // ---------- Demarrage ----------
-  $('btn-imprimer-vierge').addEventListener('click', () => window.print());
-  if (modeVierge) {
-    // Fiche vide a imprimer : toutes les zones restent visibles, rien n'est enregistre.
-    document.body.classList.add('nc-vierge');
-    fiche = vide(); fiche.date = '';
-    fiche.params = Array.from({ length: 6 }, () => ({ nom: '', cible: '', controle: '' }));
-    CAPITALISATIONS.forEach(c => { fiche.cap[c.id].coche = true; });
-    $('etat-sauvegarde').textContent = "Fiche vierge : rien n'est enregistré";
-    toutRendre();
-  } else {
-    charger();
-    if (modeExemple) entrerExemple(); else toutRendre();
-  }
+  charger();
+  if (modeExemple) entrerExemple(); else toutRendre();
+
 })();
