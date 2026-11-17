@@ -21,6 +21,8 @@
   <div class="nc-haut no-print">
     <a href="/index.html" id="lien-retour">&larr; Retour aux outils</a>
     <span id="etat-sauvegarde" class="nc-etat"></span>
+    <a class="btn secondary small" href="/norme-capitalisation.html?vierge" target="_blank" rel="noopener" title="Une fiche vide, à imprimer en A3 et à remplir au feutre">📄 Fiche vierge à imprimer</a>
+    <a class="btn secondary small" href="/templates/norme-capitalisation-swm.pptx" download title="Trame PowerPoint vierge aux couleurs SWM, à remplir ou à projeter">📎 PowerPoint vierge</a>
     <button class="btn secondary small" id="btn-exemple" title="Une fiche remplie, pour voir à quoi ça ressemble">💡 Voir un exemple</button>
     <button class="btn secondary small" id="btn-nouvelle" title="Vider la fiche pour en commencer une autre">＋ Nouvelle fiche</button>
     <button class="btn orange small" id="btn-imprimer" title="Imprimer ou enregistrer en PDF (format A3 paysage, pour la salle)">🖨️ Imprimer / PDF</button>
@@ -29,6 +31,11 @@
   <div class="nc-bandeau-exemple no-print" id="bandeau-exemple" hidden>
     <span>💡 <b>Ceci est un exemple.</b> Rien n'est enregistré : votre fiche reste intacte.</span>
     <button class="btn small" id="btn-quitter-exemple">✏️ Revenir à ma fiche</button>
+  </div>
+
+  <div class="nc-bandeau-exemple no-print" id="bandeau-vierge" hidden>
+    <span>📄 <b>Fiche vierge.</b> Rien n'est enregistré : imprimez-la en A3 paysage et remplissez-la à la main, ou <a href="/templates/norme-capitalisation-swm.pptx" download>téléchargez la trame PowerPoint</a>.</span>
+    <button class="btn orange small" id="btn-imprimer-vierge">🖨️ Imprimer</button>
   </div>
 
   <header class="nc-titre no-print">

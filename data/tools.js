@@ -682,6 +682,18 @@ const TOOLS = [
       "Chaque sortie a un responsable et une date",
       "Impression A3 paysage pour la salle"
     ],
+    template: {
+      file: 'templates/norme-capitalisation-swm.pptx',
+      label: 'Trame Norme et capitalisation (support SWM)',
+      usage: [
+        "Imprimer la trame en A3 paysage, ou la projeter en salle",
+        "Remplir l'entete : chantier, date, pilote",
+        "Coller ou dessiner l'avant et l'apres, avec les chiffres cles",
+        "Noter les parametres mis sous controle : valeur cible, qui controle, quand",
+        "Decrire la nouvelle norme en 9 etapes courtes",
+        "Remplir les quatre cadres de capitalisation avec un responsable et une date, puis faire valider la norme"
+      ]
+    },
     keywords: ['norme', 'standard', 'standardisation', 'capitalisation', 'rex', 'retour experience', 'rituel', 'fiche audit', 'pratiques a diffuser', 'norme de travail', 'avant apres', 'affichage salle']
   },
   {
