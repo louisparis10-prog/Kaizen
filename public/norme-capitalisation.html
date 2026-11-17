@@ -21,10 +21,10 @@
   <div class="nc-haut no-print">
     <a href="/index.html" id="lien-retour">&larr; Retour aux outils</a>
     <span id="etat-sauvegarde" class="nc-etat"></span>
-    <a class="btn secondary small" href="/templates/norme-capitalisation-swm.pptx" download title="Trame PowerPoint vierge aux couleurs SWM, à remplir ou à projeter">📎 Trame vierge (PowerPoint)</a>
+    <a class="btn secondary small" href="/templates/norme-capitalisation-swm.pptx" download title="Trame PowerPoint vierge aux couleurs SWM">📎 Trame vierge (PowerPoint)</a>
     <button class="btn secondary small" id="btn-exemple" title="Une fiche remplie, pour voir à quoi ça ressemble">💡 Voir un exemple</button>
     <button class="btn secondary small" id="btn-nouvelle" title="Vider la fiche pour en commencer une autre">＋ Nouvelle fiche</button>
-    <button class="btn orange small" id="btn-imprimer" title="Imprimer ou enregistrer en PDF (format A3 paysage, pour la salle)">🖨️ Imprimer / PDF</button>
+    <button class="btn orange small" id="btn-imprimer" title="Imprimer ou enregistrer en PDF (A3 paysage, pour la salle)">🖨️ Imprimer / PDF</button>
   </div>
 
   <div class="nc-bandeau-exemple no-print" id="bandeau-exemple" hidden>
@@ -34,7 +34,7 @@
 
   <header class="nc-titre no-print">
     <h1>📐 Norme et capitalisation</h1>
-    <p>Fin de chantier : on fixe la nouvelle façon de travailler (la norme), puis on décide ce qu'on en retire pour les autres (la capitalisation). La fiche s'imprime en A3 pour l'afficher en salle.</p>
+    <p>Le chantier est terminé : il faut maintenant que le gain <b>tienne dans le temps</b> et que les autres en profitent. Cette fiche sert à deux choses : <b>fixer la nouvelle façon de travailler</b> (la norme), puis <b>partager ce qu'on a appris</b> (la capitalisation). Elle s'imprime en A3 pour l'afficher en salle.</p>
   </header>
 
   <section class="nc-fiche" id="fiche">
@@ -49,32 +49,42 @@
     <div class="nc-colonnes">
       <!-- ===== 1. La norme ===== -->
       <div class="nc-bloc">
-        <h3 class="nc-bandeau"><span>1</span> La norme de travail</h3>
+        <h3 class="nc-bandeau"><span>1</span> Fixer la norme <small>pour que le gain tienne</small></h3>
 
         <div class="nc-avant-apres">
           <div class="nc-cadre">
             <h4>Avant</h4>
             <div class="nc-photo" data-photo="avant"></div>
-            <textarea data-f="avant" rows="3" placeholder="Comment on faisait avant (constat, chiffres)"></textarea>
+            <textarea data-f="avant" rows="3" placeholder="Comment on travaillait avant (constat, chiffres)"></textarea>
           </div>
           <div class="nc-cadre">
             <h4>Après</h4>
             <div class="nc-photo" data-photo="apres"></div>
-            <textarea data-f="apres" rows="3" placeholder="Ce qui a changé (résultat, chiffres)"></textarea>
+            <textarea data-f="apres" rows="3" placeholder="Ce qui a changé concrètement"></textarea>
           </div>
         </div>
 
         <div class="nc-cadre">
+          <h4>Gain obtenu</h4>
+          <table class="nc-params nc-gains">
+            <thead><tr><th>Indicateur</th><th>Avant</th><th>Après</th><th>Gain</th></tr></thead>
+            <tbody id="gains"></tbody>
+          </table>
+        </div>
+
+        <div class="nc-cadre">
           <h4>Paramètres mis sous contrôle</h4>
+          <p class="nc-aide no-print">Peu de paramètres, mais ceux qui font tenir la norme.</p>
           <table class="nc-params">
-            <thead><tr><th>Paramètre</th><th>Valeur cible</th><th>Contrôle (qui, quand)</th></tr></thead>
+            <thead><tr><th>Ce qu'on contrôle</th><th>Valeur à respecter</th><th>Qui contrôle, et quand</th></tr></thead>
             <tbody id="params"></tbody>
           </table>
           <button type="button" class="btn secondary small no-print" id="btn-ajout-param">＋ Ajouter un paramètre</button>
         </div>
 
         <div class="nc-cadre">
-          <h4>Description de la nouvelle norme de travail</h4>
+          <h4>La nouvelle norme de travail</h4>
+          <p class="nc-aide no-print">Une action par étape, dans l'ordre, en phrases courtes.</p>
           <ol class="nc-etapes" id="etapes"></ol>
           <button type="button" class="btn secondary small no-print" id="btn-ajout-etape">＋ Ajouter une étape</button>
         </div>
@@ -82,8 +92,8 @@
 
       <!-- ===== 2. La capitalisation ===== -->
       <div class="nc-bloc">
-        <h3 class="nc-bandeau"><span>2</span> Capitalisation</h3>
-        <p class="nc-aide no-print">Cochez ce qui s'applique, puis dites quoi, qui s'en charge et pour quand.</p>
+        <h3 class="nc-bandeau"><span>2</span> Partager ce qu'on a appris <small>capitalisation</small></h3>
+        <p class="nc-aide no-print">Cochez ce qui s'applique à ce chantier.</p>
         <div id="capitalisation"></div>
 
         <div class="nc-cadre nc-signatures">
@@ -91,6 +101,7 @@
           <div class="nc-valid">
             <label class="nc-champ">Validée par <input type="text" data-f="validePar" placeholder="Nom, fonction"></label>
             <label class="nc-champ">Le <input type="date" data-f="valideLe"></label>
+            <label class="nc-champ">Prochaine revue <input type="date" data-f="revueLe"></label>
           </div>
         </div>
       </div>

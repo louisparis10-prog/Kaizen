@@ -659,39 +659,39 @@ const TOOLS = [
     phase: 'standardisation',
     page: 'norme-capitalisation.html',
     libelles: { creer: 'Faire la fiche', ouvrir: 'Ouvrir la fiche' },
-    summary: "Une seule fiche en fin de chantier : la nouvelle norme de travail (avant / apres, parametres sous controle, etapes) et ce qu'on en retire pour les autres (pratiques a diffuser, fiche audit, nouveau rituel, REX). S'imprime en A3 pour l'affichage en salle.",
+    summary: "Une fiche de fin de chantier en deux parties : fixer la nouvelle facon de travailler pour que le gain tienne (la norme), puis partager ce qu'on a appris (pratiques a diffuser, fiche audit, nouveau rituel, retour d'experience). S'imprime en A3 pour l'affichage en salle.",
     whenToUse: [
-      "Un chantier Kaizen se termine et il faut fixer la nouvelle facon de travailler",
-      "Le gain doit tenir dans la duree : parametres a controler, audit, rituel",
-      "Il faut partager ce qui a marche avec les autres lignes ou sites"
+      "Un chantier Kaizen se termine et le gain doit tenir dans le temps",
+      "Il faut dire clairement comment on travaille desormais, etape par etape",
+      "Ce qui a marche doit servir aux autres lignes, ateliers ou sites"
     ],
     steps: [
-      "Renseigner le chantier, la date et le pilote",
-      "Montrer l'avant et l'apres, avec une photo et des chiffres",
-      "Lister les parametres mis sous controle : valeur cible, qui controle, quand",
-      "Decrire la nouvelle norme de travail en etapes courtes (9 prevues)",
-      "Cocher la capitalisation : pratiques a diffuser, fiche audit, nouveau rituel, REX",
-      "Faire valider la norme, puis imprimer en A3 et afficher en salle"
+      "Montrer l'avant et l'apres avec une photo, puis chiffrer le gain obtenu",
+      "Choisir les quelques parametres a controler : valeur a respecter, qui controle, quand",
+      "Ecrire la nouvelle norme de travail en etapes courtes (9 prevues)",
+      "Cocher ce qu'on partage : pratiques a diffuser, fiche audit, nouveau rituel, retour d'experience",
+      "Pour chaque rubrique cochee, dire qui s'en charge et pour quand (le retour d'experience se raconte, sans responsable)",
+      "Faire valider la norme, fixer la date de revue, puis imprimer en A3 et afficher en salle"
     ],
-    benefits: "Un seul support pour fixer la norme et capitaliser : le gain tient, l'experience circule, la salle affiche l'essentiel.",
+    benefits: "Un seul support pour que le gain tienne et que l'experience circule : la norme est ecrite, controlee, auditee, et les autres equipes en profitent.",
     memo: [
-      "Avant / Apres : un constat chiffre et une photo",
+      "Avant / apres : une photo et des chiffres",
       "Peu de parametres, mais ceux qui font tenir la norme",
-      "Etapes courtes, une action par etape",
-      "Quatre sorties possibles : pratiques, audit, rituel, REX",
-      "Chaque sortie a un responsable et une date",
-      "Impression A3 paysage pour la salle"
+      "Une action par etape, en phrases courtes",
+      "Pratique a diffuser, fiche audit, rituel : toujours un responsable et une date",
+      "Le retour d'experience : ce qui a marche, ce qui a ete difficile, le conseil au prochain chantier",
+      "La norme a une date de revue : elle n'est pas figee"
     ],
     template: {
       file: 'templates/norme-capitalisation-swm.pptx',
       label: 'Trame Norme et capitalisation (support SWM)',
       usage: [
         "Imprimer la trame en A3 paysage, ou la projeter en salle",
-        "Remplir l'entete : chantier, date, pilote",
-        "Coller ou dessiner l'avant et l'apres, avec les chiffres cles",
-        "Noter les parametres mis sous controle : valeur cible, qui controle, quand",
-        "Decrire la nouvelle norme en 9 etapes courtes",
-        "Remplir les quatre cadres de capitalisation avec un responsable et une date, puis faire valider la norme"
+        "Remplir l'entete : chantier, pilote, date",
+        "Coller une photo avant / apres et noter le gain en chiffres",
+        "Noter les parametres a controler : valeur a respecter, qui controle, quand",
+        "Ecrire la nouvelle norme en 9 etapes courtes",
+        "Remplir les rubriques de partage utiles, puis faire valider la norme et fixer sa date de revue"
       ]
     },
     keywords: ['norme', 'standard', 'standardisation', 'capitalisation', 'rex', 'retour experience', 'rituel', 'fiche audit', 'pratiques a diffuser', 'norme de travail', 'avant apres', 'affichage salle']

@@ -124,8 +124,24 @@ textarea, .nc-page input[type=text], .nc-page input[type=date] { font: inherit; 
   .nc-params tr:nth-child(even) input { background: #e2eaf8 !important; }
   .nc-etapes li:nth-child(even) textarea { background: #ecf1fb !important; }
   .nc-etapes .nc-num { background: #3d5ba9; }
-  .nc-signatures h4 { display: none; }
   .nc-valid .nc-champ input { background: #e2eaf8 !important; border: 0 !important; }
   .nc-fiche-entete .nc-champ input { background: #fff !important; border: 0 !important; border-radius: 8px; }
   input::placeholder, textarea::placeholder { color: transparent; }
+}
+
+/* ---------- Version 2 : questions propres a chaque rubrique ---------- */
+.nc-bandeau small { font-size: 0.85rem; font-weight: 400; opacity: .85; margin-left: 4px; }
+.nc-cadre .nc-aide { margin: -2px 0 0; font-size: 0.92rem; }
+.nc-cap-corps { gap: 10px; }
+.nc-cf { display: grid; gap: 4px; }
+.nc-cf > span { font-size: 0.84rem; font-weight: 700; color: var(--nc-texte); }
+.nc-cap-ligne { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.nc-valid { grid-template-columns: 1.6fr 1fr 1fr; }
+.nc-gains td:not(:first-child) input { text-align: center; }
+@media (max-width: 700px) { .nc-valid { grid-template-columns: 1fr; } }
+@media print {
+  .nc-cf > span { font-size: 0.72rem; color: #171d8f; }
+  .nc-cap-corps { gap: 4px; }
+  .nc-gains th:not(:first-child) { text-align: center; }
+  .nc-valid .nc-champ { font-size: 0.7rem; }
 }
