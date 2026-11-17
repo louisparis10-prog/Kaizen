@@ -228,7 +228,7 @@ const TOOLS = [
     libelles: { creer: "Faire l'analyse", ouvrir: "Ouvrir l'analyse" },
     summary: "Analyse guidee d'un accident benin en une dizaine de minutes : ce qui s'est passe, ce qui a joue, ce qu'on change. Bascule vers l'arbre des causes si l'accident aurait pu etre grave.",
     whenToUse: [
-      "Petit accident sans arret : coupure legere, glissade, choc, faux mouvement",
+      "Accident benin sans arret : coupure legere, glissade, choc, faux mouvement",
       "Presqu'accident a comprendre rapidement avec la personne concernee",
       "Manager ou chef d'equipe sans formation Lean ni securite"
     ],
@@ -236,10 +236,10 @@ const TOOLS = [
       "Dire quel type d'accident et quelles suites (quelques clics)",
       "Raconter les faits, sans jugement",
       "Choisir ce qui a joue et creuser jusqu'a ce sur quoi on peut agir",
-      "Decider 1 a 3 actions avec un responsable et une date",
+      "Decider des actions (autant que necessaire) avec un responsable, une date et leur type : le score d'efficacite se calcule tout seul",
       "Se demander si cela aurait pu etre beaucoup plus grave : si oui, arbre des causes"
     ],
-    benefits: "Une analyse courte mais utile pour chaque petit accident, faite sur le terrain, qui debouche sur des actions concretes plutot que sur un rappel des consignes.",
+    benefits: "Une analyse courte mais utile pour chaque accident benin, faite sur le terrain, qui debouche sur des actions concretes plutot que sur un rappel des consignes.",
     memo: [
       "Des faits, pas de jugement",
       "On cherche des causes, pas un responsable",

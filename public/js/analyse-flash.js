@@ -7,7 +7,15 @@
   const OUTIL_ID = 'analyse-flash';
   const CLE_LOCALE = 'kaizen-analyse-flash-brouillon';
   const CLE_VERS_ARBRE = 'kaizen-arbre-depuis-flash';
-  const MAX_FACTEURS = 3, MAX_ACTIONS = 3, MAX_NIVEAUX = 3, MAX_PHOTOS = 3;
+  const MAX_FACTEURS = 3, MAX_PHOTOS = 3;
+  // Codification des actions, de la plus a la moins efficace. Les points servent au score global.
+  const NIVEAUX_ACTION = [
+    { n: 1, label: 'Supprimer le danger', ex: 'supprimer la cause', pts: 100 },
+    { n: 2, label: 'Protéger tout le monde', ex: 'carter, garde-corps', pts: 70 },
+    { n: 3, label: 'Protéger la personne', ex: 'gants, lunettes', pts: 40 },
+    { n: 4, label: 'Informer', ex: 'consigne, affichage', pts: 15 }
+  ];
+  const niveauAction = (n) => NIVEAUX_ACTION.find(x => x.n === Number(n));
 
   // ---------- Referentiels ----------
   const TYPES = [
@@ -45,44 +53,40 @@
   // travaillee est rangee avec le materiel : le produit change peu d'un poste a l'autre.
   const RUBRIQUES = [
     { id: 'materiel', ico: '🛠️', label: 'Machine, outil, matériel', q: "Qu'est-ce qui, dans la machine, l'outil, le matériel ou la pièce manipulée, a joué ?" },
-    { id: 'lieu', ico: '🏭', label: 'Lieu de travail', q: "Qu'est-ce qui, dans le lieu (sol, passage, éclairage, rangement), a joué ?" },
+    { id: 'lieu', ico: '🏭', label: 'Environnement de travail', q: "Qu'est-ce qui, dans l'environnement de travail (sol, passage, éclairage, bruit, température, rangement), a joué ?" },
     { id: 'facon', ico: '👷', label: 'Façon de faire', q: "Qu'est-ce qui, dans la façon de faire le travail, a joué ?" },
-    { id: 'protection', ico: '🧤', label: 'Protections', q: "Qu'est-ce qui, dans les protections (gants, lunettes, carters…), a joué ?" },
     { id: 'organisation', ico: '📋', label: 'Organisation', q: "Qu'est-ce qui, dans l'organisation (temps, effectif, consignes, accueil), a joué ?" }
   ];
   const rubrique = (id) => RUBRIQUES.find(r => r.id === id);
 
   const EXEMPLES_FAITS = {
-    materiel: ['Outil usé ou abîmé', 'Machine sans carter à cet endroit', 'Arête vive sur la pièce', "Outil pas adapté à la tâche"],
+    materiel: ['Outil usé ou abîmé', 'Machine sans carter à cet endroit', 'Arête vive sur la pièce', "Outil pas adapté à la tâche", 'Gants portés non résistants à la coupure'],
     lieu: ['Sol mouillé ou gras', 'Objet qui traînait dans le passage', 'Éclairage faible à cet endroit', 'Poste encombré'],
     facon: ['Geste fait à la main faute de moyen adapté', 'Tâche inhabituelle, rarement faite', 'Posture penchée ou en torsion'],
-    protection: ['Gants portés non résistants à la coupure', 'Lunettes non portées pour cette tâche', 'Protection de la machine retirée'],
     organisation: ["Travail fait dans l'urgence", 'Personne seule pour une tâche à deux', 'Personne nouvelle au poste']
   };
   // Exemples propres a certains types d'accident, proposes en premier.
   const EXEMPLES_PAR_TYPE = {
-    coupure: { materiel: ['Cutter à lame fixe'], protection: ['Gants en coton portés'] },
+    coupure: { materiel: ['Cutter à lame fixe', 'Gants en coton portés, peu résistants à la coupure'] },
     glissade: { lieu: ["Flaque d'huile ou d'eau au sol", "Câble ou palette dans l'allée", 'Marche peu visible'], materiel: ['Fuite sur une machine voisine'] },
     hauteur: { materiel: ['Escabeau instable ou abîmé', 'Pas de garde-corps à cet endroit'], facon: ['Montée sur un support non prévu (caisse, chaise)'] },
     choc: { lieu: ['Passage étroit près d\'une partie saillante'], materiel: ['Charge mal calée qui a bougé'] },
     coincement: { materiel: ['Partie mobile accessible en marche'], facon: ['Intervention sans arrêter la machine'] },
     effort: { materiel: ['Charge lourde portée à la main', "Pas d'aide à la manutention au poste"], facon: ['Charge soulevée dos courbé', 'Geste répété très souvent'] },
-    projection: { protection: ['Lunettes non portées pour cette tâche'], materiel: ['Soufflette utilisée pour nettoyer'] },
+    projection: { materiel: ['Soufflette utilisée pour nettoyer', 'Lunettes non portées pour cette tâche'] },
     brulure: { materiel: ['Pièce encore chaude', 'Surface chaude non protégée', 'Produit chimique transvasé'] },
     engin: { lieu: ['Piétons et chariots dans la même allée', 'Angle sans visibilité'], organisation: ['Pas de sens de circulation défini'] }
   };
   const EXEMPLES_RAISONS = {
-    materiel: ["Pas d'entretien prévu sur cet outil", 'Matériel adapté absent du poste', 'Défaut signalé mais pas réparé', 'Aucun moyen de préhension prévu'],
+    materiel: ["Pas d'entretien prévu sur cet outil", 'Matériel adapté absent du poste', 'Défaut signalé mais pas réparé', 'Aucun moyen de préhension prévu', 'Protection adaptée absente du poste'],
     lieu: ['Fuite connue mais pas réparée', "Pas d'emplacement prévu pour ranger", 'Nettoyage pas prévu à ce moment'],
     facon: ['Le mode opératoire ne prévoit pas ce cas', 'Moyen adapté trop loin ou indisponible', 'Habitude prise depuis longtemps'],
-    protection: ['Protection adaptée absente du poste', 'Protection gênante pour travailler', 'Risque pas identifié pour cette tâche'],
     organisation: ['Retard de production à rattraper', 'Absence non remplacée', 'Accueil au poste pas encore fait']
   };
   const EXEMPLES_ACTIONS = {
-    materiel: ["Réparer ou remplacer l'outil", 'Installer une protection fixe (carter)', 'Supprimer les arêtes vives à la source', 'Prévoir un moyen de préhension ou de manutention'],
+    materiel: ["Réparer ou remplacer l'outil", 'Installer une protection fixe (carter)', 'Supprimer les arêtes vives à la source', 'Prévoir un moyen de préhension ou de manutention', 'Fournir des gants anti-coupure adaptés'],
     lieu: ['Réparer la fuite à la source', "Matérialiser et dégager l'allée", "Ajouter de l'éclairage"],
     facon: ["Revoir le mode opératoire avec l'équipe", 'Rapprocher le moyen adapté du poste', 'Supprimer la manipulation à la main'],
-    protection: ['Fournir des gants anti-coupure adaptés', 'Mettre la protection adaptée à disposition au poste', 'Remettre la protection en place et la fixer'],
     organisation: ['Prévoir un binôme pour cette tâche', "Revoir le planning pour éviter l'urgence", "Faire l'accueil sécurité au poste"]
   };
   const STATUTS = [['a_faire', 'À faire'], ['en_cours', 'En cours'], ['realisee', 'Réalisée']];
@@ -114,12 +118,12 @@
     facteurs: [
       { id: 'f1', rubrique: 'materiel', chaine: ['Le bord de la tôle est coupant (bavure de découpe)', "L'outil de découpe en amont laisse une bavure"], fin: true },
       { id: 'f2', rubrique: 'facon', chaine: ['La tôle est positionnée à la main', "Aucun moyen de préhension n'est prévu au poste"], fin: true },
-      { id: 'f3', rubrique: 'protection', chaine: ['Gants en coton portés, peu résistants à la coupure', 'Pas de gants anti-coupure au poste'], fin: true }
+      { id: 'f3', rubrique: 'materiel', chaine: ['Gants en coton portés, peu résistants à la coupure', 'Pas de gants anti-coupure au poste'], fin: true }
     ],
     actions: [
-      { id: 'a1', facteur: 'f1', description: "Régler l'outil de découpe pour supprimer la bavure", responsable: 'Méthodes', echeance: '2026-11-30', statut: 'en_cours' },
-      { id: 'a2', facteur: 'f2', description: 'Tester une ventouse de préhension pour positionner les tôles', responsable: "Chef d'atelier", echeance: '2026-12-15', statut: 'a_faire' },
-      { id: 'a3', facteur: 'f3', description: 'Mettre des gants anti-coupure à disposition au poste', responsable: 'HSE', echeance: '2026-11-20', statut: 'realisee' }
+      { id: 'a1', facteur: 'f1', description: "Régler l'outil de découpe pour supprimer la bavure", responsable: 'Méthodes', echeance: '2026-11-30', statut: 'en_cours', niveau: 1 },
+      { id: 'a2', facteur: 'f2', description: 'Tester une ventouse de préhension pour positionner les tôles', responsable: "Chef d'atelier", echeance: '2026-12-15', statut: 'a_faire', niveau: 2 },
+      { id: 'a3', facteur: 'f3', description: 'Mettre des gants anti-coupure à disposition au poste', responsable: 'HSE', echeance: '2026-11-20', statut: 'realisee', niveau: 3 }
     ],
     potentiel: 'non'
   };
@@ -174,10 +178,10 @@
     // Les analyses commencees avec l'ancienne famille « Piece ou produit » passent dans le materiel.
     const bruts = Array.isArray(d.facteurs) ? d.facteurs : [];
     const avecMateriel = bruts.some(g => g && g.rubrique === 'materiel');
-    n.facteurs = bruts.map(f => (f && f.rubrique === 'produit' && !avecMateriel) ? Object.assign({}, f, { rubrique: 'materiel' }) : f)
+    n.facteurs = bruts.map(f => (f && (f.rubrique === 'protection' || (f.rubrique === 'produit' && !avecMateriel))) ? Object.assign({}, f, { rubrique: 'materiel' }) : f)
       .filter(f => f && rubrique(f.rubrique))
-      .map(f => ({ id: f.id || uid(), rubrique: f.rubrique, chaine: Array.isArray(f.chaine) && f.chaine.length ? f.chaine.slice(0, MAX_NIVEAUX) : [''], fin: !!f.fin }));
-    n.actions = (Array.isArray(d.actions) ? d.actions : []).map(x => Object.assign({ id: uid(), facteur: '', description: '', responsable: '', echeance: '', statut: 'a_faire' }, x));
+      .map(f => ({ id: f.id || uid(), rubrique: f.rubrique, chaine: Array.isArray(f.chaine) && f.chaine.length ? f.chaine : [''], fin: !!f.fin }));
+    n.actions = (Array.isArray(d.actions) ? d.actions : []).map(x => Object.assign({ id: uid(), facteur: '', description: '', responsable: '', echeance: '', statut: 'a_faire', niveau: '' }, x));
     n.potentiel = ['oui', 'non', 'doute'].includes(d.potentiel) ? d.potentiel : '';
     n.etape = Math.min(5, Math.max(1, Number(d.etape) || 1));
     return n;
@@ -226,6 +230,35 @@
   function etapeAccessible(n) {
     for (let i = 1; i < n; i++) if (manque(i)) return false;
     return true;
+  }
+
+  // ---------- Efficacite des actions ----------
+  // Score global : moyenne des points de toutes les actions dont le type est choisi.
+  function scoreActions() {
+    const liste = a.actions.filter(x => x.description.trim());
+    const cotees = liste.filter(x => niveauAction(x.niveau));
+    const parNiveau = NIVEAUX_ACTION.map(nv => cotees.filter(x => Number(x.niveau) === nv.n).length);
+    const score = cotees.length ? Math.round(cotees.reduce((s, x) => s + niveauAction(x.niveau).pts, 0) / cotees.length) : null;
+    return { score, nb: liste.length, sans: liste.length - cotees.length, parNiveau };
+  }
+  function verdictScore(s) {
+    if (s >= 70) return { cls: 'fort', txt: 'Actions solides : elles agissent à la source du problème.' };
+    if (s >= 40) return { cls: 'moyen', txt: 'Efficacité moyenne : cherchez une action de plus haut niveau (supprimer le danger, protéger tout le monde).' };
+    return { cls: 'faible', txt: 'Actions fragiles : elles reposent surtout sur la vigilance des personnes. Peut-on agir plus à la source ?' };
+  }
+  function blocScore() {
+    const s = scoreActions();
+    if (!s.nb) return '';
+    if (s.score === null) return '<div class="af-score vide"><div class="af-score-corps"><b>Efficacité globale des actions</b><p>Choisissez le type de chaque action : le score se calcule tout seul.</p></div></div>';
+    const v = verdictScore(s.score);
+    return `<div class="af-score ${v.cls}">
+      <div class="af-score-rond"><b>${s.score}</b><small>/ 100</small></div>
+      <div class="af-score-corps"><b>Efficacité globale des actions</b>
+        <div class="af-score-barre"><i style="width:${s.score}%"></i></div>
+        <p>${v.txt}</p>
+        <div class="af-score-detail">${NIVEAUX_ACTION.map((nv, i) => s.parNiveau[i] ? `<span class="n${nv.n}">${s.parNiveau[i]} × ${esc(nv.label)}</span>` : '').join('')}</div>
+        ${s.sans ? `<p class="af-score-note">${s.sans} action${s.sans > 1 ? 's' : ''} sans type : ${s.sans > 1 ? 'elles ne comptent' : 'elle ne compte'} pas encore dans le score.</p>` : ''}
+      </div></div>`;
   }
 
   // ---------- Rendu ----------
@@ -331,17 +364,17 @@
     const titre = a.recit.consequence.trim() || libelle(TYPES, a.typologie.type) || "L'accident";
     const choisis = a.facteurs.map(f => f.rubrique);
     const arete = (r) => {
-      const actif = choisis.includes(r.id);
-      return `<button type="button" class="af-arete${actif ? ' choisi' : ''}" data-rubrique="${r.id}" aria-pressed="${actif}">
-        <span class="af-arete-ico">${r.ico}</span><span>${esc(r.label)}</span>${actif ? '<b>✓</b>' : ''}</button>`;
+      const nb = choisis.filter(x => x === r.id).length;
+      return `<button type="button" class="af-arete${nb ? ' choisi' : ''}" data-rubrique="${r.id}">
+        <span class="af-arete-ico">${r.ico}</span><span>${esc(r.label)}</span>${nb ? `<b>${nb > 1 ? '×' + nb : '✓'}</b>` : ''}</button>`;
     };
     return `
       <h2 class="af-q">Qu'est-ce qui a permis que cet accident arrive ?</h2>
-      <p class="af-aide">Touchez ce qui a joué un rôle. Choisissez au plus ${MAX_FACTEURS} familles, les plus importantes.</p>
+      <p class="af-aide">Touchez ce qui a joué un rôle. Si plusieurs choses ont joué dans la même famille, touchez-la plusieurs fois. ${MAX_FACTEURS} au plus : gardez les plus importantes.</p>
       <div class="af-poisson">
-        <div class="af-poisson-haut">${RUBRIQUES.slice(0, 3).map(arete).join('')}</div>
+        <div class="af-poisson-haut">${RUBRIQUES.slice(0, 2).map(arete).join('')}</div>
         <div class="af-poisson-arete"><span></span></div>
-        <div class="af-poisson-bas">${RUBRIQUES.slice(3).map(arete).join('')}</div>
+        <div class="af-poisson-bas">${RUBRIQUES.slice(2).map(arete).join('')}</div>
         <div class="af-poisson-tete"><small>L'accident</small>${esc(titre)}</div>
       </div>
       ${a.facteurs.length ? '' : '<p class="af-vide">👆 Commencez par toucher une famille ci-dessus.</p>'}
@@ -350,17 +383,19 @@
 
   function vueChaine(f, i) {
     const r = rubrique(f.rubrique);
+    const memes = a.facteurs.filter(g => g.rubrique === f.rubrique);
+    const rang = memes.length > 1 ? ` n°${memes.indexOf(f) + 1}` : '';
     const exemples0 = [...new Set([...((EXEMPLES_PAR_TYPE[a.typologie.type] || {})[f.rubrique] || []), ...EXEMPLES_FAITS[f.rubrique]])].slice(0, 5);
     const maillons = f.chaine.map((texte, k) => {
       const question = k === 0 ? r.q : (k === 1 ? `Et qu'est-ce qui explique cela ?` : `Et derrière, qu'est-ce qui explique cela ?`);
       const exemples = k === 0 ? exemples0 : EXEMPLES_RAISONS[f.rubrique];
       const dernier = k === f.chaine.length - 1;
-      const decision = dernier && texte.trim() && !f.fin ? (k < MAX_NIVEAUX - 1 ? `
+      const decision = dernier && texte.trim() && !f.fin ? `
         <div class="af-decision">
           <span>Peut-on agir directement là-dessus ?</span>
           <button type="button" class="btn small orange" data-fin="${f.id}">Oui, on agit là</button>
           <button type="button" class="btn small secondary" data-creuser="${f.id}">Non, il y a une raison derrière</button>
-        </div>` : `<div class="af-decision"><button type="button" class="btn small orange" data-fin="${f.id}">C'est là qu'on agit ✓</button></div>`) : '';
+        </div>` : '';
       return `
         ${k > 0 ? '<div class="af-parce-que">parce que…</div>' : ''}
         <div class="af-maillon${dernier && f.fin ? ' cible' : ''}">
@@ -373,7 +408,7 @@
         </div>`;
     }).join('');
     return `<article class="af-chaine" data-facteur="${f.id}">
-      <header><span class="af-arete-ico">${r.ico}</span><b>${esc(r.label)}</b><button type="button" class="af-lien" data-retirer-facteur="${f.id}">Retirer</button></header>
+      <header><span class="af-arete-ico">${r.ico}</span><b>${esc(r.label)}${rang}</b><button type="button" class="af-lien" data-retirer-facteur="${f.id}">Retirer</button></header>
       ${maillons}
     </article>`;
   }
@@ -383,18 +418,19 @@
     return `
       <h2 class="af-q">Que fait-on concrètement pour que cela ne se reproduise pas ?</h2>
       <div class="af-echelle" title="Du plus efficace au moins efficace">
-        <span class="n1">Supprimer le danger</span><span class="n2">Protéger tout le monde<small>carter, garde-corps</small></span><span class="n3">Protéger la personne<small>gants, lunettes</small></span><span class="n4">Informer<small>consigne, affichage</small></span>
+        ${NIVEAUX_ACTION.map(nv => `<span class="n${nv.n}">${esc(nv.label)}<small>${esc(nv.ex)}</small><i>${nv.pts} %</i></span>`).join('')}
       </div>
-      <p class="af-aide">🎯 Commencez par la gauche : une action sur la situation de travail est plus efficace qu'un rappel des consignes. ${MAX_ACTIONS} actions au plus.</p>
+      <p class="af-aide">🎯 Plus l'action est à gauche, plus elle est efficace. Pour chaque action, indiquez son type : un score global d'efficacité se calcule avec toutes vos actions. Ajoutez-en autant que nécessaire.</p>
       ${cibles.map(f => {
         const r = rubrique(f.rubrique);
         const actions = a.actions.filter(x => x.facteur === f.id);
         return `<article class="af-bloc-action">
           <header><span class="af-arete-ico">${r.ico}</span><div><small>${esc(r.label)} · on agit sur</small><b>${esc(pointAction(f))}</b></div></header>
           ${actions.map(vueAction).join('')}
-          ${a.actions.length < MAX_ACTIONS ? `<button type="button" class="af-ajout-action" data-ajout-action="${f.id}">+ ${actions.length ? 'Une autre action' : 'Ajouter une action'}</button>` : ''}
+          <button type="button" class="af-ajout-action" data-ajout-action="${f.id}">+ ${actions.length ? 'Une autre action' : 'Ajouter une action'}</button>
         </article>`;
-      }).join('')}`;
+      }).join('')}
+      ${blocScore()}`;
   }
   function vueAction(x) {
     const f = facteur(x.facteur);
@@ -404,6 +440,10 @@
         <textarea rows="1" data-action-champ="${x.id}|description" data-consigne placeholder="Ex. : ${esc(exemples[0] || '')}">${esc(x.description)}</textarea>
         <span class="af-mot-alerte" hidden></span></label>
       ${!x.description.trim() ? `<div class="af-exemples"><small>Idées :</small>${exemples.map(e => `<button type="button" class="af-puce" data-exemple-action="${x.id}">${esc(e)}</button>`).join('')}</div>` : ''}
+      <div class="af-niveaux" role="group" aria-label="Type d'action">
+        <span>Quel type d'action ?</span>
+        ${NIVEAUX_ACTION.map(nv => `<button type="button" class="af-niveau n${nv.n}${Number(x.niveau) === nv.n ? ' choisi' : ''}" data-niveau="${x.id}|${nv.n}" aria-pressed="${Number(x.niveau) === nv.n}" title="${esc(nv.ex)} : ${nv.pts} %">${esc(nv.label)}</button>`).join('')}
+      </div>
       <div class="af-action-ligne">
         <label>👤 Qui ?<input type="text" data-action-champ="${x.id}|responsable" value="${esc(x.responsable)}" placeholder="Responsable"></label>
         <label>📅 Pour quand ?<input type="date" data-action-champ="${x.id}|echeance" value="${esc(x.echeance)}"></label>
@@ -482,8 +522,9 @@
           }).join('')}
         </section>
         <section><h3><span>3</span>Ce qu'on change</h3>
-          <table><thead><tr><th>Action</th><th>Responsable</th><th>Pour quand</th><th>État</th></tr></thead>
-          <tbody>${a.actions.filter(x => x.description.trim()).map(x => `<tr><td>${esc(x.description)}</td><td>${esc(x.responsable)}</td><td>${esc(dateFr(x.echeance))}</td><td>${esc((STATUTS.find(s => s[0] === x.statut) || [, ''])[1])}</td></tr>`).join('')}</tbody></table>
+          <table><thead><tr><th>Action</th><th>Type</th><th>Responsable</th><th>Pour quand</th><th>État</th></tr></thead>
+          <tbody>${a.actions.filter(x => x.description.trim()).map(x => `<tr><td>${esc(x.description)}</td><td>${niveauAction(x.niveau) ? `<span class="af-type n${x.niveau}">${esc(niveauAction(x.niveau).label)}</span>` : '—'}</td><td>${esc(x.responsable)}</td><td>${esc(dateFr(x.echeance))}</td><td>${esc((STATUTS.find(s => s[0] === x.statut) || [, ''])[1])}</td></tr>`).join('')}</tbody></table>
+          ${blocScore()}
         </section>
         <div class="af-fiche-verdict ${a.potentiel === 'non' ? 'ok' : 'approfondir'}"><b>Aurait pu être beaucoup plus grave ?</b> ${a.potentiel === 'non' ? 'Non' : (a.potentiel === 'oui' ? 'Oui' : 'Je ne sais pas')} → ${verdict}</div>
       </div>`;
@@ -500,7 +541,7 @@
       if (c.hasAttribute('data-verifier') && MOTS_JUGEMENT.test(c.value)) {
         msg = "💡 Ce mot juge la personne. Décrivez plutôt ce qui s'est passé concrètement : qu'est-ce qu'on aurait vu ?";
       } else if (c.hasAttribute('data-consigne') && MOTS_CONSIGNE.test(c.value)) {
-        msg = '💡 Un rappel ou une consigne seule change rarement les choses. Peut-on agir sur le matériel, le lieu ou l\'organisation ?';
+        msg = '💡 Un rappel ou une consigne seule change rarement les choses. Peut-on agir sur le matériel, l\'environnement de travail ou l\'organisation ?';
       }
       zone.textContent = msg;
       zone.hidden = !msg;
@@ -531,26 +572,27 @@
   function preparerActions() {
     a.actions = a.actions.filter(x => facteur(x.facteur));
     a.facteurs.filter(f => f.chaine[0].trim()).forEach(f => {
-      if (a.actions.length < MAX_ACTIONS && !a.actions.some(x => x.facteur === f.id)) {
-        a.actions.push({ id: uid(), facteur: f.id, description: '', responsable: '', echeance: '', statut: 'a_faire' });
+      if (!a.actions.some(x => x.facteur === f.id)) {
+        a.actions.push({ id: uid(), facteur: f.id, description: '', responsable: '', echeance: '', statut: 'a_faire', niveau: '' });
       }
     });
   }
 
-  function basculerRubrique(id) {
-    const i = a.facteurs.findIndex(f => f.rubrique === id);
-    if (i >= 0) {
-      const f = a.facteurs[i];
-      if (f.chaine.some(t => t.trim()) && !confirm(`Retirer « ${rubrique(id).label} » et ce que vous avez écrit ?`)) return;
-      a.facteurs.splice(i, 1);
-      a.actions = a.actions.filter(x => x.facteur !== f.id);
-      rendre();
-    } else {
-      if (a.facteurs.length >= MAX_FACTEURS) return toast(`${MAX_FACTEURS} familles au plus : gardez les plus importantes`, 'error');
-      const f = { id: uid(), rubrique: id, chaine: [''], fin: false };
-      a.facteurs.push(f);
-      rendre(`[data-chaine="${f.id}|0"]`);
-    }
+  // Chaque appui ajoute une cause : on peut choisir plusieurs fois la meme famille.
+  function ajouterFacteur(id) {
+    if (a.facteurs.length >= MAX_FACTEURS) return toast(`${MAX_FACTEURS} causes au plus : gardez les plus importantes`, 'error');
+    const f = { id: uid(), rubrique: id, chaine: [''], fin: false };
+    a.facteurs.push(f);
+    rendre(`[data-chaine="${f.id}|0"]`);
+    sauver();
+  }
+  function retirerFacteur(fid) {
+    const f = facteur(fid);
+    if (!f) return;
+    if (f.chaine.some(t => t.trim()) && !confirm(`Retirer cette cause (${rubrique(f.rubrique).label}) et ce que vous avez écrit ?`)) return;
+    a.facteurs = a.facteurs.filter(g => g.id !== fid);
+    a.actions = a.actions.filter(x => x.facteur !== fid);
+    rendre();
     sauver();
   }
 
@@ -573,7 +615,7 @@
       rendre();
       sauver();
     } else if (d.rubrique) {
-      basculerRubrique(d.rubrique);
+      ajouterFacteur(d.rubrique);
     } else if (d.exempleChaine) {
       const [fid, k] = d.exempleChaine.split('|');
       facteur(fid).chaine[Number(k)] = b.textContent;
@@ -594,10 +636,9 @@
       rendre(`[data-chaine="${f.id}|${f.chaine.length - 1}"]`);
       sauver();
     } else if (d.retirerFacteur) {
-      basculerRubrique(facteur(d.retirerFacteur).rubrique);
+      retirerFacteur(d.retirerFacteur);
     } else if (d.ajoutAction) {
-      if (a.actions.length >= MAX_ACTIONS) return toast(`${MAX_ACTIONS} actions au plus`, 'error');
-      const x = { id: uid(), facteur: d.ajoutAction, description: '', responsable: '', echeance: '', statut: 'a_faire' };
+      const x = { id: uid(), facteur: d.ajoutAction, description: '', responsable: '', echeance: '', statut: 'a_faire', niveau: '' };
       a.actions.push(x);
       rendre(`[data-action-champ="${x.id}|description"]`);
       sauver();
@@ -609,6 +650,10 @@
       a.actions = a.actions.filter(x => x.id !== d.supprAction);
       rendre();
       sauver();
+    } else if (d.niveau) {
+      const [aid, nv] = d.niveau.split('|');
+      const x = a.actions.find(y => y.id === aid);
+      if (x) { x.niveau = Number(x.niveau) === Number(nv) ? '' : Number(nv); rendre(); sauver(); }
     } else if (d.supprPhoto !== undefined) {
       a.photos.splice(Number(d.supprPhoto), 1);
       rendre();
@@ -692,7 +737,8 @@
     // La derniere reponse (« Oui ») doit etre gardee avant de quitter la page.
     if (approfondi) a.potentiel = 'oui';   // apparait « A approfondir » dans l'historique
     if (minuterie || approfondi) { clearTimeout(minuterie); await enregistrer(); }
-    const COL = 210, LARGEUR = 170, NB = 6;
+    const plusLongue = Math.max(0, ...a.facteurs.map(f => f.chaine.filter(t => t.trim()).length));
+    const COL = 210, LARGEUR = 170, NB = Math.min(10, Math.max(6, plusLongue + 1));
     const xCol = (i) => i * COL + (COL - LARGEUR) / 2;
     const branches = a.facteurs.filter(f => f.chaine[0].trim());
     const faits = [];
@@ -712,7 +758,7 @@
     branches.forEach((f, i) => {
       const y = 70 + i * 110;
       let aval = dommage;
-      const remplis = f.chaine.filter(t => t.trim());
+      const remplis = f.chaine.filter(t => t.trim()).slice(0, NB - 1); // l'arbre accepte jusqu'a 10 « pourquoi »
       remplis.forEach((texte, k) => {
         const n = { id: uid(), x: xCol(NB - 1 - k), y, type: 'etat', texte, actions: [], images: [] };
         if (k === remplis.length - 1) {
