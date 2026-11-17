@@ -97,3 +97,35 @@ textarea, .nc-page input[type=text], .nc-page input[type=date] { font: inherit; 
   .nc-etapes li.vide { display: none; }
   .nc-params tr.vide { display: none; }
 }
+
+/* ---------- Impression : meme charte que les trames SWM (cadre bleu, etiquettes 3D5BA9, cases E2EAF8 / ECF1FB) ---------- */
+@media print {
+  .nc-fiche { border: 3px solid #2e3192; }
+  .nc-bandeau { display: none; }
+  .nc-colonnes { padding: 8px; gap: 8px; }
+  .nc-bloc { gap: 5px; }
+  .nc-cadre { border: 0; padding: 0; gap: 3px; background: transparent; }
+  .nc-cadre h4, .nc-cap-tete {
+    background: #3d5ba9 !important; color: #fff !important; border-radius: 8px; text-align: center;
+    padding: 4px 8px; font-size: 1rem; letter-spacing: .04em; justify-content: center; width: 100%;
+  }
+  .nc-avant-apres .nc-cadre:first-child h4, .nc-avant-apres .nc-cadre:last-child h4 { color: #fff !important; }
+  .nc-case, .nc-cap-sous { display: none; }
+  .nc-cap-titre { color: #fff; text-transform: uppercase; font-size: 1rem; }
+  .nc-cap { border: 0; margin-bottom: 4px; background: transparent; }
+  .nc-cap.coche .nc-cap-tete { background: #3d5ba9 !important; }
+  .nc-cap-corps { border: 0; padding: 3px 0 0; gap: 3px; }
+  .nc-cap-corps textarea, .nc-cadre textarea, .nc-etapes textarea { background: #e2eaf8 !important; border: 0 !important; border-radius: 0; }
+  .nc-cap-corps input, .nc-params input { background: #ecf1fb !important; border: 0 !important; border-radius: 0; }
+  .nc-avant-apres .nc-cadre:last-child textarea { background: #ecf1fb !important; }
+  .nc-photo { background: #e2eaf8; border: 0; border-radius: 0; }
+  .nc-params th { background: #d4dff5; color: #171d8f; padding: 3px 6px; }
+  .nc-params td { padding: 1px; }
+  .nc-params tr:nth-child(even) input { background: #e2eaf8 !important; }
+  .nc-etapes li:nth-child(even) textarea { background: #ecf1fb !important; }
+  .nc-etapes .nc-num { background: #3d5ba9; }
+  .nc-signatures h4 { display: none; }
+  .nc-valid .nc-champ input { background: #e2eaf8 !important; border: 0 !important; }
+  .nc-fiche-entete .nc-champ input { background: #fff !important; border: 0 !important; border-radius: 8px; }
+  input::placeholder, textarea::placeholder { color: transparent; }
+}
