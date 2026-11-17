@@ -107,6 +107,7 @@
   const enTete = () => ({ chantier: fiche.chantier, pilote: fiche.pilote, date: fiche.date });
   const heure = () => new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
   function enregistrer() {
+    marquerImpression();
     if (enExemple) return;
     $('etat-sauvegarde').textContent = 'Enregistrement…';
     clearTimeout(minuteur);
@@ -197,6 +198,7 @@
     document.querySelectorAll('[data-f]').forEach(el => { el.value = fiche[el.dataset.f] || ''; });
   }
   function toutRendre() {
+    marquerImpression();
     rendreChampsSimples(); rendrePhoto('avant'); rendrePhoto('apres');
     rendreGains(); rendreParams(); rendreEtapes(); rendreCapitalisation();
     $('bandeau-exemple').hidden = !enExemple;
@@ -257,7 +259,7 @@
   });
   $('btn-ajout-param').addEventListener('click', () => { fiche.params.push(ligneParam()); rendreParams(); enregistrer(); });
   $('btn-ajout-etape').addEventListener('click', () => { fiche.etapes.push(''); rendreEtapes(); enregistrer(); });
-  $('btn-imprimer').addEventListener('click', () => window.print());
+  $('btn-imprimer').addEventListener('click', () => { construireImpression(); window.print(); });
 
   $('btn-nouvelle').addEventListener('click', () => {
     if (enExemple) { quitterExemple(); return; }
@@ -283,6 +285,98 @@
   }
   $('btn-exemple').addEventListener('click', () => { history.replaceState(null, '', chantierId ? '?chantier=' + encodeURIComponent(chantierId) + '&exemple' : '?exemple'); entrerExemple(); });
   $('btn-quitter-exemple').addEventListener('click', quitterExemple);
+
+  // ---------- Impression : une feuille A3 paysage au format des trames SWM ----------
+  // La feuille est construite a part (texte fige, positions fixes) : tous les champs tiennent
+  // sur une seule page, avec le cadre, le bandeau et les couleurs des trames SWM.
+  // Coordonnees en « points de diapo » (960 de large) ; 1 unite = 0,4375 mm sur du A3.
+  const KY = (668 - 75) / (512 - 75); // etire le corps de la feuille sur toute la hauteur A3
+  const Y = (y) => 75 + (y - 75) * KY;
+  const H = (h) => h * KY;
+  const fmtDate = (v) => { if (!v) return ''; const d = new Date(v + 'T00:00:00'); return isNaN(d) ? esc(v) : d.toLocaleDateString('fr-FR'); };
+  const txt = (v) => esc(v).replace(/\n/g, '<br>');
+  function boite(cls, x, y, w, h, html, fs) {
+    return '<div class="' + cls + '" style="left:calc(var(--u)*' + x + ');top:calc(var(--u)*' + y + ');width:calc(var(--u)*' + w + ');height:calc(var(--u)*' + h + ');' + (fs ? '--fs:' + fs + ';' : '') + '">' + html + '</div>';
+  }
+  const tagI = (x, y, w, t, fs) => boite('i-tag', x, Y(y), w, H(22), '<span>' + esc(t) + '</span>', fs);
+  const caseI = (x, y, w, h, i, html) => boite('i-case i-fit ' + (i % 2 ? 'c2' : 'c1'), x, Y(y), w, H(h), html);
+  function tableauI(x, y, w, cols, entetes, lignes, nbLignes) {
+    // cols : largeurs ; lignes : tableau de tableaux de textes
+    const hEnt = H(16), zone = H(69) - hEnt, hl = zone / nbLignes - 2;
+    let out = '', cx = 0;
+    entetes.forEach((t, k) => { out += boite('i-ent', x + cx, Y(y), cols[k], H(16), '<span>' + esc(t) + '</span>'); cx += cols[k] + 4; });
+    for (let r = 0; r < nbLignes; r++) {
+      cx = 0;
+      cols.forEach((cw, k) => {
+        out += boite('i-case i-fit ' + ((r + (k ? 1 : 0)) % 2 ? 'c2' : 'c1') + (k ? ' i-centre' : ''), x + cx, Y(y) + hEnt + 2 + r * (hl + 2), cw, hl, txt((lignes[r] || [])[k] || ''), 10);
+        cx += cw + 4;
+      });
+    }
+    return out;
+  }
+  function construireImpression() {
+    const f = fiche, XG = 16, WG = 606, WA = (WG - 8) / 2, XD = 632, WD = 310;
+    let h = '';
+    // Cadre, bandeau, logos : comme les autres trames SWM
+    h += boite('i-cadre', 4, 4, 952, 671, '');
+    h += boite('i-bandeau', 4, 4, 952, 61, '');
+    h += boite('i-titre', 112, 4, 400, 61, '<span>Standardisation et capitalisation</span>');
+    h += boite('i-infos', 516, 12, 304, 45, '<div><b>Chantier :</b> ' + txt(f.chantier) + '&nbsp;&nbsp;&nbsp;<b>Date :</b> ' + fmtDate(f.date) + '</div><div><b>Pilote :</b> ' + txt(f.pilote) + '</div>');
+    h += boite('i-logo', 25, 4, 83, 61, '<img src="/img/swm-blanc.png" alt="SWM">');
+    h += boite('i-logo', 842, 8, 93, 53, '<img src="/img/opex.png" alt="OPEX">');
+
+    // 1. Avant / Apres : photo en haut, texte dessous
+    [['AVANT', 'photoAvant', 'avant', XG, 0], ['APRÈS', 'photoApres', 'apres', XG + WA + 8, 1]].forEach(a => {
+      h += tagI(a[3], 75, WA, a[0]);
+      h += caseI(a[3], 97, WA, 80, a[4], '<div class="i-photo">' + (f[a[1]] ? '<img src="' + esc(f[a[1]]) + '" alt="">' : '') + '</div><div class="i-texte">' + txt(f[a[2]]) + '</div>');
+    });
+    // Gain
+    h += tagI(XG, 182, WG, 'GAIN OBTENU');
+    h += tableauI(XG, 206, WG, [250, 108, 112, 124], ['Indicateur', 'Avant', 'Après', 'Gain'], f.gains.map(g => [g.nom, g.avant, g.apres, g.gain]), 3);
+    // Parametres (jusqu'a 6 lignes imprimees)
+    const params = f.params.filter(p => !estVideLigne(p));
+    h += tagI(XG, 279, WG, 'PARAMÈTRES MIS SOUS CONTRÔLE');
+    h += tableauI(XG, 303, WG, [230, 150, 218], ["Ce qu'on contrôle", 'Valeur à respecter', 'Qui contrôle, et quand'], params.map(p => [p.nom, p.cible, p.controle]), Math.min(6, Math.max(3, params.length)));
+    // Nouvelle norme : grille de 3 colonnes, autant de lignes que d'etapes
+    h += tagI(XG, 376, WG, 'LA NOUVELLE NORME DE TRAVAIL');
+    const nb = Math.max(9, f.etapes.length), lignes = Math.ceil(nb / 3), hE = (512 - 400 - 3 * (lignes - 1)) / lignes, wE = (WG - 8) / 3;
+    for (let i = 0; i < lignes * 3; i++) {
+      h += caseI(XG + (i % 3) * (wE + 4), 400 + Math.floor(i / 3) * (hE + 3), wE, hE, i, '<b class="i-num">Étape ' + (i + 1) + '</b> ' + txt(f.etapes[i] || ''));
+    }
+
+    // 2. Capitalisation : chaque rubrique avec ses propres questions
+    const hauteurs = { pratiques: 76, audit: 56, rituel: 56, rex: 89 };
+    let yb = 75;
+    CAPITALISATIONS.forEach((c, n) => {
+      const d = f.cap[c.id];
+      const champ = (fl) => '<div class="i-champ' + (fl.t === 'area' ? ' i-area' : '') + '"><b>' + esc(fl.l) + '</b><span>' + (fl.t === 'date' ? fmtDate(d[fl.k]) : txt(d[fl.k])) + '</span></div>';
+      const grands = c.champs.filter(x => x.t === 'area').map(champ).join('');
+      const petits = c.champs.filter(x => x.t !== 'area').map(champ).join('');
+      h += tagI(XD, yb, WD, c.id === 'rex' ? 'REX : CE QUE CE CHANTIER NOUS A APPRIS' : c.titre.toUpperCase(), c.id === 'rex' ? 10.5 : 0);
+      h += caseI(XD, yb + 22, WD, hauteurs[c.id], n, '<div class="i-flex">' + grands + (petits ? '<div class="i-ligne">' + petits + '</div>' : '') + '</div>');
+      yb += 22 + hauteurs[c.id] + 5;
+    });
+    h += tagI(XD, yb, WD, 'VALIDATION DE LA NORME');
+    h += caseI(XD, yb + 22, WD, 512 - (yb + 22), 0, '<div class="i-ligne"><div class="i-champ"><b>Validée par</b><span>' + txt(f.validePar) + '</span></div><div class="i-champ"><b>Le</b><span>' + fmtDate(f.valideLe) + '</span></div><div class="i-champ"><b>Prochaine revue</b><span>' + fmtDate(f.revueLe) + '</span></div></div>');
+
+    const zone = $('impression');
+    impressionAJour = true;
+    zone.innerHTML = h;
+    // Reduit la taille du texte des cases qui debordent, pour que rien ne soit coupe.
+    zone.querySelectorAll('.i-fit').forEach(el => {
+      let fs = parseFloat(getComputedStyle(el).getPropertyValue('--fs')) || 10.5;
+      el.style.setProperty('--fs', fs);
+      while (el.scrollHeight > el.clientHeight + 1 && fs > 5.5) { fs -= 0.5; el.style.setProperty('--fs', fs); }
+    });
+  }
+  let impressionAJour = false, minuteurImpression = null;
+  function marquerImpression() {
+    impressionAJour = false;
+    clearTimeout(minuteurImpression);
+    minuteurImpression = setTimeout(construireImpression, 250);
+  }
+  // Securite : si l'impression est lancee avant la mise a jour, on la fait une seule fois.
+  window.addEventListener('beforeprint', () => { if (!impressionAJour) construireImpression(); });
 
   // ---------- Rattacher la fiche a un chantier ----------
   async function choisirChantier() {
