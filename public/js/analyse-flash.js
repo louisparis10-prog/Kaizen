@@ -738,7 +738,7 @@
     if (approfondi) a.potentiel = 'oui';   // apparait « A approfondir » dans l'historique
     if (minuterie || approfondi) { clearTimeout(minuterie); await enregistrer(); }
     const plusLongue = Math.max(0, ...a.facteurs.map(f => f.chaine.filter(t => t.trim()).length));
-    const COL = 210, LARGEUR = 170, NB = Math.min(10, Math.max(6, plusLongue + 1));
+    const COL = 210, LARGEUR = 170, NB = Math.min(20, Math.max(6, plusLongue + 1));
     const xCol = (i) => i * COL + (COL - LARGEUR) / 2;
     const branches = a.facteurs.filter(f => f.chaine[0].trim());
     const faits = [];
@@ -758,7 +758,7 @@
     branches.forEach((f, i) => {
       const y = 70 + i * 110;
       let aval = dommage;
-      const remplis = f.chaine.filter(t => t.trim()).slice(0, NB - 1); // l'arbre accepte jusqu'a 10 « pourquoi »
+      const remplis = f.chaine.filter(t => t.trim()).slice(0, NB - 1); // l arbre accepte jusqu a 20 pourquoi
       remplis.forEach((texte, k) => {
         const n = { id: uid(), x: xCol(NB - 1 - k), y, type: 'etat', texte, actions: [], images: [] };
         if (k === remplis.length - 1) {

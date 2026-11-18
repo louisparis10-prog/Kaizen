@@ -10,7 +10,7 @@
   const CLE_LOCALE = 'kaizen-arbre-causes-brouillon';
 
   // Nombre de Pourquoi reglable : 6 par defaut (5 Pourquoi SWM + 1).
-  const NB_DEFAUT = 6, NB_MIN = 3, NB_MAX = 10;
+  const NB_DEFAUT = 6, NB_MIN = 3, NB_MAX = 20;
 
   // De gauche a droite : le plus en amont d'abord, la blessure a droite (sens INRS).
   function colonnes() {
