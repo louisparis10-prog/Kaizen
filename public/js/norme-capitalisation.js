@@ -4,7 +4,7 @@
 // Enregistrement automatique dans le navigateur ; impression en A3 paysage.
 (function () {
   const CLE = 'kaizen-norme-capitalisation-v2';
-  const NB_GAINS = 3, NB_PARAMS = 3, MAX_PARAMS = 8;
+  const NB_GAINS = 3, NB_PARAMS = 3, MAX_GAINS = 8, MAX_PARAMS = 8;
 
   // Chaque rubrique a ses propres questions : un REX n'a pas de « qui / pour quand »,
   // une pratique a diffuser en a besoin.
@@ -144,7 +144,9 @@
         <td><input type="text" data-g="${i}.avant" value="${esc(g.avant)}" placeholder="52 min"></td>
         <td><input type="text" data-g="${i}.apres" value="${esc(g.apres)}" placeholder="31 min"></td>
         <td><input type="text" data-g="${i}.gain" value="${esc(g.gain)}" placeholder="-40 %"></td>
+        <td class="nc-sup"><button type="button" class="nc-retirer no-print" data-retirer-gain="${i}" title="Retirer cette ligne">✕</button></td>
       </tr>`).join('');
+    $('btn-ajout-gain').hidden = fiche.gains.length >= MAX_GAINS;
   }
   function rendreParams() {
     $('params').innerHTML = fiche.params.map((p, i) => `
@@ -243,10 +245,12 @@
     const b = ev.target.closest('button'); if (!b) return;
     if (b.dataset.ajoutPhoto) { photoCible = b.dataset.ajoutPhoto; $('input-photo').click(); }
     else if (b.dataset.retirerPhoto) { const c = b.dataset.retirerPhoto; fiche[c === 'avant' ? 'photoAvant' : 'photoApres'] = ''; rendrePhoto(c); enregistrer(); }
+    else if (b.dataset.retirerGain !== undefined) { fiche.gains.splice(+b.dataset.retirerGain, 1); if (!fiche.gains.length) fiche.gains.push(ligneGain()); rendreGains(); enregistrer(); }
     else if (b.dataset.retirerParam !== undefined) { fiche.params.splice(+b.dataset.retirerParam, 1); if (!fiche.params.length) fiche.params.push(ligneParam()); rendreParams(); enregistrer(); }
     else if (b.dataset.standard) { fiche.standard = fiche.standard === b.dataset.standard ? '' : b.dataset.standard; rendreStandard(); enregistrer(); }
     else if (b.dataset.bascule) { const d = fiche.cap[b.dataset.bascule]; d.coche = !d.coche; rendreCapitalisation(); enregistrer(); }
   });
+  $('btn-ajout-gain').addEventListener('click', () => { fiche.gains.push(ligneGain()); rendreGains(); enregistrer(); });
   $('btn-ajout-param').addEventListener('click', () => { fiche.params.push(ligneParam()); rendreParams(); enregistrer(); });
   $('btn-imprimer').addEventListener('click', () => { construireImpression(); window.print(); });
 
@@ -319,9 +323,10 @@
       h += tagI(a[3], 75, WA, a[0]);
       h += caseI(a[3], 97, WA, 150, a[4], '<div class="i-photo">' + (f[a[1]] ? '<img src="' + esc(f[a[1]]) + '" alt="">' : '') + '</div><div class="i-texte">' + txt(f[a[2]]) + '</div>');
     });
-    // Gain
+    // Gain (de 3 a 6 lignes imprimees)
+    const gains = f.gains.filter(g => !estVideLigne(g));
     h += tagI(XG, 252, WG, 'GAIN OBTENU');
-    h += tableauI(XG, 276, WG, [250, 108, 112, 124], ['Indicateur', 'Avant', 'Après', 'Gain'], f.gains.map(g => [g.nom, g.avant, g.apres, g.gain]), 3);
+    h += tableauI(XG, 276, WG, [250, 108, 112, 124], ['Indicateur', 'Avant', 'Après', 'Gain'], gains.map(g => [g.nom, g.avant, g.apres, g.gain]), Math.min(6, Math.max(3, gains.length)));
     // Parametres (jusqu'a 6 lignes imprimees)
     const params = f.params.filter(p => !estVideLigne(p));
     h += tagI(XG, 349, WG, 'PARAMÈTRES MIS SOUS CONTRÔLE');
