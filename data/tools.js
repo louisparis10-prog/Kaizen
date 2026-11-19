@@ -659,26 +659,26 @@ const TOOLS = [
     phase: 'standardisation',
     page: 'norme-capitalisation.html',
     libelles: { creer: 'Faire la fiche', ouvrir: 'Ouvrir la fiche' },
-    summary: "Une fiche de fin de chantier en deux parties : fixer la nouvelle facon de travailler pour que le gain tienne (la norme), puis partager ce qu'on a appris (pratiques a diffuser, fiche audit, nouveau rituel, retour d'experience). S'imprime en A3 pour l'affichage en salle.",
+    summary: "Une fiche de fin de chantier en deux parties : fixer la nouvelle facon de travailler pour que le gain tienne (la norme), puis partager ce qu'on a appris (pratiques a diffuser, fiche audit, retour d'experience). S'imprime en A3 pour l'affichage en salle.",
     whenToUse: [
       "Un chantier Kaizen se termine et le gain doit tenir dans le temps",
-      "Il faut dire clairement comment on travaille desormais, etape par etape",
+      "Il faut dire si la nouvelle facon de travailler a ete standardisee",
       "Ce qui a marche doit servir aux autres lignes, ateliers ou sites"
     ],
     steps: [
       "Montrer l'avant et l'apres avec une photo, puis chiffrer le gain obtenu",
       "Choisir les quelques parametres a controler : valeur a respecter, qui controle, quand",
-      "Ecrire la nouvelle norme de travail en etapes courtes (9 prevues)",
-      "Cocher ce qu'on partage : pratiques a diffuser, fiche audit, nouveau rituel, retour d'experience",
-      "Pour chaque rubrique cochee, dire qui s'en charge et pour quand (le retour d'experience se raconte, sans responsable)",
+      "Dire si un standard de travail a ete cree, et noter sa reference",
+      "Cocher ce qu'on partage : pratiques a diffuser, fiche audit, retour d'experience",
+      "Pour les pratiques a diffuser et la fiche audit, dire qui s'en charge et pour quand (le retour d'experience se raconte, sans responsable)",
       "Faire valider la norme, fixer la date de revue, puis imprimer en A3 et afficher en salle"
     ],
     benefits: "Un seul support pour que le gain tienne et que l'experience circule : la norme est ecrite, controlee, auditee, et les autres equipes en profitent.",
     memo: [
       "Avant / apres : une photo et des chiffres",
       "Peu de parametres, mais ceux qui font tenir la norme",
-      "Une action par etape, en phrases courtes",
-      "Pratique a diffuser, fiche audit, rituel : toujours un responsable et une date",
+      "Un standard de travail cree : on note sa reference pour le retrouver",
+      "Pratique a diffuser, fiche audit : toujours un responsable et une date",
       "Le retour d'experience : ce qui a marche, ce qui a ete difficile, le conseil au prochain chantier",
       "La norme a une date de revue : elle n'est pas figee"
     ],
@@ -690,11 +690,11 @@ const TOOLS = [
         "Remplir l'entete : chantier, pilote, date",
         "Coller une photo avant / apres et noter le gain en chiffres",
         "Noter les parametres a controler : valeur a respecter, qui controle, quand",
-        "Ecrire la nouvelle norme en 9 etapes courtes",
+        "Cocher si un standard de travail a ete cree et noter sa reference",
         "Remplir les rubriques de partage utiles, puis faire valider la norme et fixer sa date de revue"
       ]
     },
-    keywords: ['norme', 'standard', 'standardisation', 'capitalisation', 'rex', 'retour experience', 'rituel', 'fiche audit', 'pratiques a diffuser', 'norme de travail', 'avant apres', 'affichage salle']
+    keywords: ['norme', 'standard', 'standardisation', 'capitalisation', 'rex', 'retour experience', 'fiche audit', 'pratiques a diffuser', 'norme de travail', 'avant apres', 'affichage salle']
   },
   {
     id: 'a3',

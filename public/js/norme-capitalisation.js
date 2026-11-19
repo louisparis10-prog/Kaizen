@@ -1,10 +1,10 @@
 // Norme et capitalisation : une fiche de fin de chantier en deux parties.
-//  1. Fixer la norme : avant / apres, gain, parametres sous controle, nouvelle norme en etapes.
-//  2. Partager ce qu'on a appris : pratiques a diffuser, fiche audit, nouveau rituel, REX.
+//  1. Fixer la norme : avant / apres, gain, parametres sous controle, standard de travail cree ou non.
+//  2. Partager ce qu'on a appris : pratiques a diffuser, fiche audit, REX.
 // Enregistrement automatique dans le navigateur ; impression en A3 paysage.
 (function () {
   const CLE = 'kaizen-norme-capitalisation-v2';
-  const NB_GAINS = 3, NB_PARAMS = 3, NB_ETAPES = 9, MAX_PARAMS = 8, MAX_ETAPES = 18;
+  const NB_GAINS = 3, NB_PARAMS = 3, MAX_PARAMS = 8;
 
   // Chaque rubrique a ses propres questions : un REX n'a pas de « qui / pour quand »,
   // une pratique a diffuser en a besoin.
@@ -21,12 +21,6 @@
         { k: 'points', l: 'Quels points ajouter à la fiche d\'audit ?', t: 'area', ph: 'Ex. chariot complet, durée du changement' },
         { k: 'frequence', l: 'À quelle fréquence ?', t: 'text', ph: 'Ex. une fois par mois' },
         { k: 'qui', l: 'Qui réalise l\'audit ?', t: 'text', ph: 'Nom' }
-      ] },
-    { id: 'rituel', titre: 'Nouveau rituel', sous: 'Un rendez-vous régulier qui fait vivre la norme',
-      champs: [
-        { k: 'quoi', l: 'Quel rituel met-on en place ?', t: 'area', ph: 'Ex. point de 5 minutes en début de poste devant le tableau' },
-        { k: 'frequence', l: 'À quelle fréquence ?', t: 'text', ph: 'Ex. chaque jour' },
-        { k: 'qui', l: 'Qui l\'anime ?', t: 'text', ph: 'Nom' }
       ] },
     { id: 'rex', titre: 'REX (retour d\'expérience)', sous: 'Ce que ce chantier nous a appris',
       champs: [
@@ -55,7 +49,7 @@
       avant: '', apres: '', photoAvant: '', photoApres: '',
       gains: Array.from({ length: NB_GAINS }, ligneGain),
       params: Array.from({ length: NB_PARAMS }, ligneParam),
-      etapes: Array.from({ length: NB_ETAPES }, () => ''),
+      standard: '', standardRef: '',
       cap: capVide(),
       validePar: '', valideLe: '', revueLe: ''
     };
@@ -76,11 +70,10 @@
       { nom: 'Pression de serrage', cible: '4 bar', controle: 'Opérateur, avant démarrage' },
       { nom: 'Chariot d\'outils complet', cible: '12 outils sur 12', controle: 'Chef d\'équipe, en début de poste' }
     ],
-    etapes: ['Préparer le chariot d\'outils', 'Arrêter la ligne et la consigner', 'Retirer le format en place', 'Nettoyer le support', 'Monter le nouveau format', 'Régler la pression à 4 bar', 'Faire un essai de 3 pièces', 'Faire valider l\'essai par la qualité', 'Redémarrer et ranger le chariot'],
+    standard: 'oui', standardRef: 'Standard de changement de format, ligne 3',
     cap: {
       pratiques: { coche: true, quoi: 'Chariot d\'outils dédié au changement de format.', ou: 'Lignes 1, 2 et 4', qui: 'Marc Dubois', quand: '2026-12-15' },
       audit: { coche: true, points: 'Chariot complet ; durée du changement inférieure à 35 min.', frequence: 'Une fois par mois', qui: 'Sophie Martin' },
-      rituel: { coche: false, quoi: '', frequence: '', qui: '' },
       rex: { coche: true, bien: 'Associer les opérateurs dès le début : la norme a été adoptée tout de suite.', difficile: 'Trouver du temps pour former les équipes de nuit.', conseil: 'Prévoir la formation de toutes les équipes avant la fin du chantier.' }
     },
     validePar: 'Directeur de production', valideLe: '2026-11-14', revueLe: '2027-02-14'
@@ -102,7 +95,7 @@
   function completer() {
     const v = vide();
     CAPITALISATIONS.forEach(c => { fiche.cap = fiche.cap || {}; fiche.cap[c.id] = Object.assign({}, v.cap[c.id], fiche.cap[c.id]); });
-    ['gains', 'params', 'etapes'].forEach(k => { if (!Array.isArray(fiche[k]) || !fiche[k].length) fiche[k] = v[k]; });
+    ['gains', 'params'].forEach(k => { if (!Array.isArray(fiche[k]) || !fiche[k].length) fiche[k] = v[k]; });
   }
   const enTete = () => ({ chantier: fiche.chantier, pilote: fiche.pilote, date: fiche.date });
   const heure = () => new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
@@ -163,14 +156,13 @@
       </tr>`).join('');
     $('btn-ajout-param').hidden = fiche.params.length >= MAX_PARAMS;
   }
-  function rendreEtapes() {
-    $('etapes').innerHTML = fiche.etapes.map((e, i) => `
-      <li class="${e ? '' : 'vide'}">
-        <span class="nc-num">${i + 1}</span>
-        <textarea rows="2" data-e="${i}" placeholder="Étape ${i + 1}">${esc(e)}</textarea>
-        <button type="button" class="nc-retirer no-print" data-retirer-etape="${i}" title="Retirer cette étape">✕</button>
-      </li>`).join('');
-    $('btn-ajout-etape').hidden = fiche.etapes.length >= MAX_ETAPES;
+  function rendreStandard() {
+    document.querySelectorAll('[data-standard]').forEach(b => {
+      const actif = fiche.standard === b.dataset.standard;
+      b.classList.toggle('choisi', actif);
+      b.setAttribute('aria-pressed', String(actif));
+    });
+    $('standard-ref').hidden = fiche.standard !== 'oui';
   }
   function rendreChamp(c, f, d) {
     const nom = `${c.id}.${f.k}`;
@@ -200,7 +192,7 @@
   function toutRendre() {
     marquerImpression();
     rendreChampsSimples(); rendrePhoto('avant'); rendrePhoto('apres');
-    rendreGains(); rendreParams(); rendreEtapes(); rendreCapitalisation();
+    rendreGains(); rendreParams(); rendreStandard(); rendreCapitalisation();
     $('bandeau-exemple').hidden = !enExemple;
   }
 
@@ -215,8 +207,6 @@
     } else if (el.dataset.p !== undefined) {
       const [i, champ] = chemin(el, 'p'); fiche.params[+i][champ] = el.value;
       el.closest('tr').classList.toggle('vide', estVideLigne(fiche.params[+i]));
-    } else if (el.dataset.e !== undefined) {
-      fiche.etapes[+el.dataset.e] = el.value; el.closest('li').classList.toggle('vide', !el.value);
     } else if (el.dataset.c !== undefined) {
       const [id, champ] = chemin(el, 'c'); fiche.cap[id][champ] = el.value;
     } else return;
@@ -254,11 +244,10 @@
     if (b.dataset.ajoutPhoto) { photoCible = b.dataset.ajoutPhoto; $('input-photo').click(); }
     else if (b.dataset.retirerPhoto) { const c = b.dataset.retirerPhoto; fiche[c === 'avant' ? 'photoAvant' : 'photoApres'] = ''; rendrePhoto(c); enregistrer(); }
     else if (b.dataset.retirerParam !== undefined) { fiche.params.splice(+b.dataset.retirerParam, 1); if (!fiche.params.length) fiche.params.push(ligneParam()); rendreParams(); enregistrer(); }
-    else if (b.dataset.retirerEtape !== undefined) { fiche.etapes.splice(+b.dataset.retirerEtape, 1); if (!fiche.etapes.length) fiche.etapes.push(''); rendreEtapes(); enregistrer(); }
+    else if (b.dataset.standard) { fiche.standard = fiche.standard === b.dataset.standard ? '' : b.dataset.standard; rendreStandard(); enregistrer(); }
     else if (b.dataset.bascule) { const d = fiche.cap[b.dataset.bascule]; d.coche = !d.coche; rendreCapitalisation(); enregistrer(); }
   });
   $('btn-ajout-param').addEventListener('click', () => { fiche.params.push(ligneParam()); rendreParams(); enregistrer(); });
-  $('btn-ajout-etape').addEventListener('click', () => { fiche.etapes.push(''); rendreEtapes(); enregistrer(); });
   $('btn-imprimer').addEventListener('click', () => { construireImpression(); window.print(); });
 
   $('btn-nouvelle').addEventListener('click', () => {
@@ -328,24 +317,22 @@
     // 1. Avant / Apres : photo en haut, texte dessous
     [['AVANT', 'photoAvant', 'avant', XG, 0], ['APRÈS', 'photoApres', 'apres', XG + WA + 8, 1]].forEach(a => {
       h += tagI(a[3], 75, WA, a[0]);
-      h += caseI(a[3], 97, WA, 80, a[4], '<div class="i-photo">' + (f[a[1]] ? '<img src="' + esc(f[a[1]]) + '" alt="">' : '') + '</div><div class="i-texte">' + txt(f[a[2]]) + '</div>');
+      h += caseI(a[3], 97, WA, 150, a[4], '<div class="i-photo">' + (f[a[1]] ? '<img src="' + esc(f[a[1]]) + '" alt="">' : '') + '</div><div class="i-texte">' + txt(f[a[2]]) + '</div>');
     });
     // Gain
-    h += tagI(XG, 182, WG, 'GAIN OBTENU');
-    h += tableauI(XG, 206, WG, [250, 108, 112, 124], ['Indicateur', 'Avant', 'Après', 'Gain'], f.gains.map(g => [g.nom, g.avant, g.apres, g.gain]), 3);
+    h += tagI(XG, 252, WG, 'GAIN OBTENU');
+    h += tableauI(XG, 276, WG, [250, 108, 112, 124], ['Indicateur', 'Avant', 'Après', 'Gain'], f.gains.map(g => [g.nom, g.avant, g.apres, g.gain]), 3);
     // Parametres (jusqu'a 6 lignes imprimees)
     const params = f.params.filter(p => !estVideLigne(p));
-    h += tagI(XG, 279, WG, 'PARAMÈTRES MIS SOUS CONTRÔLE');
-    h += tableauI(XG, 303, WG, [230, 150, 218], ["Ce qu'on contrôle", 'Valeur à respecter', 'Qui contrôle, et quand'], params.map(p => [p.nom, p.cible, p.controle]), Math.min(6, Math.max(3, params.length)));
-    // Nouvelle norme : grille de 3 colonnes, autant de lignes que d'etapes
-    h += tagI(XG, 376, WG, 'LA NOUVELLE NORME DE TRAVAIL');
-    const nb = Math.max(9, f.etapes.length), lignes = Math.ceil(nb / 3), hE = (512 - 400 - 3 * (lignes - 1)) / lignes, wE = (WG - 8) / 3;
-    for (let i = 0; i < lignes * 3; i++) {
-      h += caseI(XG + (i % 3) * (wE + 4), 400 + Math.floor(i / 3) * (hE + 3), wE, hE, i, '<b class="i-num">Étape ' + (i + 1) + '</b> ' + txt(f.etapes[i] || ''));
-    }
+    h += tagI(XG, 349, WG, 'PARAMÈTRES MIS SOUS CONTRÔLE');
+    h += tableauI(XG, 373, WG, [230, 150, 218], ["Ce qu'on contrôle", 'Valeur à respecter', 'Qui contrôle, et quand'], params.map(p => [p.nom, p.cible, p.controle]), Math.min(6, Math.max(3, params.length)));
+    // Standard de travail : cree ou non, avec sa reference
+    h += tagI(XG, 446, WG, 'UN STANDARD DE TRAVAIL A-T-IL ÉTÉ CRÉÉ ?');
+    h += caseI(XG, 470, WG, 42, 0, '<div class="i-standard"><b>' + (f.standard === 'oui' ? '☒' : '☐') + ' Oui</b><b>' + (f.standard === 'non' ? '☒' : '☐') + ' Non</b></div>' +
+      '<div class="i-champ"><b>Nom ou référence du standard</b><span>' + (f.standard === 'oui' ? txt(f.standardRef) : '') + '</span></div>');
 
     // 2. Capitalisation : chaque rubrique avec ses propres questions
-    const hauteurs = { pratiques: 76, audit: 56, rituel: 56, rex: 89 };
+    const hauteurs = { pratiques: 96, audit: 76, rex: 126 };
     let yb = 75;
     CAPITALISATIONS.forEach((c, n) => {
       const d = f.cap[c.id];
@@ -356,7 +343,7 @@
       h += caseI(XD, yb + 22, WD, hauteurs[c.id], n, '<div class="i-flex">' + grands + (petits ? '<div class="i-ligne">' + petits + '</div>' : '') + '</div>');
       yb += 22 + hauteurs[c.id] + 5;
     });
-    h += tagI(XD, yb, WD, 'VALIDATION DE LA NORME');
+    h += tagI(XD, yb, WD, 'VALIDATION');
     h += caseI(XD, yb + 22, WD, 512 - (yb + 22), 0, '<div class="i-ligne"><div class="i-champ"><b>Validée par</b><span>' + txt(f.validePar) + '</span></div><div class="i-champ"><b>Le</b><span>' + fmtDate(f.valideLe) + '</span></div><div class="i-champ"><b>Prochaine revue</b><span>' + fmtDate(f.revueLe) + '</span></div></div>');
 
     const zone = $('impression');

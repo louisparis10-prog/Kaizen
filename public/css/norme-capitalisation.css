@@ -125,3 +125,10 @@ textarea, .nc-page input[type=text], .nc-page input[type=date] { font: inherit; 
   #impression { position: static; left: auto; }
   #impression, #impression * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+
+/* ---------- Standard de travail : question oui / non ---------- */
+.nc-oui-non { display: flex; gap: 12px; }
+.nc-choix { min-width: 130px; padding: 12px 26px; border: 2px solid var(--nc-trait); background: #fff; color: var(--nc-texte); border-radius: 10px; font: inherit; font-weight: 700; font-size: 1.05rem; cursor: pointer; }
+.nc-choix:hover { border-color: var(--nc-cadre); background: var(--nc-case-alt); }
+.nc-choix.choisi { background: var(--nc-bandeau); border-color: var(--nc-bandeau); color: #fff; }
+#impression .i-standard { display: flex; gap: calc(var(--u) * 26); font-size: calc(var(--u) * 12); margin-bottom: calc(var(--u) * 2); }

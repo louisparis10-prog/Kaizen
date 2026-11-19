@@ -84,10 +84,12 @@
         </div>
 
         <div class="nc-cadre">
-          <h4>La nouvelle norme de travail</h4>
-          <p class="nc-aide no-print">Une action par étape, dans l'ordre, en phrases courtes.</p>
-          <ol class="nc-etapes" id="etapes"></ol>
-          <button type="button" class="btn secondary small no-print" id="btn-ajout-etape">＋ Ajouter une étape</button>
+          <h4>Un standard de travail a-t-il été créé ?</h4>
+          <div class="nc-oui-non" role="group" aria-label="Standard de travail">
+            <button type="button" class="nc-choix" data-standard="oui" aria-pressed="false">✓ Oui</button>
+            <button type="button" class="nc-choix" data-standard="non" aria-pressed="false">✕ Non</button>
+          </div>
+          <label class="nc-cf" id="standard-ref" hidden><span>Nom ou référence du standard</span><input type="text" data-f="standardRef" placeholder="Pour le retrouver facilement"></label>
         </div>
       </div>
 
@@ -98,7 +100,7 @@
         <div id="capitalisation"></div>
 
         <div class="nc-cadre nc-signatures">
-          <h4>Validation de la norme</h4>
+          <h4>Validation</h4>
           <div class="nc-valid">
             <label class="nc-champ">Validée par <input type="text" data-f="validePar" placeholder="Nom, fonction"></label>
             <label class="nc-champ">Le <input type="date" data-f="valideLe"></label>
