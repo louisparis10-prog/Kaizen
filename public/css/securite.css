@@ -539,3 +539,14 @@
   .af-ishi-os ol { font-size: 8.5pt; }
 }
 .af-ishi-os ol + ol { border-top: 1px dashed var(--swm-trait); padding-top: 4px; }
+
+/* ---------- Plusieurs personnes pour « Analyse faite par » ---------- */
+.af-analystes { display: flex; flex-direction: column; gap: 6px; }
+.af-analystes-titre { font-size: 0.85rem; font-weight: 700; color: var(--swm-texte); }
+.af-analyste { display: flex; gap: 6px; }
+.af-analyste input { flex: 1; min-width: 0; }
+.af-analyste-suppr { border: 0; background: transparent; color: var(--text-muted); font-size: 1.3rem; cursor: pointer; padding: 0 8px; }
+.af-analyste-suppr:hover { color: var(--red); }
+.af-analyste-ajout { align-self: flex-start; border: 1.5px dashed var(--swm-trait); background: #fff; color: var(--swm-cadre); border-radius: 8px; padding: 5px 12px; font: inherit; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+.af-analyste-ajout:hover { border-color: var(--swm-cadre); background: var(--swm-case-alt); }
+.af-decision p { flex: 1 1 260px; margin: 0; font-size: 0.9rem; line-height: 1.4; color: var(--swm-texte); }

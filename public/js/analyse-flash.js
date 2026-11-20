@@ -108,7 +108,7 @@
   const EXEMPLE = {
     version: 1, etape: 5,
     typologie: { type: 'coupure', zone: 'main', suites: 'infirmerie' },
-    infos: { date: '2026-11-12', secteur: 'Atelier découpe, poste 4', personne: 'Opérateur découpe', animateur: "Chef d'équipe" },
+    infos: { date: '2026-11-12', ouverture: '2026-11-13', secteur: 'Atelier découpe, poste 4', personne: 'Opérateur découpe', animateur: "Chef d'équipe" },
     recit: {
       activite: "L'opérateur positionnait à la main une tôle sur la table de la presse.",
       evenement: "La tôle a glissé dans sa main et le bord a entaillé son index gauche.",
@@ -133,7 +133,7 @@
   const EXEMPLE_APPROFONDI = {
     version: 1, etape: 1,
     typologie: { type: 'glissade', zone: 'pied', suites: 'medecin' },
-    infos: { date: '2026-11-06', secteur: 'Atelier presses, allée de la presse P3', personne: 'Opérateur presse', animateur: 'L. Paris' },
+    infos: { date: '2026-11-06', ouverture: '2026-11-07', secteur: 'Atelier presses, allée de la presse P3', personne: 'Opérateur presse', animateur: 'L. Paris' },
     recit: {
       activite: "L'opérateur traversait l'allée à pied en portant un carton de flacons.",
       evenement: "Il a glissé sur une flaque d'huile présente dans l'allée de la presse P3.",
@@ -162,18 +162,31 @@
   const $ = (id) => document.getElementById(id);
 
   function nouvelle(infos) {
-    return {
+    const n = {
       version: 1, etape: 1,
       typologie: { type: '', zone: '', suites: '' },
-      infos: Object.assign({ date: aujourdhui(), secteur: '', personne: '', animateur: '' }, infos || {}),
+      infos: Object.assign({ date: aujourdhui(), ouverture: aujourdhui(), secteur: '', personne: '', animateur: '' }, infos || {}),
       recit: { activite: '', evenement: '', consequence: '' },
       photos: [], facteurs: [], actions: [], potentiel: ''
     };
+    n.infos.analystes = analystesDe(n.infos);
+    return n;
+  }
+  // Les personnes qui font l'analyse : une liste, et le champ « animateur » (texte) qui la resume.
+  function analystesDe(infos) {
+    if (Array.isArray(infos.analystes) && infos.analystes.length) return infos.analystes.map(x => String(x || ''));
+    const txt = String(infos.animateur || '').trim();
+    return [txt];
+  }
+  function syncAnimateur() {
+    a.infos.animateur = a.infos.analystes.map(x => x.trim()).filter(Boolean).join(', ');
   }
   function normaliser(d) {
     const n = nouvelle();
     if (!d || typeof d !== 'object') return n;
     ['typologie', 'infos', 'recit'].forEach(k => Object.assign(n[k], d[k] || {}));
+    n.infos.analystes = analystesDe(n.infos);
+    if (!d.infos || !d.infos.ouverture) n.infos.ouverture = ''; // analyses enregistrees avant l'ajout de cette date
     n.photos = Array.isArray(d.photos) ? d.photos.slice(0, MAX_PHOTOS) : [];
     // Les analyses commencees avec l'ancienne famille « Piece ou produit » passent dans le materiel.
     const bruts = Array.isArray(d.facteurs) ? d.facteurs : [];
@@ -320,9 +333,14 @@
       <h2 class="af-q"><span class="af-num">4</span>Quand et où ?</h2>
       <div class="af-infos">
         <label>Date de l'accident<input type="date" data-champ="infos.date" value="${esc(a.infos.date)}"></label>
+        <label>Date d'ouverture de l'analyse<input type="date" data-champ="infos.ouverture" value="${esc(a.infos.ouverture)}"></label>
         <label>Lieu, secteur<input type="text" data-champ="infos.secteur" value="${esc(a.infos.secteur)}" placeholder="Ex. : atelier, poste 4"></label>
         <label>Personne concernée<input type="text" data-champ="infos.personne" value="${esc(a.infos.personne)}" placeholder="Poste ou nom"></label>
-        <label>Analyse faite par<input type="text" data-champ="infos.animateur" value="${esc(a.infos.animateur)}" placeholder="Votre nom"></label>
+        <div class="af-analystes">
+          <span class="af-analystes-titre">Analyse faite par</span>
+          ${a.infos.analystes.map((nom, i) => `<div class="af-analyste"><input type="text" data-analyste="${i}" value="${esc(nom)}" placeholder="${i === 0 ? 'Votre nom' : 'Nom de la personne'}" aria-label="Personne ${i + 1}">${i > 0 ? `<button type="button" class="af-analyste-suppr" data-suppr-analyste="${i}" title="Retirer cette personne">×</button>` : ''}</div>`).join('')}
+          <button type="button" class="af-analyste-ajout" data-ajout-analyste="1" title="Ajouter une personne">＋ Ajouter une personne</button>
+        </div>
       </div>`;
   }
 
@@ -387,23 +405,21 @@
     const rang = memes.length > 1 ? ` n°${memes.indexOf(f) + 1}` : '';
     const exemples0 = [...new Set([...((EXEMPLES_PAR_TYPE[a.typologie.type] || {})[f.rubrique] || []), ...EXEMPLES_FAITS[f.rubrique]])].slice(0, 5);
     const maillons = f.chaine.map((texte, k) => {
-      const question = k === 0 ? r.q : (k === 1 ? `Et qu'est-ce qui explique cela ?` : `Et derrière, qu'est-ce qui explique cela ?`);
+      const question = k === 0 ? r.q : `Pourquoi n°${k} ?`;
       const exemples = k === 0 ? exemples0 : EXEMPLES_RAISONS[f.rubrique];
-      const dernier = k === f.chaine.length - 1;
-      const decision = dernier && texte.trim() && !f.fin ? `
+      // Le dernier fait renseigne est le point d'action : on peut toujours y ajouter un pourquoi.
+      const dernierRempli = k === f.chaine.length - 1 && texte.trim();
+      const decision = dernierRempli ? `
         <div class="af-decision">
-          <span>Peut-on agir directement là-dessus ?</span>
-          <button type="button" class="btn small orange" data-fin="${f.id}">Oui, on agit là</button>
-          <button type="button" class="btn small secondary" data-creuser="${f.id}">Non, il y a une raison derrière</button>
+          <p>🎯 <b>Peut-on agir directement sur cela ?</b> Si oui, c'est votre point d'action. Sinon, cherchez ce qui l'explique.</p>
+          <button type="button" class="btn small secondary" data-creuser="${f.id}">＋ Ajouter un pourquoi</button>
         </div>` : '';
       return `
-        ${k > 0 ? '<div class="af-parce-que">parce que…</div>' : ''}
-        <div class="af-maillon${dernier && f.fin ? ' cible' : ''}">
+        <div class="af-maillon${dernierRempli ? ' cible' : ''}">
           <label class="af-champ"><span class="af-champ-q">${esc(question)}</span>
             <textarea rows="1" data-chaine="${f.id}|${k}" data-verifier placeholder="Décrivez un fait constaté">${esc(texte)}</textarea>
             <span class="af-mot-alerte" hidden></span></label>
           ${!texte.trim() && exemples.length ? `<div class="af-exemples"><small>Exemples :</small>${exemples.map(x => `<button type="button" class="af-puce" data-exemple-chaine="${f.id}|${k}">${esc(x)}</button>`).join('')}</div>` : ''}
-          ${dernier && f.fin ? `<div class="af-cible-tag">🎯 C'est là qu'on agit <button type="button" class="af-lien" data-rouvrir="${f.id}">modifier</button></div>` : ''}
           ${decision}
         </div>`;
     }).join('');
@@ -521,6 +537,7 @@
           <div><small>Lieu</small>${esc(a.infos.secteur) || '—'}</div>
           <div><small>Personne</small>${esc(a.infos.personne) || '—'}</div>
           <div><small>Analyse par</small>${esc(a.infos.animateur) || '—'}</div>
+          <div><small>Analyse ouverte le</small>${esc(dateFr(a.infos.ouverture)) || '—'}</div>
           <div><small>Type</small>${esc(libelle(TYPES, t.type)) || '—'}</div>
           <div><small>Blessure</small>${esc(libelle(ZONES, t.zone)) || '—'}</div>
           <div><small>Suites</small>${esc(libelle(SUITES, t.suites)) || '—'}</div>
@@ -634,18 +651,9 @@
       facteur(fid).chaine[Number(k)] = b.textContent;
       rendre(`[data-chaine="${fid}|${k}"]`);
       sauver();
-    } else if (d.fin) {
-      facteur(d.fin).fin = true;
-      rendre();
-      sauver();
     } else if (d.creuser) {
       const f = facteur(d.creuser);
       f.chaine.push('');
-      rendre(`[data-chaine="${f.id}|${f.chaine.length - 1}"]`);
-      sauver();
-    } else if (d.rouvrir) {
-      const f = facteur(d.rouvrir);
-      f.fin = false;
       rendre(`[data-chaine="${f.id}|${f.chaine.length - 1}"]`);
       sauver();
     } else if (d.retirerFacteur) {
@@ -667,6 +675,15 @@
       const [aid, nv] = d.niveau.split('|');
       const x = a.actions.find(y => y.id === aid);
       if (x) { x.niveau = Number(x.niveau) === Number(nv) ? '' : Number(nv); rendre(); sauver(); }
+    } else if (d.ajoutAnalyste) {
+      a.infos.analystes.push('');
+      rendre(`[data-analyste="${a.infos.analystes.length - 1}"]`);
+      sauver();
+    } else if (d.supprAnalyste) {
+      a.infos.analystes.splice(Number(d.supprAnalyste), 1);
+      syncAnimateur();
+      rendre();
+      sauver();
     } else if (d.supprPhoto !== undefined) {
       a.photos.splice(Number(d.supprPhoto), 1);
       rendre();
@@ -693,6 +710,7 @@
     const c = e.target;
     const d = c.dataset;
     if (d.champ) definirChamp(d.champ, c.value);
+    else if (d.analyste !== undefined) { a.infos.analystes[Number(d.analyste)] = c.value; syncAnimateur(); }
     else if (d.chaine) {
       const [fid, k] = d.chaine.split('|');
       const f = facteur(fid);
