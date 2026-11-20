@@ -488,6 +488,24 @@
     return [consequence, a.infos.secteur.trim(), a.infos.personne.trim()].filter(Boolean).join(' - ');
   }
 
+  // Schema des causes (en arete de poisson) : les familles autour, l'accident a droite.
+  function schemaCausesHTML() {
+    const titre = a.recit.consequence.trim() || a.recit.evenement.trim() || libelle(TYPES, a.typologie.type) || "L'accident";
+    const os = (r) => {
+      const causes = a.facteurs.filter(f => f.rubrique === r.id && f.chaine[0].trim());
+      return `<div class="af-ishi-os"><b><span>${r.ico}</span>${esc(r.label)}</b>${causes.length ? causes.map(f => {
+        const remplis = f.chaine.filter(x => x.trim());
+        return `<ol>${remplis.map((x, k) => `<li${k === remplis.length - 1 ? ' class="cible"' : ''}>${esc(x)}${k === remplis.length - 1 ? ' <em>🎯</em>' : ''}</li>`).join('')}</ol>`;
+      }).join('') : '<p class="af-ishi-vide">Rien noté</p>'}</div>`;
+    };
+    return `<div class="af-ishi">
+      <div class="af-ishi-haut">${RUBRIQUES.slice(0, 2).map(os).join('')}</div>
+      <div class="af-ishi-arete"><span></span></div>
+      <div class="af-ishi-bas">${RUBRIQUES.slice(2).map(os).join('')}</div>
+      <div class="af-ishi-tete"><small>L'accident</small>${esc(titre)}</div>
+    </div>`;
+  }
+
   function ficheHTML() {
     const t = a.typologie;
     const verdict = a.potentiel === 'non' ? '✅ Analyse simplifiée suffisante'
@@ -507,19 +525,14 @@
           <div><small>Blessure</small>${esc(libelle(ZONES, t.zone)) || '—'}</div>
           <div><small>Suites</small>${esc(libelle(SUITES, t.suites)) || '—'}</div>
         </div>
-        <section><h3><span>1</span>Ce qui s'est passé</h3>
+        <section class="af-fiche-schema"><h3><span>1</span>Ce qui a joué</h3>
+          ${schemaCausesHTML()}
+        </section>
+        <section><h3><span>2</span>Ce qui s'est passé</h3>
           ${a.recit.activite ? `<p><b>La personne :</b> ${esc(a.recit.activite)}</p>` : ''}
           <p><b>L'événement :</b> ${esc(a.recit.evenement)}</p>
           ${a.recit.consequence ? `<p><b>Conséquence :</b> ${esc(a.recit.consequence)}</p>` : ''}
           ${a.photos.length ? `<div class="af-fiche-photos">${a.photos.map(p => `<img src="${p}" alt="">`).join('')}</div>` : ''}
-        </section>
-        <section><h3><span>2</span>Ce qui a joué</h3>
-          ${a.facteurs.filter(f => f.chaine[0].trim()).map(f => {
-            const r = rubrique(f.rubrique);
-            const remplis = f.chaine.filter(x => x.trim());
-            return `<div class="af-fiche-facteur"><b>${r.ico} ${esc(r.label)}</b>
-              <ol>${remplis.map((x, k) => `<li${k === remplis.length - 1 ? ' class="cible"' : ''}>${esc(x)}${k === remplis.length - 1 ? ' <em>🎯 on agit ici</em>' : ''}</li>`).join('')}</ol></div>`;
-          }).join('')}
         </section>
         <section><h3><span>3</span>Ce qu'on change</h3>
           <table><thead><tr><th>Action</th><th>Type</th><th>Responsable</th><th>Pour quand</th><th>État</th></tr></thead>
